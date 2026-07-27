@@ -1,4 +1,4 @@
-// JS/core/auth.js
+// JS/core/auth.js (ou apenas auth.js se estiver tudo na raiz)
 import { supabase } from './config.js';
 
 // ==========================================
@@ -7,8 +7,6 @@ import { supabase } from './config.js';
 window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null) {
     const palco = document.getElementById('conteudo-dinamico');
     if (!palco) return;
-
-    const pastaReal = pasta || 'nav';
 
     // 1. INJETA O LOADER IMEDIATAMENTE (Acaba com a tela branca/flickering)
     palco.innerHTML = `
@@ -27,8 +25,8 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
     });
 
     try {
-        // 3. BUSCA O HTML NO SERVIDOR
-        const resposta = await fetch(`views/${pastaReal}/${nomeDaTela}.html`);
+        // 3. BUSCA O HTML NO SERVIDOR (CORRIGIDO PARA A RAIZ!)
+        const resposta = await fetch(`./${nomeDaTela}.html`);
         if (!resposta.ok) throw new Error(`HTML não encontrado: ${nomeDaTela}`);
         
         const html = await resposta.text();
@@ -50,7 +48,7 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
                 <div class="bg-red-50 p-6 rounded-xl border border-red-200 text-center shadow-sm">
                     <span class="text-5xl block mb-3">🚧</span>
                     <h3 class="text-red-800 font-black text-xl uppercase tracking-wider">Módulo em Construção</h3>
-                    <p class="text-red-600 font-medium mt-1">A tela <b>${nomeDaTela}</b> ainda não foi criada.</p>
+                    <p class="text-red-600 font-medium mt-1">A tela <b>${nomeDaTela}</b> ainda não foi criada ou o caminho está incorreto.</p>
                 </div>
             </div>`;
     }
