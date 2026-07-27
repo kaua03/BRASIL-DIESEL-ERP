@@ -1,0 +1,25 @@
+# ==========================================
+# GESTÃO DE SEGURANÇA E AMBIENTE (IGNORAR SEMPRE)
+# ==========================================
+
+# Arquivos de Sistema Operacional (Lixo do Windows/Mac)
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Pastas de Editor de Código (Configurações da sua máquina)
+.vscode/
+.idea/
+
+# Variáveis de Ambiente e Chaves Secretas (NUNCA SUBA ISSO)
+.env
+.env.local
+.env.development
+.env.production
+credenciais.json
+
+# Logs e Dependências (Se um dia você usar Node.js para o Backend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

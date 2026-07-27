@@ -1,0 +1,81 @@
+<!-- views/nav/patio.html -->
+<div class="fade-in space-y-6">
+    <!-- Cabeçalho Limpo (Sem botão atualizar) -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <div>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Pátio de Execução</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Acompanhamento em tempo real, checklists e diário de bordo.</p>
+        </div>
+    </div>
+
+    <!-- Grid de Cards Compactos do Pátio -->
+    <div id="grid-patio" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="col-span-full text-center p-12 text-gray-400 dark:text-gray-500 font-bold bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+            A rastrear veículos no pátio...
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE EXECUÇÃO DO PÁTIO (Checklist e Diário)           -->
+<!-- ========================================================= -->
+<div id="modal-patio" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh] max-h-[800px] overflow-hidden transform transition-transform duration-300">
+        
+        <!-- Cabeçalho do Modal -->
+        <div class="flex justify-between items-center p-5 border-b border-gray-100 bg-[#1a428a] text-white">
+            <div id="modal-patio-header">
+                <h3 class="text-xl font-black tracking-tight" id="modal-patio-titulo">O.S. #0000 — PLACA</h3>
+                <p class="text-xs text-blue-200 font-medium mt-0.5" id="modal-patio-subtitulo">Veículo e Cliente</p>
+            </div>
+            <button type="button" onclick="window.fecharModalPatio()" class="text-blue-200 hover:text-white text-4xl leading-none font-light transition-colors">&times;</button>
+        </div>
+
+        <!-- Corpo do Modal (Dividido em 2 colunas em telas grandes) -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+            
+            <!-- COLUNA ESQUERDA: CHECKLIST E PROGRESSO -->
+            <div class="flex-1 md:w-1/2 border-r border-gray-200 flex flex-col bg-white overflow-hidden">
+                <!-- Painel de Progresso Fixo no Topo -->
+                <div class="p-5 border-b border-gray-100 bg-gray-50/50">
+                    <div class="flex justify-between text-[11px] font-black text-gray-500 mb-2">
+                        <span class="tracking-widest">PROGRESSO DE EXECUÇÃO</span>
+                        <span id="modal-patio-progresso-texto" class="text-[#1a428a] text-sm">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                        <div id="modal-patio-progresso-barra" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Área Rolável dos Checklists -->
+                <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white" id="modal-patio-checklist">
+                    <!-- Gerado pelo JS -->
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA: DIÁRIO DE BORDO (CHAT) -->
+            <div class="flex-1 md:w-1/2 flex flex-col bg-gray-50 overflow-hidden relative">
+                <div class="p-3 border-b border-gray-200 bg-gray-100/80">
+                    <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                        Diário de Bordo
+                    </h4>
+                </div>
+                
+                <!-- Área do Chat Rolável -->
+                <div id="modal-patio-chat" class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+                    <!-- Gerado pelo JS -->
+                </div>
+                
+                <!-- Input de Envio de Mensagem Fixo no Rodapé -->
+                <div class="p-4 bg-white border-t border-gray-200 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                    <input type="text" id="modal-patio-input" placeholder="Escreva uma observação técnica..." class="flex-1 text-sm px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#1a428a] focus:ring-1 focus:ring-[#1a428a] transition-all bg-gray-50 focus:bg-white" onkeypress="if(event.key === 'Enter') window.enviarComentarioPatioAtual()">
+                    <button onclick="window.enviarComentarioPatioAtual()" class="bg-[#1a428a] hover:bg-blue-900 text-white px-5 py-3 rounded-xl transition-colors shadow-md flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

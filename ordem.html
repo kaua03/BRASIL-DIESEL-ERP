@@ -1,0 +1,266 @@
+<!-- views/nav/ordem.html -->
+<div class="fade-in space-y-6">
+    <!-- Cabeçalho -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <div>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Ordens de Serviço (O.S)</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão completa de pátio, orçamentos e laudos técnicos.</p>
+        </div>
+        <button onclick="window.abrirModalNovaOs()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Abrir Nova O.S.
+        </button>
+    </div>
+
+    <!-- Tabela de Listagem -->
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-max">
+                <thead>
+                    <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors">
+                        <th class="p-4 w-[8%]">Nº O.S</th>
+                        <th class="p-4 w-[12%]">Data/Hora</th>
+                        <th class="p-4 text-center w-[12%]">Placa</th>
+                        <th class="p-4 w-[25%]">Cliente / Veículo</th>
+                        <th class="p-4 text-right w-[15%]">Resumo Financeiro</th>
+                        <th class="p-4 text-center w-[13%]">Situação</th>
+                        <th class="p-4 text-center w-[15%]">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-ordens-servico" class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-[#1e293b] transition-colors">
+                    <tr>
+                        <td colspan="7" class="text-center p-8 text-gray-400 font-bold">A carregar base de dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE NOVA / EDITAR O.S.                               -->
+<!-- ========================================================= -->
+<div id="modal-os" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[92vh]">
+
+        <!-- Cabeçalho Dinâmico -->
+        <div id="cabecalho-modal-os" class="flex justify-between items-center p-6 border-b border-gray-100 bg-[#1a428a] text-white rounded-t-2xl transition-colors duration-300">
+            <h3 id="modal-titulo-os" class="text-2xl font-black">Ordem de Serviço — Placa: ---</h3>
+            <button type="button" id="btn-fechar-x" onclick="window.fecharModalOsSeguro()" class="text-gray-300 hover:text-white transition-colors text-2xl font-bold">&times;</button>
+        </div>
+
+        <!-- Formulário -->
+        <form id="form-nova-os" onsubmit="window.salvarOs(event)" class="p-6 overflow-y-auto flex-1 space-y-6 relative">
+            <input type="hidden" id="os-id-editando">
+
+            <!-- DATA E HORA -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center">
+                <span class="font-bold text-gray-700 text-sm">Data e Hora de Abertura:</span>
+                <input type="datetime-local" id="data_hora" required class="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white font-mono font-bold text-sm">
+            </div>
+
+            <!-- BLOCO 1: DADOS DO VEÍCULO -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-[#1a428a] mb-4">1. Dados do Veículo</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Placa</label>
+                        <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] uppercase font-mono font-bold" placeholder="ABC-1234 / ABC1D23" maxlength="8">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Veículo / Modelo</label>
+                        <input type="text" id="modelo" required class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Marca</label>
+                        <input type="text" id="marca" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Ano</label>
+                        <input type="text" id="ano" required class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white" maxlength="4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOCO 2: DADOS DO CLIENTE & ENDEREÇO -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-[#1a428a] mb-4">2. Dados do Cliente & Endereço</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">CPF / CNPJ</label>
+                        <input type="text" id="cpf_cnpj" required oninput="window.mascaraCpfCnpj(this)" onblur="window.consultarCnpj(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white font-mono" placeholder="Digite CPF ou CNPJ">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700">Nome / Razão Social</label>
+                        <input type="text" id="cliente" required class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Celular / Tel</label>
+                        <input type="text" id="celular" oninput="window.mascaraCelular(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700">E-mail</label>
+                        <input type="email" id="cliente_email" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white" placeholder="cliente@email.com">
+                    </div>
+                </div>
+
+                <!-- ENDEREÇO VIA CEP -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-bold text-gray-700">CEP</label>
+                        <input type="text" id="cep" required oninput="window.mascaraCep(this)" onblur="window.consultarCep(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white font-mono" placeholder="00000-000">
+                    </div>
+                    <div class="md:col-span-6">
+                        <label class="block text-sm font-bold text-gray-700">Endereço</label>
+                        <input type="text" id="endereco" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-gray-100 text-gray-700 font-medium" readonly>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-bold text-gray-700">Bairro</label>
+                        <input type="text" id="bairro" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-gray-100 text-gray-700 font-medium" readonly>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-3">
+                    <div class="md:col-span-5">
+                        <label class="block text-sm font-bold text-gray-700">Cidade / UF</label>
+                        <input type="text" id="cidade" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-gray-100 text-gray-700 font-medium" readonly>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-bold text-gray-700">Nº</label>
+                        <input type="text" id="numero_end" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="block text-sm font-bold text-gray-700">Complemento</label>
+                        <input type="text" id="complemento" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white" placeholder="Sala, Bloco, etc.">
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOCO 3: SITUAÇÃO E RELATOS -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-[#1a428a] mb-4">3. Situação e Relatos</h4>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="md:col-span-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Situação Operacional</label>
+                        <select id="situacao" onchange="window.atualizarCorSelectSituacao(this)" class="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none font-bold text-sm shadow-inner transition-colors disabled:opacity-75 disabled:bg-gray-100">
+                            <option value="Aberto" style="background-color: #E0F2FE; color: #0369A1;" class="font-bold">Aberto</option>
+                            <option value="Aguardando" style="background-color: #FEF3C7; color: #B45309;" class="font-bold">Aguardando</option>
+                            <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D;" class="font-bold">Autorizado</option>
+                            <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3;" class="font-bold">Em Execução</option>
+                            <option value="Recusado" style="background-color: #FEE2E2; color: #B91C1C;" class="font-bold">Recusado</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-8">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Relato do Condutor / Cliente</label>
+                        <textarea id="defeito" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] disabled:bg-gray-100" placeholder="Descreva o relato..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOCO 4: ORÇAMENTO FINANCEIRO -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-[#1a428a] mb-4">4. Orçamento de Peças e Serviços</h4>
+
+                <!-- PAINEL DE ADIÇÃO DE ITEM -->
+                <div id="painel-adicionar-item" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm items-end transition-all">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-700">Tipo</label>
+                        <select id="item-tipo" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm outline-none font-bold text-gray-700">
+                            <option value="Peça" class="text-purple-700 font-bold">Peça</option>
+                            <option value="Serviço" class="text-amber-700 font-bold">Serviço</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold text-gray-700">Item / Descrição</label>
+                        <input type="text" id="item-descricao" autocomplete="off" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-[#1a428a]" placeholder="Digite o nome...">
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-bold text-gray-700 text-center">Qtd</label>
+                        <input type="number" id="item-qtd" value="1" min="1" oninput="window.calcularSubtotalItem()" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-center font-mono font-bold focus:border-[#1a428a]">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 text-right">V. Unitário (R$)</label>
+                        <input type="text" id="item-valor" oninput="window.mascaraValorItem(this); window.calcularSubtotalItem()" autocomplete="off" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-right font-mono font-bold focus:border-[#1a428a]" placeholder="0,00">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 text-right">V. Total (R$)</label>
+                        <input type="text" id="item-subtotal" class="w-full mt-1 px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-sm text-right font-mono font-bold text-[#1a428a]" placeholder="0,00" readonly>
+                    </div>
+                    <div class="md:col-span-1">
+                        <button type="button" onclick="window.adicionarItemOrcamento()" class="w-full bg-[#1a428a] text-white font-black py-2 rounded-md hover:bg-blue-900 transition-colors shadow-sm text-lg flex justify-center items-center h-[38px]">+</button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Itens -->
+                <div class="overflow-x-auto border border-gray-200 rounded-xl bg-white shadow-sm">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                            <tr>
+                                <th class="p-3 w-16 text-center font-bold">N°</th>
+                                <th class="p-3 w-28 text-center font-bold">Tipo</th>
+                                <th class="p-3 font-bold">Item</th>
+                                <th class="p-3 w-20 text-center font-bold">Qtd</th>
+                                <th class="p-3 w-32 text-right font-bold">V. Unitário</th>
+                                <th class="p-3 w-32 text-right font-bold">V. Total</th>
+                                <th id="th-acao-orcamento" class="p-3 w-12 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-orcamento" class="divide-y divide-gray-100">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-gray-400 font-medium">Nenhum item adicionado ao orçamento.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Resumo APRIMORADO COM DESCONTO E OUTROS VALORES -->
+                <div class="mt-4 flex flex-col items-end gap-3 text-sm bg-white p-5 border border-gray-200 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-center w-80 text-gray-600">
+                        <span class="font-bold">Qtd. Total de Itens:</span>
+                        <span id="qtd-total-itens" class="font-mono font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center w-80 text-gray-600">
+                        <span class="font-bold">Total em Peças:</span>
+                        <span id="total-pecas" class="font-mono">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center w-80 text-gray-600">
+                        <span class="font-bold">Total em Serviços:</span>
+                        <span id="total-servicos" class="font-mono">R$ 0,00</span>
+                    </div>
+
+                    <!-- Novos campos editáveis -->
+                    <div class="flex justify-between items-center w-80 text-gray-600 mt-2">
+                        <span class="font-bold">Outros Valores (R$):</span>
+                        <input type="text" id="outros-valores" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-32 px-3 py-1.5 border border-gray-300 rounded text-right font-mono font-bold outline-none focus:border-[#1a428a] transition-colors">
+                    </div>
+                    
+                    <div class="flex justify-between items-center w-80 text-gray-600 pb-3 border-b border-gray-200">
+                        <div class="flex flex-col">
+                            <span class="font-bold">Desconto (R$):</span>
+                            <span id="desconto-porcentagem" class="text-[11px] text-green-600 font-bold leading-none mt-1">0.00%</span>
+                        </div>
+                        <input type="text" id="desconto-valor" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-32 px-3 py-1.5 border border-gray-300 rounded text-right font-mono font-bold text-red-600 outline-none focus:border-red-500 transition-colors">
+                    </div>
+
+                    <div class="flex justify-between items-center w-80 text-[#1a428a] text-xl font-black mt-2">
+                        <span>VALOR TOTAL:</span>
+                        <span id="total-geral" class="font-mono">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- PAINÉIS DE AÇÃO (APENAS SALVAR E CANCELAR)                     -->
+            <!-- ============================================================== -->
+            <div class="pt-4 border-t border-gray-200">
+                <div id="painel-botoes-edicao" class="flex justify-end gap-3">
+                    <button type="button" id="btn-cancelar-alteracoes" onclick="window.tentarCancelarOs()" class="hidden px-6 py-2.5 font-bold text-gray-600 hover:text-gray-900 transition-colors">Cancelar</button>
+                    <button type="submit" id="btn-salvar-os" class="px-8 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg">Salvar Ordem de Serviço</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
