@@ -1,15 +1,14 @@
 // login.js
-import { supabase } from '../core/config.js';
+import { supabase } from './config.js'; // CORREÇÃO 1: Caminho direto para a raiz
 
 // ==========================================
 // 1. ELEMENTOS DA TELA
 // ==========================================
 const telaLogin = document.getElementById('tela-login');
-const telaErp = document.getElementById('tela-erp');
+const telaErp = document.getElementById('tela-erp'); // Ou 'layout-app', conforme o ID do seu index.html
 const btnLogin = document.getElementById('btn-login');
 const resultado = document.getElementById('resultado');
 const formLogin = document.getElementById('form-login');
-const btnSair = document.getElementById('btn-sair');
 
 // ==========================================
 // 2. LÓGICA DE ENTRADA (LOGIN)
@@ -54,14 +53,14 @@ if (formLogin) {
             if (userSpan) userSpan.innerText = email.split('@')[0].toUpperCase();
             if (cargoSpan) cargoSpan.innerText = userData?.Função || userData?.funcao || "MASTER";
 
-            // 5. O GATILHO SPA DA NOVA ARQUITETURA
-            // Avisa o Roteador para colar a tela do pátio E DEPOIS rodar a função
-            if (typeof window.carregarTela === 'function') {
-                window.carregarTela('nav', 'ordem', 'carregarOrdensDeServico');
-
-                // Acende a luz amarela do botão Pátio no menu superior
-                document.querySelector('[data-tela="ordem"]')?.classList.add('text-[#facc15]', 'border-[#facc15]', 'bg-blue-900');
-            }
+            // 5. O GATILHO SPA DA NOVA ARQUITETURA (CORREÇÃO 2)
+            // Simulamos um clique no botão do menu para o sistema carregar a tela perfeitamente
+            setTimeout(() => {
+                const btnInicial = document.querySelector('[data-tela="ordem"]');
+                if (btnInicial) {
+                    btnInicial.click();
+                }
+            }, 100); // Um atraso minúsculo só para garantir que o menu já existe na tela
 
         } catch (erro) {
             console.error("Erro no login:", erro);
@@ -77,28 +76,26 @@ if (formLogin) {
 }
 
 // ==========================================
-// 3. LÓGICA DE SAÍDA (LOGOUT)
+// 3. LÓGICA DE SAÍDA (LOGOUT GLOBAL - CORREÇÃO 3)
 // ==========================================
-if (btnSair) {
-    btnSair.addEventListener('click', async () => {
-        try {
-            // 1. Invalida a sessão no servidor
-            await supabase.auth.signOut();
+window.fazerLogout = async function() {
+    try {
+        // 1. Invalida a sessão no servidor
+        await supabase.auth.signOut();
 
-            // 2. Inverte as telas (Esconde ERP, Mostra Login)
-            if (telaErp) {
-                telaErp.classList.add('hidden');
-                telaErp.classList.remove('flex');
-            }
-            if (telaLogin) telaLogin.classList.remove('hidden');
-
-            // 3. Limpa os campos por segurança
-            const inputSenha = document.getElementById('senha');
-            if (inputSenha) inputSenha.value = '';
-            if (resultado) resultado.innerHTML = '';
-
-        } catch (erro) {
-            console.error("Erro ao sair:", erro);
+        // 2. Inverte as telas (Esconde ERP, Mostra Login)
+        if (telaErp) {
+            telaErp.classList.add('hidden');
+            telaErp.classList.remove('flex');
         }
-    });
-}
+        if (telaLogin) telaLogin.classList.remove('hidden');
+
+        // 3. Limpa os campos por segurança
+        const inputSenha = document.getElementById('senha');
+        if (inputSenha) inputSenha.value = '';
+        if (resultado) resultado.innerHTML = '';
+
+    } catch (erro) {
+        console.error("Erro ao sair:", erro);
+    }
+};
