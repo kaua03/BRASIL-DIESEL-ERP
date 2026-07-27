@@ -136,16 +136,13 @@ window.fazerLogout = async function() {
 };
 
 // ==========================================
-// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Cura Definitiva do F5)
+// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Fim da "Amnésia" do F5)
 // ==========================================
-// Como o script é um módulo VIP, ele roda depois do HTML. Executamos DIRETO!
-async function restaurarSessao() {
+window.restaurarSessao = async function() {
     try {
-        // 1. O sistema pergunta ao Supabase se a chave já está na ignição
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-            // 2. Se tem sessão, chuta a porta do login e mostra o ERP instantaneamente
             const telaLogin = document.getElementById('tela-login');
             const telaErp = document.getElementById('tela-erp');
             
@@ -155,12 +152,10 @@ async function restaurarSessao() {
                 telaErp.classList.add('flex');
             }
 
-            // 3. Preenche o crachá do cabeçalho
             const email = session.user.email;
             const userSpan = document.getElementById('usuario-logado');
             if (userSpan) userSpan.innerText = email.split('@')[0].toUpperCase();
 
-            // Puxa o cargo do banco de dados
             const { data: userData } = await supabase
                 .from('users')
                 .select('*')
@@ -170,11 +165,11 @@ async function restaurarSessao() {
             const cargoSpan = document.getElementById('cargo-logado');
             if (cargoSpan) cargoSpan.innerText = userData?.Função || userData?.funcao || "MASTER";
 
-            // 4. Dispara o clique no botão do Pátio para carregar a tela
+            // Simula clique no botão do Pátio (ou chama carregarTela direto)
             setTimeout(() => {
                 const btnInicial = document.querySelector('[data-tela="patio"]');
                 if (btnInicial) {
-                    btnInicial.click(); // Simula o clique perfeito
+                    btnInicial.click();
                 } else if (typeof window.carregarTela === 'function') {
                     window.carregarTela('nav', 'patio', 'carregarPatio');
                 }
@@ -183,6 +178,4 @@ async function restaurarSessao() {
     } catch (erro) {
         console.error("Erro ao verificar sessão automática no F5:", erro);
     }
-}
-
-restaurarSessao();
+};
