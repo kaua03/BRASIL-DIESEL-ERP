@@ -1,5 +1,5 @@
 // JS/modules/patio.js
-import { supabase } from '../core/config.js';
+import { supabase } from './config.js';
 
 // Memória local do Pátio para reatividade rápida
 window.dadosPatio = [];
