@@ -136,15 +136,16 @@ window.fazerLogout = async function() {
 };
 
 // ==========================================
-// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Cura da "Amnésia" do F5)
+// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Cura Definitiva do F5)
 // ==========================================
-window.addEventListener('DOMContentLoaded', async () => {
+// Como o script é um módulo VIP, ele roda depois do HTML. Executamos DIRETO!
+async function restaurarSessao() {
     try {
-        // 1. O sistema pergunta ao Supabase: "Este utilizador já tem a chave na ignição?"
+        // 1. O sistema pergunta ao Supabase se a chave já está na ignição
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-            // 2. Se tem sessão ativa, esconde o login e mostra o ERP instantaneamente!
+            // 2. Se tem sessão, chuta a porta do login e mostra o ERP instantaneamente
             const telaLogin = document.getElementById('tela-login');
             const telaErp = document.getElementById('tela-erp');
             
@@ -169,9 +170,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             const cargoSpan = document.getElementById('cargo-logado');
             if (cargoSpan) cargoSpan.innerText = userData?.Função || userData?.funcao || "MASTER";
 
-            // 4. Dispara a tela inicial automaticamente
+            // 4. Dispara o clique no botão do Pátio para carregar a tela
             setTimeout(() => {
-                // Foca no Pátio como tela inicial no recarregamento (pode mudar para 'ordem' se preferir)
                 const btnInicial = document.querySelector('[data-tela="patio"]');
                 if (btnInicial) {
                     btnInicial.click(); // Simula o clique perfeito
@@ -183,4 +183,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (erro) {
         console.error("Erro ao verificar sessão automática no F5:", erro);
     }
-});
+}
+
+restaurarSessao();
