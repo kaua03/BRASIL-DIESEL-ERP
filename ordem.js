@@ -9,34 +9,42 @@ window.modoLeitura = false;
 window.itemEmEdicaoId = null;
 
 // =========================================================================
-// 1. MÁSCARAS E APIS (Corrigido para formato Universal - Mercosul e Antiga)
+// 1. MÁSCARAS E APIS (Libertadas para aceitar Balcão/Avulsa)
 // =========================================================================
 window.formatarPlaca = function(placa) {
     if (!placa) return '';
-    let p = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Limpa a placa deixando só letras, números e hífen
+    let p = placa.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     
-    // Se for o padrão Antigo exato (3 letras e 4 números), coloca o hífen
+    // Se for o padrão Antigo exato (3 letras e 4 números sem traço), coloca o hífen para ficar bonito na tela
     if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
         return p.substring(0, 3) + '-' + p.substring(3, 7);
     }
-    // Se for Mercosul ou incompleto, retorna limpo (ex: ASX5C03)
+    // Se for Mercosul, 0000000, BOMBA, ou qualquer outra coisa, retorna como você digitou!
     return p;
 };
 
 window.mascaraPlaca = function(input) {
-    let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Transforma em maiúsculo e só deixa letras, números e o traço (-)
+    let p = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     
-    // Aplica o hífen apenas enquanto digita se for reconhecido como formato antigo
-    if (p.length === 7 && /^[A-Z]{3}[0-9]{4}$/.test(p)) {
-        input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
-    } else {
-        input.value = p.substring(0, 7);
+    // Devolve o valor limpo para o campo sem cortar agressivamente as letras
+    input.value = p;
+
+    // Atualiza o título do modal lá em cima se a função existir
+    if (typeof window.atualizarTituloModalOs === 'function') {
+        window.atualizarTituloModalOs(window.osNumeroAtual, input.value);
     }
-    window.atualizarTituloModalOs(window.osNumeroAtual, input.value);
 };
 
 window.validarPlacaBrasil = function(placa) {
-    return /^[A-Z]{3}-[0-9]{4}$/.test(placa) || /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa);
+    // A REGRA DE ELITE: O sistema agora confia em você!
+    // Se você digitou pelo menos 3 caracteres, ele aceita e salva no banco de dados.
+    // Assim, "0000000" passa, "AVULSA" passa, "ABC-1234" passa.
+    if (!placa || placa.length < 3) {
+        return false;
+    }
+    return true; 
 };
 
 window.mascaraCpfCnpj = function(input) {
