@@ -62,24 +62,33 @@
             </div>
 
             <!-- BLOCO 1: DADOS DO VEÍCULO -->
-            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
-                <h4 class="font-bold text-[#1a428a] mb-4">1. Dados do Veículo</h4>
+            <div class="bg-gray-50 dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+                
+                <!-- CABEÇALHO COM O BOTÃO MÁGICO -->
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-bold text-[#1a428a] dark:text-[#3b82f6]">1. Dados do Veículo</h4>
+                    <button type="button" onclick="window.preencherVeiculoAvulso()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors shadow-sm border border-transparent dark:border-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#facc15]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        O.S. Balcão
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700">Placa</label>
-                        <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] uppercase font-mono font-bold" placeholder="ABC-1234 / ABC1D23" maxlength="8">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Placa</label>
+                        <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full mt-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white uppercase font-mono font-bold transition-colors" placeholder="ABC-1234 / ABC1D23" maxlength="8">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700">Veículo / Modelo</label>
-                        <input type="text" id="modelo" required class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Veículo / Modelo</label>
+                        <input type="text" id="modelo" required class="w-full mt-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700">Marca</label>
-                        <input type="text" id="marca" class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Marca</label>
+                        <input type="text" id="marca" class="w-full mt-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700">Ano</label>
-                        <input type="text" id="ano" required class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white" maxlength="4">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Ano</label>
+                        <input type="text" id="ano" required class="w-full mt-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" maxlength="4">
                     </div>
                 </div>
             </div>
