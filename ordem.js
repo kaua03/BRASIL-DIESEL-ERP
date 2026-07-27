@@ -1,5 +1,5 @@
 // JS/modules/ordem.js
-import { supabase } from '../core/config.js';
+import { supabase } from './config.js';
 
 window.itensOrcamento = [];
 window.osEmEdicaoId = null;
