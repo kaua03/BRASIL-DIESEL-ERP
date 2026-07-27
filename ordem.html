@@ -61,12 +61,14 @@
                 <input type="datetime-local" id="data_hora" required class="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1a428a] bg-white font-mono font-bold text-sm">
             </div>
 
-            <!-- BLOCO 1: DADOS DO VEÍCULO -->
+            <!-- BLOCO 1: DADOS DO VEÍCULO (Com Botão O.S. Balcão) -->
             <div class="bg-gray-50 dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
                 
                 <!-- CABEÇALHO COM O BOTÃO MÁGICO -->
                 <div class="flex justify-between items-center mb-4">
                     <h4 class="font-bold text-[#1a428a] dark:text-[#3b82f6]">1. Dados do Veículo</h4>
+                    
+                    <!-- ESTE É O BOTÃO QUE VOCÊ PRECISA ADICIONAR -->
                     <button type="button" onclick="window.preencherVeiculoAvulso()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors shadow-sm border border-transparent dark:border-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#facc15]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         O.S. Balcão
