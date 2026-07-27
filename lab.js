@@ -1,5 +1,5 @@
 // JS/modules/lab.js
-import { supabase } from '../core/config.js';
+import { supabase } from './config.js';
 
 window.osIdAtualLab = null;
 window.pecasLabAtual = [];
