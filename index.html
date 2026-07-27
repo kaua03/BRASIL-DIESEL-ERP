@@ -33,11 +33,11 @@
             <form id="form-login" class="space-y-4 text-left">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">E-mail</label>
-                    <input type="email" id="email" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
+                    <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Senha</label>
-                    <input type="password" id="senha" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
+                    <input type="password" id="senha" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
                 </div>
                 <button type="submit" id="btn-login" class="w-full bg-[#1a428a] dark:bg-[#2563eb] text-white font-bold py-2 rounded-lg hover:bg-blue-900 dark:hover:bg-blue-700 transition-colors shadow-md">Entrar</button>
             </form>
@@ -48,10 +48,9 @@
     <!-- CAIXA 2: PAINEL DO SISTEMA -->
     <div id="tela-erp" class="hidden h-full flex-col anima-fade">
 
-        <!-- CABEÇALHO -->
+        <!-- CABEÇALHO LIMPO (Sem o botão de hambúrguer) -->
         <header class="bg-[#1a428a] dark:bg-[#0b1b3b] text-white px-6 py-3 shadow-md flex justify-between items-center z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
             <div class="flex items-center gap-4">
-                <!-- Botão de menu removido! O título agora fica cravado à esquerda -->
                 <h1 class="text-xl font-black italic text-[#facc15]">BRASIL DIESEL <span class="text-sm font-normal text-white not-italic uppercase tracking-widest ml-1">ERP</span></h1>
             </div>
             
@@ -188,12 +187,12 @@
             </aside>
 
             <!-- O PALCO (Onde o Roteador Injeta as Telas) -->
-            <!-- Adicionado fundo escuro dinâmico -->
             <main class="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-[#0f172a] transition-colors duration-300 relative" id="conteudo-dinamico">
                 <!-- As telas HTML aparecerão aqui magicamente -->
             </main>
 
         </div>
+    </div>
 
     <!-- Modais e Toasts Globais -->
     <div id="custom-toast" class="fixed top-5 right-5 z-[200] transform translate-x-[150%] transition-transform duration-300 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-bold max-w-sm">
@@ -215,7 +214,7 @@
         </div>
     </div>
 
-    <!-- Scripts de Engenharia -->
+    <!-- Scripts de Engenharia (Caminhos Ajustados para a Raiz) -->
     <script type="module" src="config.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="ui.js"></script>
@@ -225,7 +224,9 @@
     <script type="module" src="lab.js"></script>
 
     <script>
-        // MOTOR DO MODO NOTURNO
+        // ==========================================
+        // 1. MOTOR DO MODO NOTURNO
+        // ==========================================
         window.alternarModoNoturno = function() {
             const html = document.documentElement;
             html.classList.toggle('dark');
@@ -239,36 +240,33 @@
             }
         };
 
-        // Verifica o tema salvo assim que carrega
+        // ==========================================
+        // 2. INICIALIZAÇÃO DA PÁGINA (A CURA DO F5!)
+        // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
+            // 2.1 Verifica o tema
             if (localStorage.getItem('tema') === 'dark') {
                 document.documentElement.classList.add('dark');
             }
 
+            // 2.2 Conecta os botões do menu lateral (função lá do auth.js)
             if (window.configurarBotoesMenu) window.configurarBotoesMenu();
             
+            // 2.3 Conecta o botão de Login
             const formLogin = document.getElementById('form-login');
             if (formLogin && window.tentarLogar) {
                 formLogin.addEventListener('submit', window.tentarLogar);
             }
         });
 
-        window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const textos = document.querySelectorAll('.sidebar-text');
-            
-            if (sidebar.classList.contains('w-64')) {
-                sidebar.classList.remove('w-64');
-                sidebar.classList.add('w-20');
-                textos.forEach(el => el.classList.add('hidden'));
-            } else {
-                sidebar.classList.remove('w-20');
-                sidebar.classList.add('w-64');
-                setTimeout(() => {
-                    textos.forEach(el => el.classList.remove('hidden'));
-                }, 150);
+        // 2.4 A VERIFICAÇÃO AUTOMÁTICA DA SESSÃO (Para quando apertar F5)
+        // Isso verifica se a função "restaurarSessao" (que está no auth.js) existe e roda ela!
+        // Usamos um pequeno atraso (setTimeout) para dar tempo de o auth.js terminar de carregar
+        setTimeout(() => {
+            if (typeof window.restaurarSessao === 'function') {
+                window.restaurarSessao();
             }
-        };
+        }, 300);
     </script>
 </body>
 </html>
