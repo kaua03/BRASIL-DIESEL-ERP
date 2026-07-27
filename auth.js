@@ -134,3 +134,53 @@ window.fazerLogout = async function() {
     const formLogin = document.getElementById('form-login');
     if (formLogin) formLogin.reset();
 };
+
+// ==========================================
+// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Cura da "Amnésia" do F5)
+// ==========================================
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // 1. O sistema pergunta ao Supabase: "Este utilizador já tem a chave na ignição?"
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            // 2. Se tem sessão ativa, esconde o login e mostra o ERP instantaneamente!
+            const telaLogin = document.getElementById('tela-login');
+            const telaErp = document.getElementById('tela-erp');
+            
+            if (telaLogin) telaLogin.classList.add('hidden');
+            if (telaErp) {
+                telaErp.classList.remove('hidden');
+                telaErp.classList.add('flex');
+            }
+
+            // 3. Preenche o crachá do cabeçalho
+            const email = session.user.email;
+            const userSpan = document.getElementById('usuario-logado');
+            if (userSpan) userSpan.innerText = email.split('@')[0].toUpperCase();
+
+            // Puxa o cargo do banco de dados
+            const { data: userData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            const cargoSpan = document.getElementById('cargo-logado');
+            if (cargoSpan) cargoSpan.innerText = userData?.Função || userData?.funcao || "MASTER";
+
+            // 4. Dispara a tela inicial automaticamente
+            setTimeout(() => {
+                // Foca no Pátio como tela inicial no recarregamento (pode mudar para 'ordem' se preferir)
+                const btnInicial = document.querySelector('[data-tela="patio"]');
+                if (btnInicial) {
+                    btnInicial.click(); // Simula o clique perfeito
+                } else if (typeof window.carregarTela === 'function') {
+                    window.carregarTela('nav', 'patio', 'carregarPatio');
+                }
+            }, 100);
+        }
+    } catch (erro) {
+        console.error("Erro ao verificar sessão automática no F5:", erro);
+    }
+});
