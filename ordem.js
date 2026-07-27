@@ -1105,3 +1105,36 @@ window.atualizarTotaisOrcamento = function() {
     document.getElementById('total-servicos').innerText = 'R$ ' + tServ.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     document.getElementById('total-geral').innerText = 'R$ ' + Math.max(0, totalGeral).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 };
+
+// =========================================================================
+// O.S. AVULSA / BALCÃO (Preenchimento Rápido com 1 clique)
+// =========================================================================
+window.preencherVeiculoAvulso = function() {
+    const inputPlaca = document.getElementById('placa');
+    const inputModelo = document.getElementById('modelo');
+    const inputMarca = document.getElementById('marca');
+    const inputAno = document.getElementById('ano');
+
+    if (inputPlaca) {
+        inputPlaca.value = '0000000';
+        // Força o evento de input para o navegador entender a mudança e tirar o vermelho de campo "required" vazio
+        inputPlaca.dispatchEvent(new Event('input')); 
+    }
+    
+    if (inputModelo) {
+        inputModelo.value = 'CONSUMIDOR / PEÇA AVULSA';
+        inputModelo.dispatchEvent(new Event('input'));
+    }
+    
+    if (inputMarca) {
+        inputMarca.value = 'N/A';
+        inputMarca.dispatchEvent(new Event('input'));
+    }
+    
+    if (inputAno) {
+        inputAno.value = '0000';
+        inputAno.dispatchEvent(new Event('input'));
+    }
+
+    if(window.mostrarToast) window.mostrarToast("Modo O.S. Avulsa ativado!", "info");
+};
