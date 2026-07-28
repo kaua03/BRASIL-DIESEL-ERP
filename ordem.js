@@ -235,8 +235,14 @@ window.atualizarTopHeaderVisualizacao = function(os) {
     if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
 };
 
-// MOTOR ANTI-CORTE DO DROPDOWN
-window.toggleDrop = function(id, btnElement) {
+// =========================================================================
+// MOTOR DE AÇÕES BLINDADO (RESOLVE O BUG DO MENU CORTADO E FECHANDO SOZINHO)
+// =========================================================================
+window.toggleDrop = function(event, id, btnElement) {
+    event.preventDefault(); // Impede duplo clique invisível
+    event.stopPropagation(); // Impede que o clique suba para o HTML fechando o menu na mesma hora
+
+    // Esconde todos os outros que estiverem abertos
     document.querySelectorAll('.menu-acao-os').forEach(el => {
         if (el.id !== `menu-${id}`) el.classList.add('hidden');
     });
@@ -255,11 +261,13 @@ window.toggleDrop = function(id, btnElement) {
         const menuHeight = menu.offsetHeight || 160;
 
         let topPos = rect.bottom + 4;
-        if (topPos + menuHeight > window.innerHeight) {
+        // Anti-Corte: Se bater no fundo do monitor, abre para cima do botão
+        if (topPos + menuHeight > window.innerHeight && rect.top > menuHeight) {
             topPos = rect.top - menuHeight - 4;
         }
 
         let leftPos = rect.right - menuWidth; 
+        // Anti-Corte: Se bater na borda esquerda, joga pra direita
         if (leftPos < 0) leftPos = rect.left; 
         
         menu.style.top = `${topPos}px`;
@@ -269,6 +277,7 @@ window.toggleDrop = function(id, btnElement) {
     }
 };
 
+// Clica fora, fecha. 
 document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown-container')) {
         document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
@@ -443,7 +452,8 @@ window.gerarHtmlDocumentoOs = function(os, itens) {
     `;
 };
 
-window.imprimirOsDaLista = async function(id) {
+window.imprimirOsDaLista = async function(event, id) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     const menu = document.getElementById(`menu-${id}`);
     if(menu) menu.classList.add('hidden');
 
@@ -462,13 +472,15 @@ window.imprimirOsDaLista = async function(id) {
         setTimeout(() => win.print(), 800);
     } catch (e) { 
         console.error(e); 
-        if(window.mostrarToast) window.mostrarToast("Erro ao imprimir.", "erro");
+        alert("Erro ao imprimir O.S.");
     }
 };
 
-window.salvarComoPdfDaLista = async function(id) {
+window.salvarComoPdfDaLista = async function(event, id) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     const menu = document.getElementById(`menu-${id}`);
     if(menu) menu.classList.add('hidden');
+    
     if (window.mostrarToast) window.mostrarToast("Gerando Arquivo PDF...", "aviso");
 
     try {
@@ -494,17 +506,19 @@ window.salvarComoPdfDaLista = async function(id) {
         });
     } catch (e) { 
         console.error(e); 
-        if (window.mostrarToast) window.mostrarToast("Erro ao gerar PDF.", "erro"); 
+        alert("Erro ao gerar PDF.");
     }
 };
 
-window.enviarWhatsAppDaLista = async function(id, celular) {
+window.enviarWhatsAppDaLista = async function(event, id, celular) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     const menu = document.getElementById(`menu-${id}`);
     if(menu) menu.classList.add('hidden');
 
     const telLimpo = String(celular || '').replace(/\D/g, '');
     if (telLimpo.length < 10) {
         if (window.mostrarToast) window.mostrarToast("Cliente sem WhatsApp válido!", "erro");
+        else alert("Cliente sem celular cadastrado.");
         return;
     }
 
@@ -544,11 +558,12 @@ window.enviarWhatsAppDaLista = async function(id, celular) {
 
     } catch (e) {
         console.error(e);
-        if (window.mostrarToast) window.mostrarToast("Erro ao processar integração.", "erro");
+        alert("Erro ao processar a nuvem do WhatsApp.");
     }
 };
 
-window.visualizarNotificacaoLab = async function(osId, osNum, placa, situacao) {
+window.visualizarNotificacaoLab = async function(event, osId, osNum, placa, situacao) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     const confirmou = await window.abrirConfirmacao("Aviso do Laboratório", "O laboratório atualizou esta O.S. Deseja remover o aviso e ir para o painel do laboratório?", "aviso");
     if (!confirmou) return;
 
@@ -562,14 +577,11 @@ window.visualizarNotificacaoLab = async function(osId, osNum, placa, situacao) {
         setTimeout(() => {
             if (typeof window.abrirGestaoPecas === 'function') {
                 window.abrirGestaoPecas(osId, osNum, placa, situacao);
-            } else if (window.mostrarToast) {
-                window.mostrarToast("Navegue até a aba Laboratório para ver as atualizações.", "info");
             }
         }, 600);
-
     } catch (e) { 
         console.error(e); 
-        if(window.mostrarToast) window.mostrarToast("Erro ao limpar aviso.", "erro");
+        alert("Erro ao limpar notificação do Laboratório.");
     }
 };
 
@@ -606,10 +618,11 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            let iconeNotificacao = os.lab_atualizado ? `<button type="button" onclick="window.visualizarNotificacaoLab(${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse transition-all" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
+            let iconeNotificacao = os.lab_atualizado ? `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse transition-all" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
+            // Adicionei os EVENTS em todos os botões
             return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border-b border-gray-100 dark:border-gray-700">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
@@ -639,19 +652,28 @@ window.carregarOrdensServico = async function() {
                     </td>
                     <td class="p-4">
                         <div class="flex items-center justify-center gap-2 relative dropdown-container">
-                            <button type="button" onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Ver Detalhes">
+                            <button type="button" onclick="window.visualizarOs(event, ${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Ver Detalhes">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                             </button>
-                            <button type="button" onclick="window.editarOs(${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Editar O.S">
+                            <button type="button" onclick="window.editarOs(event, ${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Editar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             </button>
-                            <button type="button" onclick="window.excluirOs(${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
+                            <button type="button" onclick="window.excluirOs(event, ${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
 
-                            <button type="button" onclick="window.toggleDrop(${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Mais Opções">
+                            <button type="button" onclick="window.toggleDrop(event, ${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Mais Opções">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
                             </button>
+
+                            <div id="menu-${os.id}" class="menu-acao-os hidden fixed w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 text-left" style="min-width: 180px; z-index: 99999;">
+                                <button type="button" onclick="window.imprimirOsDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
+                                <button type="button" onclick="window.salvarComoPdfDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
+                                
+                                <button type="button" onclick="window.enviarWhatsAppDaLista(event, ${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-[#25D366] hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> WhatsApp
+                                </button>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -705,7 +727,7 @@ window.buscarDadosOs = async function(id) {
         window.osNumeroAtual = os.numero_os || os.id;
         window.itemEmEdicaoId = null;
 
-        // FUNÇÃO BLINDADA: Tenta preencher; se o HTML não existir, não quebra o código.
+        // FUNÇÃO BLINDADA
         const setVal = (idEl, val) => { const el = document.getElementById(idEl); if(el) el.value = val; };
 
         setVal('data_hora', os.data_hora ? String(os.data_hora).slice(0, 16) : '');
@@ -741,8 +763,8 @@ window.buscarDadosOs = async function(id) {
         window.atualizarTituloModalOs(window.osNumeroAtual, os.placa);
         window.atualizarTopHeaderVisualizacao(os);
     } catch (error) {
-        console.error("ERRO GRAVE AO BUSCAR DADOS DA O.S:", error);
-        throw error; // Repassa o erro para o botão que chamou
+        console.error("ERRO GRAVE AO BUSCAR DADOS:", error);
+        throw error; 
     }
 };
 
@@ -750,7 +772,6 @@ window.salvarOs = async function(event) {
     event.preventDefault();
     if(window.modoLeitura) return;
 
-    // FUNÇÃO BLINDADA: Lê com fallback caso o HTML não exista
     const getVal = (idEl, fallback='') => { const el = document.getElementById(idEl); return el ? el.value : fallback; };
 
     const placaBruta = getVal('placa');
@@ -825,11 +846,12 @@ window.salvarOs = async function(event) {
         window.carregarOrdensServico();
     } catch (err) {
         console.error("FALHA DE INTEGRIDADE NO BANCO:", err);
-        if (window.mostrarToast) window.mostrarToast("Erro ao gravar O.S. Limpe o Cache do Supabase (Veja o console).", "erro");
+        alert("ERRO AO SALVAR! Verifique o console. Detalhe: " + err.message);
     }
 };
 
-window.editarOs = async function(id) {
+window.editarOs = async function(event, id) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     try { 
         window.modoLeitura = false; 
         await window.buscarDadosOs(id); 
@@ -838,12 +860,13 @@ window.editarOs = async function(id) {
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
     } catch (e) {
-        console.error("ERRO AO EDITAR:", e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: Limpe o Cache do Supabase e aperte CTRL+F5.", "erro");
+        console.error("ERRO AO ABRIR EDIÇÃO:", e);
+        alert("Falha Crítica ao tentar Editar O.S. Detalhe: " + e.message);
     }
 };
 
-window.visualizarOs = async function(id) {
+window.visualizarOs = async function(event, id) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     try { 
         window.modoLeitura = true; 
         await window.buscarDadosOs(id); 
@@ -851,15 +874,23 @@ window.visualizarOs = async function(id) {
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
     } catch (e) {
-        console.error("ERRO AO VISUALIZAR:", e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: Limpe o Cache do Supabase e aperte CTRL+F5.", "erro");
+        console.error("ERRO AO ABRIR VISUALIZAÇÃO:", e);
+        alert("Falha Crítica ao tentar Visualizar O.S. Detalhe: " + e.message);
     }
 };
 
-window.excluirOs = async function(id, placa, numeroOs) {
+window.excluirOs = async function(event, id, placa, numeroOs) {
+    if(event) { event.preventDefault(); event.stopPropagation(); }
     const confirmou = await window.abrirConfirmacao("Excluir O.S.", `Deseja eliminar a O.S. #${numeroOs}?`, "perigo");
     if (!confirmou) return;
-    try { await supabase.from('itens_orcamento').delete().eq('os_id', id); await supabase.from('ordens_servico').delete().eq('id', id); if (window.mostrarToast) window.mostrarToast("O.S. eliminada!", "sucesso"); window.carregarOrdensServico(); } catch (e) { if (window.mostrarToast) window.mostrarToast("Erro ao eliminar.", "erro"); }
+    try { 
+        await supabase.from('itens_orcamento').delete().eq('os_id', id); 
+        await supabase.from('ordens_servico').delete().eq('id', id); 
+        if (window.mostrarToast) window.mostrarToast("O.S. eliminada!", "sucesso"); 
+        window.carregarOrdensServico(); 
+    } catch (e) { 
+        alert("Erro ao eliminar O.S."); 
+    }
 };
 
 window.configurarRastreioAlteracoes = function() {
@@ -1094,7 +1125,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (ARREDONDAMENTO BANCÁRIO EXATO)
+// 7. FECHAMENTO FINANCEIRO
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1140,9 +1171,9 @@ window.atualizarVencimentoPorOperacao = function() {
     const dataAtual = new Date();
     
     if (operacao === 'PIX' || operacao === 'Dinheiro') {
-        dataAtual.setDate(dataAtual.getDate() + 1); // Dia seguinte
+        dataAtual.setDate(dataAtual.getDate() + 1); 
     } else {
-        dataAtual.setMonth(dataAtual.getMonth() + 1); // Próximo Mês exato
+        dataAtual.setMonth(dataAtual.getMonth() + 1); 
     }
     
     const dataLocal = new Date(dataAtual.getTime() - (dataAtual.getTimezoneOffset() * 60000));
@@ -1188,7 +1219,6 @@ window.gerarPreviewParcelas = function() {
         return;
     }
 
-    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO (Joga centavos pra cima)
     const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
     
     let html = '';
@@ -1259,7 +1289,7 @@ window.confirmarFechamentoOS = async function() {
         window.carregarOrdensServico();
     } catch(e) {
         console.error(e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao processar o fechamento.", "erro");
+        alert("Erro ao processar o fechamento.");
     }
 };
 
