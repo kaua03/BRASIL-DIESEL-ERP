@@ -193,6 +193,7 @@ window.obterCoresStatus = function(situacao) {
         case 'Garantia': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200';
         case 'Não Usar': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200';
         case 'Recusado': return 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300 border-red-300';
+        case 'Fechado': return 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-300';
         default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200';
     }
 };
@@ -210,6 +211,7 @@ window.atualizarCorSelectSituacao = function(selectEl) {
     else if (val === 'Aguardando Pagamento') { selectEl.style.backgroundColor = '#FEF08A'; selectEl.style.color = '#854D0E'; }
     else if (val === 'Não Usar') { selectEl.style.backgroundColor = '#FEE2E2'; selectEl.style.color = '#991B1B'; }
     else if (val === 'Recusado') { selectEl.style.backgroundColor = '#FECACA'; selectEl.style.color = '#B91C1C'; }
+    else if (val === 'Fechado') { selectEl.style.backgroundColor = '#E5E7EB'; selectEl.style.color = '#1F2937'; }
 };
 
 window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
@@ -288,6 +290,7 @@ window.alterarStatusOsInline = async function(id, selectElement) {
         const { error } = await supabase.from('ordens_servico').update({ situacao: novaSituacao, status: novaSituacao }).eq('id', id);
         if (error) throw error;
         if (window.mostrarToast) window.mostrarToast("Situação atualizada!", "sucesso");
+        window.carregarOrdensServico(); // Atualiza a tela para reordenar se for "Fechado"
     } catch (e) {
         console.error("ERRO AO ATUALIZAR STATUS:", e);
         if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação. Verifique o console.", "erro");
@@ -582,7 +585,7 @@ window.visualizarNotificacaoLab = async function(event, osId, osNum, placa, situ
 };
 
 // =========================================================================
-// 5. BANCO DE DADOS E TABELA PRINCIPAL
+// 5. BANCO DE DADOS E TABELA PRINCIPAL (COM ORGANIZAÇÃO INTELIGENTE)
 // =========================================================================
 window.carregarOrdensServico = async function() {
     const tabela = document.getElementById('tabela-ordens-servico');
@@ -600,7 +603,12 @@ window.carregarOrdensServico = async function() {
             return;
         }
 
-        tabela.innerHTML = data.map(os => {
+        // MOTOR DE ORDENAÇÃO: Fechados vão para o final
+        const ordensAtivas = data.filter(os => os.situacao !== 'Fechado');
+        const ordensFechadas = data.filter(os => os.situacao === 'Fechado');
+        const dadosOrdenados = [...ordensAtivas, ...ordensFechadas];
+
+        tabela.innerHTML = dadosOrdenados.map(os => {
             const numeroFormatado = String(os.numero_os || os.id).padStart(4, '0');
             const dataFormatada = os.data_hora ? new Date(os.data_hora).toLocaleString('pt-BR') : '---';
             const placaFormatada = window.formatarPlaca(os.placa);
@@ -619,7 +627,7 @@ window.carregarOrdensServico = async function() {
             const bgStatus = window.obterCoresStatus(os.situacao);
 
             return `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border-b border-gray-100 dark:border-gray-700">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border-b border-gray-100 dark:border-gray-700 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400">${dataFormatada}</td>
                     <td class="p-4 font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap text-center relative">${iconeNotificacao}<span>${placaFormatada}</span></td>
@@ -641,6 +649,7 @@ window.carregarOrdensServico = async function() {
                             <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D; font-weight: 800;" ${os.situacao === 'Autorizado' ? 'selected' : ''}>AUTORIZADO</option>
                             <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3; font-weight: 800;" ${os.situacao === 'Em Execução' ? 'selected' : ''}>EM EXECUÇÃO</option>
                             <option value="Garantia" style="background-color: #CCFBF1; color: #0F766E; font-weight: 800;" ${os.situacao === 'Garantia' ? 'selected' : ''}>GARANTIA</option>
+                            <option value="Fechado" style="background-color: #E5E7EB; color: #1F2937; font-weight: 800;" ${os.situacao === 'Fechado' ? 'selected' : ''}>FECHADO</option>
                             <option value="Não Usar" style="background-color: #FEE2E2; color: #991B1B; font-weight: 800;" ${os.situacao === 'Não Usar' ? 'selected' : ''}>CANCELADA</option>
                             <option value="Recusado" style="background-color: #FECACA; color: #B91C1C; font-weight: 800;" ${os.situacao === 'Recusado' ? 'selected' : ''}>RECUSADO</option>
                         </select>
@@ -678,7 +687,7 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
+// 6. GESTÃO DO MODAL DE O.S.
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -722,7 +731,6 @@ window.buscarDadosOs = async function(id) {
         window.osNumeroAtual = os.numero_os || os.id;
         window.itemEmEdicaoId = null;
 
-        // FUNÇÃO BLINDADA
         const setVal = (idEl, val) => { const el = document.getElementById(idEl); if(el) el.value = val; };
 
         setVal('data_hora', os.data_hora ? String(os.data_hora).slice(0, 16) : '');
@@ -1120,7 +1128,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (MÓDULO EDITÁVEL)
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO 
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1241,27 +1249,27 @@ window.gerarPreviewParcelas = function() {
             <tr class="border-b border-gray-100 dark:border-gray-800 transition-all">
                 <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300">${i}/${parcelas}</td>
                 <td class="p-2">
-                    <input type="date" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
+                    <input type="date" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
                 </td>
                 <td class="p-2">
-                    <select class="w-full px-2 py-1.5 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
+                    <select class="w-full px-2 py-1 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
                         ${optionsHtml}
                     </select>
                 </td>
                 <td class="p-2 text-right">
                     <div class="flex items-center justify-end gap-1">
                         <span class="text-xs font-bold text-gray-500">R$</span>
-                        <input type="text" class="input-val-parcela w-24 px-2 py-1.5 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
+                        <input type="text" class="input-val-parcela w-24 px-2 py-1 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
                     </div>
                 </td>
                 <td class="p-2">
-                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
+                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
                 </td>
             </tr>
         `;
         dataAtual.setMonth(dataAtual.getMonth() + 1);
     }
-
+    
     html += `
         <tr class="bg-gray-50 dark:bg-[#0f172a]">
             <td colspan="3" class="p-2 text-right text-xs font-bold text-gray-500 uppercase">Soma das Parcelas:</td>
@@ -1296,8 +1304,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.add('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = true;
-            btnConfirmar.classList.remove('bg-amber-500', 'hover:bg-amber-600');
-            btnConfirmar.classList.add('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
+            btnConfirmar.classList.replace('bg-amber-500', 'bg-gray-400');
+            btnConfirmar.classList.replace('hover:bg-amber-600', 'hover:bg-gray-500');
             btnConfirmar.innerText = "VALORES NÃO BATEM";
         }
     } else {
@@ -1305,8 +1313,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.remove('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
-            btnConfirmar.classList.remove('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
-            btnConfirmar.classList.add('bg-amber-500', 'hover:bg-amber-600');
+            btnConfirmar.classList.replace('bg-gray-400', 'bg-amber-500');
+            btnConfirmar.classList.replace('hover:bg-gray-500', 'hover:bg-amber-600');
             btnConfirmar.innerText = "CONFIRMAR FECHAMENTO";
         }
     }
@@ -1337,7 +1345,9 @@ window.confirmarFechamentoOS = async function() {
     try {
         const elConclusao = document.getElementById('fechamento-conclusao');
         const dataConclusao = elConclusao ? elConclusao.value : null;
-        const novaSituacao = 'Aguardando Pagamento';
+        
+        // MUDANÇA DE REQUISITO: Agora a O.S. vai direto para FECHADO
+        const novaSituacao = 'Fechado';
 
         const { error } = await supabase.from('ordens_servico').update({
             situacao: novaSituacao,
