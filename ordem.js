@@ -99,7 +99,7 @@ window.consultarCep = async function(input) {
 };
 
 // =========================================================================
-// 2. CONEXÃO COM BDD (DATALISTS E GATILHOS DE AUTOMAÇÃO)
+// 2. CONEXÃO COM BDD E GATILHOS
 // =========================================================================
 window.carregarDatalists = async function() {
     try {
@@ -132,13 +132,14 @@ document.addEventListener('input', function(e) {
 });
 
 // =========================================================================
-// 3. MODO LEITURA E CORES DE STATUS
+// 3. MODO LEITURA E CORES DE STATUS (REVISADO)
 // =========================================================================
 window.alternarModoLeitura = function(ativo) {
     window.modoLeitura = ativo;
     const form = document.getElementById('form-nova-os');
     if (!form) return;
 
+    // Desativa/Ativa inputs
     form.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.type !== 'hidden') el.disabled = ativo;
     });
@@ -146,14 +147,20 @@ window.alternarModoLeitura = function(ativo) {
     const btnFecharOs = document.getElementById('btn-fechar-os');
     const btnBalcao = document.getElementById('btn-os-balcao'); 
     const cabecalho = document.getElementById('cabecalho-modal-os');
+    const painelEdicao = document.getElementById('painel-botoes-edicao'); // Bloco do botão Salvar e Cancelar
+    const painelAdicionar = document.getElementById('painel-adicionar-item'); // Bloco de Add Peças
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
         if (btnBalcao) btnBalcao.classList.add('hidden'); 
+        if (painelEdicao) painelEdicao.classList.add('hidden'); // ESCONDE SALVAR
+        if (painelAdicionar) painelAdicionar.classList.add('hidden'); // ESCONDE ADICIONAR ITEM
         if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
         if (btnFecharOs) btnFecharOs.classList.remove('hidden');
         if (btnBalcao) btnBalcao.classList.remove('hidden'); 
+        if (painelEdicao) painelEdicao.classList.remove('hidden'); // MOSTRA SALVAR
+        if (painelAdicionar) painelAdicionar.classList.remove('hidden'); // MOSTRA ADICIONAR ITEM
         if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
 
@@ -165,8 +172,8 @@ window.obterCoresStatus = function(situacao) {
     switch(situacao) {
         case 'Aberto': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
         case 'Orçamento': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
-        case 'Aguardando Autorização': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200';
-        case 'Aguardando Peça': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200';
+        case 'Aguardando Autorização': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200'; // Cor Laranja
+        case 'Aguardando Peça': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200'; // Cor Amarela Escura
         case 'Aguardando Pagamento': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200';
         case 'Autorizado': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200';
         case 'Em Execução': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-200';
@@ -175,21 +182,6 @@ window.obterCoresStatus = function(situacao) {
         case 'Recusado': return 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300 border-red-300';
         default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200';
     }
-};
-
-window.atualizarCorSelectSituacao = function(selectEl) {
-    if (!selectEl) return;
-    const val = selectEl.value;
-    if (val === 'Aberto') { selectEl.style.backgroundColor = '#E0F2FE'; selectEl.style.color = '#0369A1'; }
-    else if (val === 'Orçamento') { selectEl.style.backgroundColor = '#F3E8FF'; selectEl.style.color = '#6B21A8'; }
-    else if (val === 'Aguardando Autorização') { selectEl.style.backgroundColor = '#FEF3C7'; selectEl.style.color = '#B45309'; }
-    else if (val === 'Aguardando Peça') { selectEl.style.backgroundColor = '#FFEDD5'; selectEl.style.color = '#C2410C'; }
-    else if (val === 'Autorizado') { selectEl.style.backgroundColor = '#DCFCE7'; selectEl.style.color = '#15803D'; }
-    else if (val === 'Em Execução') { selectEl.style.backgroundColor = '#E0E7FF'; selectEl.style.color = '#3730A3'; }
-    else if (val === 'Garantia') { selectEl.style.backgroundColor = '#CCFBF1'; selectEl.style.color = '#0F766E'; }
-    else if (val === 'Aguardando Pagamento') { selectEl.style.backgroundColor = '#FEF08A'; selectEl.style.color = '#854D0E'; }
-    else if (val === 'Não Usar') { selectEl.style.backgroundColor = '#FEE2E2'; selectEl.style.color = '#991B1B'; }
-    else if (val === 'Recusado') { selectEl.style.backgroundColor = '#FECACA'; selectEl.style.color = '#B91C1C'; }
 };
 
 window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
@@ -206,6 +198,7 @@ window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
     }
 };
 
+// MOTOR ANTI-CORTE DO DROPDOWN DE AÇÕES
 window.toggleDrop = function(id, btnElement) {
     document.querySelectorAll('.menu-acao-os').forEach(el => {
         if (el.id !== `menu-${id}`) el.classList.add('hidden');
@@ -217,15 +210,24 @@ window.toggleDrop = function(id, btnElement) {
     if (menu.classList.contains('hidden')) {
         menu.classList.remove('hidden');
         
-        // MÁGICA DEVSECOPS: Usar Fixed para sobrepor a tabela sem cortar
+        // MÁGICA: Fixa o menu para ele nunca ser cortado pelo overflow da tabela
         const rect = btnElement.getBoundingClientRect();
         menu.style.position = 'fixed'; 
-        menu.style.top = `${rect.bottom + 4}px`;
+        menu.style.zIndex = '99999';
         
         const menuWidth = 192; 
-        let leftPos = rect.right - menuWidth + rect.width; 
-        if (leftPos < 10) leftPos = rect.left; 
+        const menuHeight = menu.offsetHeight || 160;
+
+        let topPos = rect.bottom + 4;
+        // Se bater no fundo da tela, abre para cima
+        if (topPos + menuHeight > window.innerHeight) {
+            topPos = rect.top - menuHeight - 4;
+        }
+
+        let leftPos = rect.right - menuWidth; 
+        if (leftPos < 0) leftPos = rect.left; 
         
+        menu.style.top = `${topPos}px`;
         menu.style.left = `${leftPos}px`;
     } else {
         menu.classList.add('hidden');
@@ -238,14 +240,13 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Ao rolar a tela, fecha o menu flutuante para não ficar perdido no ar
+// Fechar ao dar scroll para não ficar o menu voando na tela
 document.addEventListener('scroll', function(event) {
     document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
 }, { capture: true });
 
 window.alterarStatusOsInline = async function(id, selectElement) {
     const novaSituacao = selectElement.value;
-    
     selectElement.className = `text-[10px] uppercase px-2 py-1.5 rounded-lg font-black tracking-wider outline-none cursor-pointer text-center text-center-last border shadow-sm transition-colors w-full max-w-[140px] ${window.obterCoresStatus(novaSituacao)}`;
 
     try {
@@ -260,7 +261,7 @@ window.alterarStatusOsInline = async function(id, selectElement) {
 };
 
 // =========================================================================
-// 4. FÁBRICA DE PDF E AÇÕES RÁPIDAS
+// 4. FÁBRICA DE PDF E WHATSAPP (NOVO ICONE E LINKS)
 // =========================================================================
 window.gerarHtmlDocumentoOs = function(os, itens) {
     let tPecas = 0; let tServ = 0;
@@ -499,7 +500,10 @@ window.enviarWhatsAppDaLista = async function(id, celular) {
         const cliente = (os.cliente || 'Cliente').trim();
         const calcTotalGeral = Math.max(0, (os.total_pecas || 0) + (os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
 
-        const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado (ou Laudo) aqui:* \n${linkPdf}\n\nQualquer dúvida, estamos à disposição!`;
+        // INJEÇÃO DA LÓGICA DOS 2 LINKS DE WHATSAPP
+        const linkLaudoTexto = os.url_laudo ? `\n*Acesse o Laudo Técnico e Evidências do Laboratório:* \n${os.url_laudo}\n` : '';
+
+        const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
         
         const url = `https://wa.me/55${telLimpo}?text=${encodeURIComponent(mensagem)}`;
         window.open(url, '_blank');
@@ -547,7 +551,6 @@ window.carregarOrdensServico = async function() {
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
-            // SELECT REFORMULADO (Forçando as cores em cada opção)
             return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
@@ -565,8 +568,8 @@ window.carregarOrdensServico = async function() {
                         <select onchange="window.alterarStatusOsInline(${os.id}, this)" class="${bgStatus} text-[10px] uppercase px-2 py-1.5 rounded-lg font-black tracking-wider outline-none cursor-pointer text-center text-center-last border shadow-sm transition-colors w-full max-w-[140px]">
                             <option value="Aberto" style="background-color: #E0F2FE; color: #0369A1; font-weight: 800;" ${os.situacao === 'Aberto' ? 'selected' : ''}>ABERTO</option>
                             <option value="Orçamento" style="background-color: #F3E8FF; color: #6B21A8; font-weight: 800;" ${os.situacao === 'Orçamento' ? 'selected' : ''}>ORÇAMENTO</option>
-                            <option value="Aguardando Autorização" style="background-color: #FEF3C7; color: #B45309; font-weight: 800;" ${os.situacao === 'Aguardando Autorização' ? 'selected' : ''}>AGUAR. AUTORIZAÇÃO</option>
-                            <option value="Aguardando Peça" style="background-color: #FFEDD5; color: #C2410C; font-weight: 800;" ${os.situacao === 'Aguardando Peça' ? 'selected' : ''}>AGUAR. PEÇA</option>
+                            <option value="Aguardando Autorização" style="background-color: #FFEDD5; color: #C2410C; font-weight: 800;" ${os.situacao === 'Aguardando Autorização' ? 'selected' : ''}>AGUAR. AUTORIZAÇÃO</option>
+                            <option value="Aguardando Peça" style="background-color: #FEF3C7; color: #B45309; font-weight: 800;" ${os.situacao === 'Aguardando Peça' ? 'selected' : ''}>AGUAR. PEÇA</option>
                             <option value="Aguardando Pagamento" style="background-color: #FEF08A; color: #854D0E; font-weight: 800;" ${os.situacao === 'Aguardando Pagamento' ? 'selected' : ''}>AGUAR. PAGAMENTO</option>
                             <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D; font-weight: 800;" ${os.situacao === 'Autorizado' ? 'selected' : ''}>AUTORIZADO</option>
                             <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3; font-weight: 800;" ${os.situacao === 'Em Execução' ? 'selected' : ''}>EM EXECUÇÃO</option>
@@ -577,7 +580,6 @@ window.carregarOrdensServico = async function() {
                     </td>
                     <td class="p-4">
                         <div class="flex items-center justify-center gap-2 relative dropdown-container">
-                            
                             <!-- Botões de Ação Direta (Mais rápidos para a Oficina) -->
                             <button onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Ver Detalhes">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -589,16 +591,19 @@ window.carregarOrdensServico = async function() {
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
 
-                            <!-- Dropdown de 3 Pontinhos (Ações Secundárias) -->
+                            <!-- Dropdown de 3 Pontinhos -->
                             <button onclick="window.toggleDrop(${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Mais Opções">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
                             </button>
 
-                            <!-- Menu Fixed Dropdown (Sobreposição Absoluta) -->
-                            <div id="menu-${os.id}" class="menu-acao-os hidden fixed w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[9999] py-2 text-left" style="min-width: 180px;">
+                            <div id="menu-${os.id}" class="menu-acao-os hidden w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 text-left" style="min-width: 180px;">
                                 <button onclick="window.imprimirOsDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
                                 <button onclick="window.salvarComoPdfDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
-                                <button onclick="window.enviarWhatsAppDaLista(${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> Enviar Laudo WP</button>
+                                
+                                <!-- NOVO WHATSAPP COM ÍCONE OFICIAL E 2 LINKS -->
+                                <button onclick="window.enviarWhatsAppDaLista(${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-[#25D366] hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> WhatsApp
+                                </button>
                             </div>
                         </div>
                     </td>
@@ -606,6 +611,24 @@ window.carregarOrdensServico = async function() {
             `;
         }).join('');
     } catch (err) { console.error("Erro ao listar O.S:", err); }
+};
+
+window.visualizarNotificacaoLab = async function(osId, osNum, placa, situacao) {
+    const confirmou = await window.abrirConfirmacao("Aviso do Laboratório", "O laboratório atualizou esta O.S. Deseja remover o aviso e ir para o painel do laboratório?", "aviso");
+    if (!confirmou) return;
+
+    try {
+        await supabase.from('ordens_servico').update({ lab_atualizado: false }).eq('id', osId);
+        
+        const btnLab = document.querySelector('.nav-btn[data-tela="lab"]');
+        if (btnLab) {
+            btnLab.click();
+            setTimeout(() => {
+                if (window.abrirGestaoPecas) window.abrirGestaoPecas(osId, osNum, placa, situacao);
+            }, 500);
+        }
+        window.carregarOrdensServico();
+    } catch (e) { console.error(e); }
 };
 
 // =========================================================================
@@ -628,9 +651,7 @@ window.abrirModalNovaOs = async function() {
         } else {
             document.getElementById('responsavel_os').value = document.getElementById('usuario-logado')?.innerText || 'SISTEMA';
         }
-    } catch (e) {
-        document.getElementById('responsavel_os').value = 'SISTEMA';
-    }
+    } catch (e) { document.getElementById('responsavel_os').value = 'SISTEMA'; }
 
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -688,6 +709,17 @@ window.buscarDadosOs = async function(id) {
     window.itensOrcamento = itens ? itens.map(i => ({ id: i.id || Date.now(), tipo: i.tipo, descricao: i.descricao, qtd: i.quantidade, valorUnitario: i.valor_unitario, subtotal: i.subtotal, concluido: i.concluido })) : [];
 
     window.atualizarTituloModalOs(window.osNumeroAtual, os.placa);
+    window.atualizarTopHeaderVisualizacao(os); // PREPARA O TOP HEADER HTML
+};
+
+window.atualizarTopHeaderVisualizacao = function(os) {
+    // Alimenta os campos que criaremos no HTML do Topo
+    const hCliente = document.getElementById('header-view-cliente');
+    const hVeiculo = document.getElementById('header-view-veiculo');
+    const hPlaca = document.getElementById('header-view-placa');
+    if(hCliente) hCliente.innerText = (os.cliente || 'CLIENTE NÃO INFORMADO').toUpperCase();
+    if(hVeiculo) hVeiculo.innerText = (os.modelo || 'VEÍCULO NÃO INFORMADO').toUpperCase();
+    if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
 };
 
 window.salvarOs = async function(event) {
@@ -847,9 +879,6 @@ window.editarItemOrcamento = function(id) {
     window.itemEmEdicaoId = id;
 };
 
-// =========================================================================
-// MOTOR DE INTELIGÊNCIA (CROSS-SELL / UP-SELL) E CÁLCULOS
-// =========================================================================
 window.verificarMotorInteligencia = function(descricaoNova) {
     const desc = descricaoNova.toLowerCase();
     let sugestao = null; let tipoSugestao = 'Serviço';
@@ -1013,7 +1042,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO
+// 7. FECHAMENTO FINANCEIRO: PARCELAMENTO BANCÁRIO EXATO E VENCIMENTOS
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1029,16 +1058,35 @@ window.abrirModalFechamento = async function() {
     document.getElementById('fechamento-total').innerText = document.getElementById('total-geral').innerText;
     window.calcularRestanteFechamento();
     
+    // Set datas padrão antes da alteração de operação
     document.getElementById('fechamento-vencimento').value = new Date().toISOString().split('T')[0];
     const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
     document.getElementById('fechamento-conclusao').value = agora.toISOString().slice(0,16);
     document.getElementById('fechamento-entrega').value = new Date().toISOString().split('T')[0];
-    window.calcularGarantia();
     
-    window.gerarPreviewParcelas();
+    // Dispara a lógica de data +1 Dia ou +1 Mês de acordo com a operação
+    window.atualizarVencimentoPorOperacao();
+    window.calcularGarantia();
     
     document.getElementById('modal-fechamento-os').classList.remove('hidden');
     document.getElementById('modal-fechamento-os').classList.add('flex');
+};
+
+window.atualizarVencimentoPorOperacao = function() {
+    const operacao = document.getElementById('fechamento-operacao').value;
+    const inputVenc = document.getElementById('fechamento-vencimento');
+    const dataAtual = new Date();
+    
+    if (operacao === 'PIX' || operacao === 'Dinheiro') {
+        dataAtual.setDate(dataAtual.getDate() + 1); // Dia seguinte
+    } else {
+        dataAtual.setMonth(dataAtual.getMonth() + 1); // Próximo Mês
+    }
+    
+    // Corrige fuso horário para bater exato com o Brasil
+    const dataLocal = new Date(dataAtual.getTime() - (dataAtual.getTimezoneOffset() * 60000));
+    inputVenc.value = dataLocal.toISOString().split('T')[0];
+    window.gerarPreviewParcelas();
 };
 
 window.calcularRestanteFechamento = function() {
@@ -1066,19 +1114,29 @@ window.gerarPreviewParcelas = function() {
         return;
     }
 
-    const valorParcela = restante / parcelas;
+    // ARREDONDAMENTO BANCÁRIO EXATO (ex: 633.34, 633.34, 633.32)
+    const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
+    
     let html = '';
     let dataAtual = new Date(venciInicial || new Date());
     if(venciInicial) dataAtual.setMinutes(dataAtual.getMinutes() + dataAtual.getTimezoneOffset()); 
 
     for(let i=1; i<=parcelas; i++) {
+        let valorDaParcela = valorParcelaBase;
+        
+        // A última parcela ajusta a diferença dos centavos a maior
+        if (i === parcelas) {
+            valorDaParcela = restante - (valorParcelaBase * (parcelas - 1));
+            valorDaParcela = Math.round(valorDaParcela * 100) / 100; // previne bugs de float no JS
+        }
+
         const dataFormatada = dataAtual.toLocaleDateString('pt-BR');
         html += `
             <tr class="border-b border-gray-100 dark:border-gray-800">
                 <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300">${i}/${parcelas}</td>
                 <td class="p-2 font-mono font-bold text-gray-600 dark:text-gray-400">${dataFormatada}</td>
                 <td class="p-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">${operacao}</td>
-                <td class="p-2 text-right font-mono font-black text-amber-600 dark:text-amber-500">R$ ${valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td class="p-2 text-right font-mono font-black text-amber-600 dark:text-amber-500">R$ ${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 <td class="p-2"><input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors"></td>
             </tr>
         `;
@@ -1089,9 +1147,13 @@ window.gerarPreviewParcelas = function() {
 
 window.calcularGarantia = function() {
     const entrega = document.getElementById('fechamento-entrega').value;
+    const inputDias = document.getElementById('fechamento-garantia-dias');
+    const dias = inputDias ? (parseInt(inputDias.value) || 0) : 90; // Default 90 se não achar o input
+    
     if(entrega) {
         const dataGarantia = new Date(entrega);
-        dataGarantia.setDate(dataGarantia.getDate() + 90);
+        dataGarantia.setMinutes(dataGarantia.getMinutes() + dataGarantia.getTimezoneOffset());
+        dataGarantia.setDate(dataGarantia.getDate() + dias);
         document.getElementById('fechamento-garantia').value = dataGarantia.toISOString().split('T')[0];
     }
 };
