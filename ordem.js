@@ -236,21 +236,23 @@ window.atualizarTopHeaderVisualizacao = function(os) {
 };
 
 // =========================================================================
-// MOTOR DE AÇÕES BLINDADO (RESOLVE O BUG DO MENU CORTADO E FECHANDO SOZINHO)
+// O MENU SUSPENSO BLINDADO (Física Corrigida e Scroll Removido)
 // =========================================================================
 window.toggleDrop = function(event, id, btnElement) {
-    event.preventDefault(); // Impede duplo clique invisível
-    event.stopPropagation(); // Impede que o clique suba para o HTML fechando o menu na mesma hora
+    if(event) { event.preventDefault(); event.stopPropagation(); }
 
-    // Esconde todos os outros que estiverem abertos
-    document.querySelectorAll('.menu-acao-os').forEach(el => {
-        if (el.id !== `menu-${id}`) el.classList.add('hidden');
-    });
-
-    const menu = document.getElementById(`menu-${id}`);
+    const menuId = `menu-${id}`;
+    const menu = document.getElementById(menuId);
     if (!menu) return;
 
-    if (menu.classList.contains('hidden')) {
+    const estavaEscondido = menu.classList.contains('hidden');
+
+    // Sempre esconde todos os menus primeiro
+    document.querySelectorAll('.menu-acao-os').forEach(el => {
+        el.classList.add('hidden');
+    });
+
+    if (estavaEscondido) {
         menu.classList.remove('hidden');
         
         const rect = btnElement.getBoundingClientRect();
@@ -261,23 +263,20 @@ window.toggleDrop = function(event, id, btnElement) {
         const menuHeight = menu.offsetHeight || 160;
 
         let topPos = rect.bottom + 4;
-        // Anti-Corte: Se bater no fundo do monitor, abre para cima do botão
+        // Inversão se bater no chão da tela
         if (topPos + menuHeight > window.innerHeight && rect.top > menuHeight) {
             topPos = rect.top - menuHeight - 4;
         }
 
         let leftPos = rect.right - menuWidth; 
-        // Anti-Corte: Se bater na borda esquerda, joga pra direita
         if (leftPos < 0) leftPos = rect.left; 
         
         menu.style.top = `${topPos}px`;
         menu.style.left = `${leftPos}px`;
-    } else {
-        menu.classList.add('hidden');
     }
 };
 
-// Clica fora, fecha. 
+// Se clicar em qualquer lugar fora, o menu some.
 document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown-container')) {
         document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
@@ -622,7 +621,6 @@ window.carregarOrdensServico = async function() {
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
-            // Adicionei os EVENTS em todos os botões
             return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border-b border-gray-100 dark:border-gray-700">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
@@ -1125,7 +1123,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (ARREDONDAMENTO BANCÁRIO EXATO)
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1171,9 +1169,9 @@ window.atualizarVencimentoPorOperacao = function() {
     const dataAtual = new Date();
     
     if (operacao === 'PIX' || operacao === 'Dinheiro') {
-        dataAtual.setDate(dataAtual.getDate() + 1); 
+        dataAtual.setDate(dataAtual.getDate() + 1); // Dia seguinte
     } else {
-        dataAtual.setMonth(dataAtual.getMonth() + 1); 
+        dataAtual.setMonth(dataAtual.getMonth() + 1); // Próximo Mês exato
     }
     
     const dataLocal = new Date(dataAtual.getTime() - (dataAtual.getTimezoneOffset() * 60000));
@@ -1219,6 +1217,7 @@ window.gerarPreviewParcelas = function() {
         return;
     }
 
+    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO
     const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
     
     let html = '';
