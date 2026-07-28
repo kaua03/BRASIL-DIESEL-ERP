@@ -236,7 +236,7 @@ window.atualizarTopHeaderVisualizacao = function(os) {
 };
 
 // =========================================================================
-// O MENU SUSPENSO BLINDADO (Física Corrigida e Scroll Removido)
+// O MENU SUSPENSO BLINDADO
 // =========================================================================
 window.toggleDrop = function(event, id, btnElement) {
     if(event) { event.preventDefault(); event.stopPropagation(); }
@@ -247,7 +247,6 @@ window.toggleDrop = function(event, id, btnElement) {
 
     const estavaEscondido = menu.classList.contains('hidden');
 
-    // Sempre esconde todos os menus primeiro
     document.querySelectorAll('.menu-acao-os').forEach(el => {
         el.classList.add('hidden');
     });
@@ -263,7 +262,6 @@ window.toggleDrop = function(event, id, btnElement) {
         const menuHeight = menu.offsetHeight || 160;
 
         let topPos = rect.bottom + 4;
-        // Inversão se bater no chão da tela
         if (topPos + menuHeight > window.innerHeight && rect.top > menuHeight) {
             topPos = rect.top - menuHeight - 4;
         }
@@ -276,7 +274,6 @@ window.toggleDrop = function(event, id, btnElement) {
     }
 };
 
-// Se clicar em qualquer lugar fora, o menu some.
 document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown-container')) {
         document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
@@ -548,7 +545,8 @@ window.enviarWhatsAppDaLista = async function(event, id, celular) {
         const cliente = String(os.cliente || 'Cliente').trim();
         const calcTotalGeral = Math.max(0, Number(os.total_pecas || 0) + Number(os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
 
-        const linkLaudoTexto = os.link_laudo ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${os.link_laudo}\n` : '';
+        const urlL = os.url_laudo || os.link_laudo;
+        const linkLaudoTexto = urlL ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${urlL}\n` : '';
 
         const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
         
@@ -681,7 +679,7 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
+// 6. GESTÃO DO MODAL DE O.S.
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -725,7 +723,6 @@ window.buscarDadosOs = async function(id) {
         window.osNumeroAtual = os.numero_os || os.id;
         window.itemEmEdicaoId = null;
 
-        // FUNÇÃO BLINDADA
         const setVal = (idEl, val) => { const el = document.getElementById(idEl); if(el) el.value = val; };
 
         setVal('data_hora', os.data_hora ? String(os.data_hora).slice(0, 16) : '');
@@ -767,7 +764,7 @@ window.buscarDadosOs = async function(id) {
 };
 
 window.salvarOs = async function(event) {
-    event.preventDefault();
+    if(event) event.preventDefault();
     if(window.modoLeitura) return;
 
     const getVal = (idEl, fallback='') => { const el = document.getElementById(idEl); return el ? el.value : fallback; };
@@ -1123,7 +1120,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (ARREDONDAMENTO BANCÁRIO EXATO)
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (NOVO MODELO EDITÁVEL)
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1168,10 +1165,10 @@ window.atualizarVencimentoPorOperacao = function() {
     const operacao = elOperacao.value;
     const dataAtual = new Date();
     
-    if (operacao === 'PIX' || operacao === 'Dinheiro') {
-        dataAtual.setDate(dataAtual.getDate() + 1); // Dia seguinte
+    if (operacao === 'PIX' || operacao === 'Dinheiro' || operacao === 'Cartão de Débito') {
+        dataAtual.setDate(dataAtual.getDate() + 1); 
     } else {
-        dataAtual.setMonth(dataAtual.getMonth() + 1); // Próximo Mês exato
+        dataAtual.setMonth(dataAtual.getMonth() + 1); 
     }
     
     const dataLocal = new Date(dataAtual.getTime() - (dataAtual.getTimezoneOffset() * 60000));
@@ -1217,7 +1214,6 @@ window.gerarPreviewParcelas = function() {
         return;
     }
 
-    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO
     const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
     
     let html = '';
@@ -1231,19 +1227,89 @@ window.gerarPreviewParcelas = function() {
             valorDaParcela = Math.round(valorDaParcela * 100) / 100; 
         }
 
-        const dataFormatada = dataAtual.toLocaleDateString('pt-BR');
+        const dataISO = dataAtual.toISOString().split('T')[0];
+        
+        const optionsHtml = `
+            <option value="PIX" ${operacao === 'PIX' ? 'selected' : ''}>PIX</option>
+            <option value="Dinheiro" ${operacao === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option>
+            <option value="Cartão de Crédito" ${operacao === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito</option>
+            <option value="Cartão de Débito" ${operacao === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito</option>
+            <option value="Boleto Bancário" ${operacao === 'Boleto Bancário' ? 'selected' : ''}>Boleto Bancário</option>
+        `;
+
         html += `
             <tr class="border-b border-gray-100 dark:border-gray-800 transition-all">
                 <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300">${i}/${parcelas}</td>
-                <td class="p-2 font-mono font-bold text-gray-600 dark:text-gray-400">${dataFormatada}</td>
-                <td class="p-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">${operacao}</td>
-                <td class="p-2 text-right font-mono font-black text-amber-600 dark:text-amber-500">R$ ${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                <td class="p-2"><input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors"></td>
+                <td class="p-2">
+                    <input type="date" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
+                </td>
+                <td class="p-2">
+                    <select class="w-full px-2 py-1 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
+                        ${optionsHtml}
+                    </select>
+                </td>
+                <td class="p-2 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <span class="text-xs font-bold text-gray-500">R$</span>
+                        <input type="text" class="input-val-parcela w-24 px-2 py-1 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
+                    </div>
+                </td>
+                <td class="p-2">
+                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
+                </td>
             </tr>
         `;
         dataAtual.setMonth(dataAtual.getMonth() + 1);
     }
+    
+    html += `
+        <tr class="bg-gray-50 dark:bg-[#0f172a]">
+            <td colspan="3" class="p-2 text-right text-xs font-bold text-gray-500 uppercase">Soma das Parcelas:</td>
+            <td class="p-2 text-right font-mono font-black text-[#1a428a] dark:text-blue-400" id="soma-parcelas-footer">R$ ${restante.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td></td>
+        </tr>
+    `;
+    
     tbody.innerHTML = html;
+    window.validarSomaParcelas();
+};
+
+window.validarSomaParcelas = function() {
+    const elRestante = document.getElementById('fechamento-restante');
+    const footerSoma = document.getElementById('soma-parcelas-footer');
+    if(!elRestante || !footerSoma) return;
+
+    const restante = parseFloat(elRestante.innerText.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
+    
+    let soma = 0;
+    document.querySelectorAll('.input-val-parcela').forEach(input => {
+        soma += parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+    });
+
+    footerSoma.innerText = 'R$ ' + soma.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+    const btnConfirmar = document.querySelector('button[onclick="window.confirmarFechamentoOS()"]');
+    const diff = Math.abs(restante - soma);
+
+    if (diff > 0.05) {
+        footerSoma.classList.remove('text-[#1a428a]', 'dark:text-blue-400');
+        footerSoma.classList.add('text-red-600', 'dark:text-red-400');
+        if (btnConfirmar) {
+            btnConfirmar.disabled = true;
+            btnConfirmar.classList.replace('bg-amber-500', 'bg-gray-400');
+            btnConfirmar.classList.replace('hover:bg-amber-600', 'hover:bg-gray-500');
+            btnConfirmar.innerText = "VALORES NÃO BATEM";
+        }
+    } else {
+        footerSoma.classList.add('text-[#1a428a]', 'dark:text-blue-400');
+        footerSoma.classList.remove('text-red-600', 'dark:text-red-400');
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.classList.replace('bg-gray-400', 'bg-amber-500');
+            btnConfirmar.classList.replace('hover:bg-gray-500', 'hover:bg-amber-600');
+            btnConfirmar.innerText = "CONFIRMAR FECHAMENTO";
+        }
+    }
 };
 
 window.calcularGarantia = function() {
