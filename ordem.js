@@ -14,7 +14,7 @@ window.listaVeiculosBdd = [];
 // =========================================================================
 window.formatarPlaca = function(placa) {
     if (!placa) return '';
-    let p = placa.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    let p = String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
     if (/^[A-Z]{3}[0-9]{4}$/.test(p)) return p.substring(0, 3) + '-' + p.substring(3, 7);
     return p;
 };
@@ -26,7 +26,7 @@ window.mascaraPlaca = function(input) {
 };
 
 window.validarPlacaBrasil = function(placa) {
-    if (!placa || placa.length < 3) return false;
+    if (!placa || String(placa).length < 3) return false;
     return true; 
 };
 
@@ -63,7 +63,7 @@ window.consultarCnpj = async function(input) {
             let res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`);
             if (res.ok) {
                 let dados = await res.json();
-                document.getElementById('cliente').value = (dados.razao_social || dados.nome_fantasia || '').trim();
+                document.getElementById('cliente').value = String(dados.razao_social || dados.nome_fantasia || '').trim();
                 if (dados.ddd_telefone_1) {
                     document.getElementById('celular').value = dados.ddd_telefone_1;
                     window.mascaraCelular(document.getElementById('celular'));
@@ -88,9 +88,9 @@ window.consultarCep = async function(input) {
             if (res.ok) {
                 let dados = await res.json();
                 if (!dados.erro) {
-                    document.getElementById('endereco').value = (dados.logradouro || '').trim();
-                    document.getElementById('bairro').value = (dados.bairro || '').trim();
-                    document.getElementById('cidade').value = `${(dados.localidade || '').trim()} / ${(dados.uf || '').trim()}`;
+                    document.getElementById('endereco').value = String(dados.logradouro || '').trim();
+                    document.getElementById('bairro').value = String(dados.bairro || '').trim();
+                    document.getElementById('cidade').value = `${String(dados.localidade || '').trim()} / ${String(dados.uf || '').trim()}`;
                     document.getElementById('numero_end')?.focus();
                 }
             }
@@ -123,23 +123,22 @@ document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'modelo') {
         const mod = e.target.value.trim().toUpperCase();
         if (window.listaVeiculosBdd && mod.length > 2) {
-            const achou = window.listaVeiculosBdd.find(v => v.modelo && v.modelo.toUpperCase() === mod);
+            const achou = window.listaVeiculosBdd.find(v => v.modelo && String(v.modelo).toUpperCase() === mod);
             if (achou && achou.marca) {
-                document.getElementById('marca').value = achou.marca.toUpperCase();
+                document.getElementById('marca').value = String(achou.marca).toUpperCase();
             }
         }
     }
 });
 
 // =========================================================================
-// 3. MODO LEITURA E CORES DE STATUS (REVISADO)
+// 3. MODO LEITURA E CORES DE STATUS
 // =========================================================================
 window.alternarModoLeitura = function(ativo) {
     window.modoLeitura = ativo;
     const form = document.getElementById('form-nova-os');
     if (!form) return;
 
-    // Desativa/Ativa inputs
     form.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.type !== 'hidden') el.disabled = ativo;
     });
@@ -147,20 +146,24 @@ window.alternarModoLeitura = function(ativo) {
     const btnFecharOs = document.getElementById('btn-fechar-os');
     const btnBalcao = document.getElementById('btn-os-balcao'); 
     const painelAdicionar = document.getElementById('painel-adicionar-item');
-    const btnSalvar = document.getElementById('btn-salvar-os');
-    const btnCancelar = document.getElementById('btn-cancelar-alteracoes');
+    const painelEdicao = document.getElementById('painel-botoes-edicao');
+    const cabecalho = document.getElementById('cabecalho-modal-os');
+    const painelTopoResumo = document.getElementById('painel-topo-resumo');
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
         if (btnBalcao) btnBalcao.classList.add('hidden'); 
         if (painelAdicionar) painelAdicionar.classList.add('hidden');
-        if (btnSalvar) btnSalvar.classList.add('hidden');
-        if (btnCancelar) btnCancelar.classList.add('hidden');
+        if (painelEdicao) painelEdicao.classList.add('hidden');
+        if (painelTopoResumo) painelTopoResumo.classList.remove('hidden');
+        if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
         if (btnFecharOs) btnFecharOs.classList.remove('hidden');
         if (btnBalcao) btnBalcao.classList.remove('hidden'); 
         if (painelAdicionar) painelAdicionar.classList.remove('hidden');
-        if (btnSalvar) btnSalvar.classList.remove('hidden');
+        if (painelEdicao) painelEdicao.classList.remove('hidden');
+        if (painelTopoResumo) painelTopoResumo.classList.add('hidden');
+        if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
 
     window.renderizarTabelaOrcamento();
@@ -171,9 +174,9 @@ window.obterCoresStatus = function(situacao) {
     switch(situacao) {
         case 'Aberto': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
         case 'Orçamento': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
-        case 'Aguardando Autorização': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200'; // Laranja
-        case 'Aguardando Peça': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200'; // Amarelo Escuro
-        case 'Aguardando Pagamento': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200'; // Amarelo Claro
+        case 'Aguardando Autorização': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200';
+        case 'Aguardando Peça': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200';
+        case 'Aguardando Pagamento': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200';
         case 'Autorizado': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200';
         case 'Em Execução': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-200';
         case 'Garantia': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200';
@@ -183,7 +186,45 @@ window.obterCoresStatus = function(situacao) {
     }
 };
 
-// MOTOR ANTI-CORTE DO DROPDOWN DE AÇÕES
+window.atualizarCorSelectSituacao = function(selectEl) {
+    if (!selectEl) return;
+    const val = selectEl.value;
+    if (val === 'Aberto') { selectEl.style.backgroundColor = '#E0F2FE'; selectEl.style.color = '#0369A1'; }
+    else if (val === 'Orçamento') { selectEl.style.backgroundColor = '#F3E8FF'; selectEl.style.color = '#6B21A8'; }
+    else if (val === 'Aguardando Autorização') { selectEl.style.backgroundColor = '#FFEDD5'; selectEl.style.color = '#C2410C'; }
+    else if (val === 'Aguardando Peça') { selectEl.style.backgroundColor = '#FEF3C7'; selectEl.style.color = '#B45309'; }
+    else if (val === 'Autorizado') { selectEl.style.backgroundColor = '#DCFCE7'; selectEl.style.color = '#15803D'; }
+    else if (val === 'Em Execução') { selectEl.style.backgroundColor = '#E0E7FF'; selectEl.style.color = '#3730A3'; }
+    else if (val === 'Garantia') { selectEl.style.backgroundColor = '#CCFBF1'; selectEl.style.color = '#0F766E'; }
+    else if (val === 'Aguardando Pagamento') { selectEl.style.backgroundColor = '#FEF08A'; selectEl.style.color = '#854D0E'; }
+    else if (val === 'Não Usar') { selectEl.style.backgroundColor = '#FEE2E2'; selectEl.style.color = '#991B1B'; }
+    else if (val === 'Recusado') { selectEl.style.backgroundColor = '#FECACA'; selectEl.style.color = '#B91C1C'; }
+};
+
+window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
+    const tituloEl = document.getElementById('modal-titulo-os');
+    if (!tituloEl) return;
+    const placaFormatada = window.formatarPlaca(placa || document.getElementById('placa')?.value);
+    const sufixoLeitura = window.modoLeitura ? ' — [SOMENTE LEITURA]' : '';
+
+    if (window.osEmEdicaoId && numeroOs) {
+        const numFormatado = String(numeroOs).padStart(4, '0');
+        tituloEl.innerText = `Ordem de Serviço Nº ${numFormatado} — Placa: ${placaFormatada || '---'}${sufixoLeitura}`;
+    } else {
+        tituloEl.innerText = `Nova Ordem de Serviço`;
+    }
+};
+
+window.atualizarTopHeaderVisualizacao = function(os) {
+    const hCliente = document.getElementById('header-view-cliente');
+    const hVeiculo = document.getElementById('header-view-veiculo');
+    const hPlaca = document.getElementById('header-view-placa');
+    if(hCliente) hCliente.innerText = String(os.cliente || 'CLIENTE NÃO INFORMADO').toUpperCase();
+    if(hVeiculo) hVeiculo.innerText = String(os.modelo || 'VEÍCULO NÃO INFORMADO').toUpperCase();
+    if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
+};
+
+// MOTOR ANTI-CORTE DO DROPDOWN (Blindado contra Scroll)
 window.toggleDrop = function(id, btnElement) {
     document.querySelectorAll('.menu-acao-os').forEach(el => {
         if (el.id !== `menu-${id}`) el.classList.add('hidden');
@@ -195,7 +236,6 @@ window.toggleDrop = function(id, btnElement) {
     if (menu.classList.contains('hidden')) {
         menu.classList.remove('hidden');
         
-        // Fixação absoluta imune a rolagem interna
         const rect = btnElement.getBoundingClientRect();
         menu.style.position = 'fixed'; 
         menu.style.zIndex = '99999';
@@ -204,13 +244,11 @@ window.toggleDrop = function(id, btnElement) {
         const menuHeight = menu.offsetHeight || 160;
 
         let topPos = rect.bottom + 4;
-        // Se bater no fundo do monitor, abre pra cima
         if (topPos + menuHeight > window.innerHeight) {
             topPos = rect.top - menuHeight - 4;
         }
 
         let leftPos = rect.right - menuWidth; 
-        // Se bater na esquerda, joga pra direita
         if (leftPos < 0) leftPos = rect.left; 
         
         menu.style.top = `${topPos}px`;
@@ -225,10 +263,6 @@ document.addEventListener('click', function(event) {
         document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
     }
 });
-
-document.addEventListener('scroll', function(event) {
-    document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
-}, { capture: true });
 
 window.alterarStatusOsInline = async function(id, selectElement) {
     const novaSituacao = selectElement.value;
@@ -246,7 +280,7 @@ window.alterarStatusOsInline = async function(id, selectElement) {
 };
 
 // =========================================================================
-// 4. FÁBRICA DE PDF E WHATSAPP DE ELITE
+// 4. FÁBRICA DE PDF E WHATSAPP
 // =========================================================================
 window.gerarHtmlDocumentoOs = function(os, itens) {
     let tPecas = 0; let tServ = 0;
@@ -260,7 +294,7 @@ window.gerarHtmlDocumentoOs = function(os, itens) {
             htmlPecas += `
                 <tr style="border-bottom: 1px solid #ccc; font-size: 10px;">
                     <td style="padding: 4px; border-right: 1px solid #ccc;">${String(idx + 1).padStart(4, '0')}</td>
-                    <td style="padding: 4px; border-right: 1px solid #ccc;">${(i.descricao || '').toUpperCase()}</td>
+                    <td style="padding: 4px; border-right: 1px solid #ccc;">${String(i.descricao || '').toUpperCase()}</td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: center;">PC</td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: center;">${(i.quantidade || 1).toLocaleString('pt-BR', {minimumFractionDigits: 4})}</td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: right;">R$ ${(i.valor_unitario || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
@@ -270,7 +304,7 @@ window.gerarHtmlDocumentoOs = function(os, itens) {
         } else {
             htmlServicos += `
                 <tr style="border-bottom: 1px solid #ccc; font-size: 10px;">
-                    <td style="padding: 4px; border-right: 1px solid #ccc;">${String(idx + 1).padStart(4, '0')} - ${(i.descricao || '').toUpperCase()}</td>
+                    <td style="padding: 4px; border-right: 1px solid #ccc;">${String(idx + 1).padStart(4, '0')} - ${String(i.descricao || '').toUpperCase()}</td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: center;"></td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: center;"></td>
                     <td style="padding: 4px; border-right: 1px solid #ccc; text-align: center;"></td>
@@ -310,31 +344,31 @@ window.gerarHtmlDocumentoOs = function(os, itens) {
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; border: 1px solid #000; padding: 8px; margin-bottom: 10px; font-size: 10px; line-height: 1.4;">
                 <div>
-                    <p style="margin: 2px 0;"><strong>Cliente:</strong> ${(os.cliente || '---').toUpperCase()}</p>
-                    <p style="margin: 2px 0;"><strong>Endereço:</strong> ${os.endereco || '---'}</p>
-                    <p style="margin: 2px 0;"><strong>Bairro:</strong> ${os.bairro || '---'}</p>
-                    <p style="margin: 2px 0;"><strong>Cnpj/Cpf:</strong> ${os.cpf_cnpj || '---'}</p>
+                    <p style="margin: 2px 0;"><strong>Cliente:</strong> ${String(os.cliente || '---').toUpperCase()}</p>
+                    <p style="margin: 2px 0;"><strong>Endereço:</strong> ${String(os.endereco || '---')}</p>
+                    <p style="margin: 2px 0;"><strong>Bairro:</strong> ${String(os.bairro || '---')}</p>
+                    <p style="margin: 2px 0;"><strong>Cnpj/Cpf:</strong> ${String(os.cpf_cnpj || '---')}</p>
                 </div>
                 <div>
-                    <p style="margin: 2px 0;"><strong>Telefone:</strong> ${os.celular || '---'}</p>
-                    <p style="margin: 2px 0;"><strong>Cep:</strong> ${os.cep || '---'}</p>
-                    <p style="margin: 2px 0;"><strong>Cidade:</strong> ${os.cidade || '---'}</p>
-                    <p style="margin: 2px 0;"><strong>Inscrição Est.:</strong> ${os.inscricao_estadual || '---'}</p>
+                    <p style="margin: 2px 0;"><strong>Telefone:</strong> ${String(os.celular || '---')}</p>
+                    <p style="margin: 2px 0;"><strong>Cep:</strong> ${String(os.cep || '---')}</p>
+                    <p style="margin: 2px 0;"><strong>Cidade:</strong> ${String(os.cidade || '---')}</p>
+                    <p style="margin: 2px 0;"><strong>Inscrição Est.:</strong> ${String(os.inscricao_estadual || '---')}</p>
                 </div>
             </div>
 
             <div style="border: 1px solid #000; padding: 8px; margin-bottom: 10px; font-size: 10px; line-height: 1.4;">
                 <div style="display: flex; gap: 20px;">
-                    <p style="margin: 2px 0; flex: 2;"><strong>Veículo:</strong> ${(os.modelo || '---').toUpperCase()}</p>
-                    <p style="margin: 2px 0; flex: 1;"><strong>Marca:</strong> ${(os.marca || '---').toUpperCase()}</p>
-                    <p style="margin: 2px 0; flex: 1;"><strong>Ano/Modelo:</strong> ${os.ano || '---'}</p>
-                    <p style="margin: 2px 0; flex: 1;"><strong>KM:</strong> ${os.km_veiculo || '---'}</p>
+                    <p style="margin: 2px 0; flex: 2;"><strong>Veículo:</strong> ${String(os.modelo || '---').toUpperCase()}</p>
+                    <p style="margin: 2px 0; flex: 1;"><strong>Marca:</strong> ${String(os.marca || '---').toUpperCase()}</p>
+                    <p style="margin: 2px 0; flex: 1;"><strong>Ano/Modelo:</strong> ${String(os.ano || '---')}</p>
+                    <p style="margin: 2px 0; flex: 1;"><strong>KM:</strong> ${String(os.km_veiculo || '---')}</p>
                 </div>
             </div>
 
             <div style="border: 1px solid #000; padding: 8px; margin-bottom: 10px; font-size: 10px;">
                 <strong>RELATO / DEFEITO:</strong><br>
-                ${(os.defeito || 'Nenhum relato registrado.').toUpperCase()}
+                ${String(os.defeito || 'Nenhum relato registrado.').toUpperCase()}
             </div>
 
             <div style="page-break-inside: avoid;">
@@ -376,17 +410,17 @@ window.gerarHtmlDocumentoOs = function(os, itens) {
 
             <div style="display: flex; justify-content: space-between; page-break-inside: avoid; border: 1px solid #000; padding: 10px; margin-top: 10px;">
                 <div style="width: 50%; font-size: 10px; line-height: 1.5;">
-                    <p style="margin: 0;"><strong>Resp. Lançamento:</strong> ${(os.responsavel || '---').toUpperCase()}</p>
+                    <p style="margin: 0;"><strong>Resp. Lançamento:</strong> ${String(os.responsavel || '---').toUpperCase()}</p>
                     <p style="margin: 0;"><strong>Placa:</strong> ${placaDoc}</p>
                 </div>
                 
                 <div style="width: 40%; font-size: 10px; line-height: 1.5;">
                     <div style="display: flex; justify-content: space-between;"><span>Total de Peças (+):</span> <span>R$ ${tPecas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
                     <div style="display: flex; justify-content: space-between;"><span>Total Serviços (+):</span> <span>R$ ${tServ.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Outros Vlrs (+):</span> <span>R$ ${(os.outros_valores || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                    <div style="display: flex; justify-content: space-between; color: red;"><span>Desconto (-):</span> <span>R$ ${(os.desconto || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Outros Vlrs (+):</span> <span>R$ ${Number(os.outros_valores || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
+                    <div style="display: flex; justify-content: space-between; color: red;"><span>Desconto (-):</span> <span>R$ ${Number(os.desconto || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
                     <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 13px; border-top: 1px solid #000; margin-top: 4px; padding-top: 4px;">
-                        <span>Total Líquido (=):</span> <span>R$ ${Math.max(0, tPecas + tServ + (os.outros_valores || 0) - (os.desconto || 0)).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                        <span>Total Líquido (=):</span> <span>R$ ${Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0)).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                     </div>
                 </div>
             </div>
@@ -451,13 +485,13 @@ window.enviarWhatsAppDaLista = async function(id, celular) {
     const menu = document.getElementById(`menu-${id}`);
     if(menu) menu.classList.add('hidden');
 
-    const telLimpo = (celular || '').replace(/\D/g, '');
+    const telLimpo = String(celular || '').replace(/\D/g, '');
     if (telLimpo.length < 10) {
         if (window.mostrarToast) window.mostrarToast("Cliente sem WhatsApp válido!", "erro");
         return;
     }
 
-    if (window.mostrarToast) window.mostrarToast("Gerando link seguro...", "aviso");
+    if (window.mostrarToast) window.mostrarToast("Gerando links seguros...", "aviso");
 
     try {
         const { data: os, error } = await supabase.from('ordens_servico').select('*').eq('id', id).single();
@@ -481,11 +515,10 @@ window.enviarWhatsAppDaLista = async function(id, celular) {
         const { data: publicUrlData } = supabase.storage.from('pdfs-os').getPublicUrl(nomeArquivo);
         const linkPdf = publicUrlData.publicUrl;
 
-        const cliente = (os.cliente || 'Cliente').trim();
-        const calcTotalGeral = Math.max(0, (os.total_pecas || 0) + (os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
+        const cliente = String(os.cliente || 'Cliente').trim();
+        const calcTotalGeral = Math.max(0, Number(os.total_pecas || 0) + Number(os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
 
-        // INJEÇÃO DA LÓGICA DE 2 LINKS: Orçamento e Laudo do Lab
-        const linkLaudoTexto = os.link_laudo ? `\n*Acesse também o Laudo Técnico do Laboratório:* \n${os.link_laudo}\n` : '';
+        const linkLaudoTexto = os.link_laudo ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${os.link_laudo}\n` : '';
 
         const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
         
@@ -504,7 +537,7 @@ window.visualizarNotificacaoLab = async function(osId, osNum, placa, situacao) {
 
     try {
         await supabase.from('ordens_servico').update({ lab_atualizado: false }).eq('id', osId);
-        window.carregarOrdensServico(); // Limpa o sino da tela na hora
+        window.carregarOrdensServico(); 
         
         const btnLab = document.querySelector('.nav-btn[data-tela="lab"]');
         if (btnLab) btnLab.click();
@@ -654,40 +687,42 @@ window.buscarDadosOs = async function(id) {
     window.osNumeroAtual = os.numero_os || os.id;
     window.itemEmEdicaoId = null;
 
-    document.getElementById('data_hora').value = os.data_hora ? os.data_hora.slice(0, 16) : '';
-    document.getElementById('responsavel_os').value = os.responsavel || 'SISTEMA';
-    document.getElementById('setor_destino').value = os.setor_destino || 'Pátio';
+    // BLINDAGEM DE STRING NOS CAMPOS
+    document.getElementById('data_hora').value = os.data_hora ? String(os.data_hora).slice(0, 16) : '';
+    document.getElementById('responsavel_os').value = String(os.responsavel || 'SISTEMA');
+    document.getElementById('setor_destino').value = String(os.setor_destino || 'Pátio');
     
     document.getElementById('placa').value = window.formatarPlaca(os.placa);
-    document.getElementById('modelo').value = (os.modelo || '').trim();
-    document.getElementById('marca').value = (os.marca || '').trim();
-    document.getElementById('ano').value = (os.ano || '').trim();
-    document.getElementById('km_veiculo').value = (os.km_veiculo || '').trim();
+    document.getElementById('modelo').value = String(os.modelo || '').trim();
+    document.getElementById('marca').value = String(os.marca || '').trim();
+    document.getElementById('ano').value = String(os.ano || '').trim();
+    document.getElementById('km_veiculo').value = String(os.km_veiculo || '').trim();
     
-    document.getElementById('cpf_cnpj').value = (os.cpf_cnpj || '').trim();
-    document.getElementById('inscricao_estadual').value = (os.inscricao_estadual || '').trim();
-    document.getElementById('cliente').value = (os.cliente || '').trim();
-    document.getElementById('celular').value = (os.celular || '').trim();
-    document.getElementById('cliente_email').value = (os.email || '').trim();
-    document.getElementById('cep').value = (os.cep || '').trim();
-    document.getElementById('endereco').value = (os.endereco || '').trim();
-    document.getElementById('bairro').value = (os.bairro || '').trim();
-    document.getElementById('cidade').value = (os.cidade || '').trim();
-    document.getElementById('numero_end').value = (os.numero_end || '').trim();
-    document.getElementById('complemento').value = (os.complemento || '').trim();
+    document.getElementById('cpf_cnpj').value = String(os.cpf_cnpj || '').trim();
+    document.getElementById('inscricao_estadual').value = String(os.inscricao_estadual || '').trim();
+    document.getElementById('cliente').value = String(os.cliente || '').trim();
+    document.getElementById('celular').value = String(os.celular || '').trim();
+    document.getElementById('cliente_email').value = String(os.email || '').trim();
+    document.getElementById('cep').value = String(os.cep || '').trim();
+    document.getElementById('endereco').value = String(os.endereco || '').trim();
+    document.getElementById('bairro').value = String(os.bairro || '').trim();
+    document.getElementById('cidade').value = String(os.cidade || '').trim();
+    document.getElementById('numero_end').value = String(os.numero_end || '').trim();
+    document.getElementById('complemento').value = String(os.complemento || '').trim();
     
-    document.getElementById('outros-valores').value = (os.outros_valores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    document.getElementById('desconto-tipo').value = os.desconto_tipo || 'total';
-    document.getElementById('desconto-valor').value = (os.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    document.getElementById('outros-valores').value = Number(os.outros_valores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    document.getElementById('desconto-tipo').value = String(os.desconto_tipo || 'total');
+    document.getElementById('desconto-valor').value = Number(os.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
     const sel = document.getElementById('situacao');
     if(sel) { sel.value = os.situacao || 'Aberto'; window.atualizarCorSelectSituacao(sel); }
-    document.getElementById('defeito').value = (os.defeito || '').trim();
+    document.getElementById('defeito').value = String(os.defeito || '').trim();
 
     const { data: itens } = await supabase.from('itens_orcamento').select('*').eq('os_id', id);
     window.itensOrcamento = itens ? itens.map(i => ({ id: i.id || Date.now(), tipo: i.tipo, descricao: i.descricao, qtd: i.quantidade, valorUnitario: i.valor_unitario, subtotal: i.subtotal, concluido: i.concluido })) : [];
 
     window.atualizarTituloModalOs(window.osNumeroAtual, os.placa);
+    window.atualizarTopHeaderVisualizacao(os); 
 };
 
 window.salvarOs = async function(event) {
@@ -770,11 +805,30 @@ window.salvarOs = async function(event) {
 };
 
 window.editarOs = async function(id) {
-    try { window.modoLeitura = false; await window.buscarDadosOs(id); window.alternarModoLeitura(false); window.configurarRastreioAlteracoes(); document.getElementById('modal-os')?.classList.remove('hidden'); document.getElementById('modal-os')?.classList.add('flex'); } catch (e) {}
+    try { 
+        window.modoLeitura = false; 
+        await window.buscarDadosOs(id); 
+        window.alternarModoLeitura(false); 
+        window.configurarRastreioAlteracoes(); 
+        document.getElementById('modal-os')?.classList.remove('hidden'); 
+        document.getElementById('modal-os')?.classList.add('flex'); 
+    } catch (e) {
+        console.error("ERRO AO ABRIR EDIÇÃO:", e);
+        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: " + e.message, "erro");
+    }
 };
 
 window.visualizarOs = async function(id) {
-    try { window.modoLeitura = true; await window.buscarDadosOs(id); window.alternarModoLeitura(true); document.getElementById('modal-os')?.classList.remove('hidden'); document.getElementById('modal-os')?.classList.add('flex'); } catch (e) {}
+    try { 
+        window.modoLeitura = true; 
+        await window.buscarDadosOs(id); 
+        window.alternarModoLeitura(true); 
+        document.getElementById('modal-os')?.classList.remove('hidden'); 
+        document.getElementById('modal-os')?.classList.add('flex'); 
+    } catch (e) {
+        console.error("ERRO AO ABRIR VISUALIZAÇÃO:", e);
+        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: " + e.message, "erro");
+    }
 };
 
 window.excluirOs = async function(id, placa, numeroOs) {
@@ -1013,7 +1067,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (ARREDONDAMENTO BANCÁRIO)
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (ARREDONDAMENTO BANCÁRIO EXATO)
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1046,10 +1100,10 @@ window.atualizarVencimentoPorOperacao = function() {
     const inputVenc = document.getElementById('fechamento-vencimento');
     const dataAtual = new Date();
     
-    if (operacao === 'PIX' || operacao === 'Dinheiro' || operacao === 'Cartão de Débito') {
+    if (operacao === 'PIX' || operacao === 'Dinheiro') {
         dataAtual.setDate(dataAtual.getDate() + 1); // Dia seguinte
     } else {
-        dataAtual.setMonth(dataAtual.getMonth() + 1); // Mês seguinte
+        dataAtual.setMonth(dataAtual.getMonth() + 1); // Próximo Mês exato
     }
     
     const dataLocal = new Date(dataAtual.getTime() - (dataAtual.getTimezoneOffset() * 60000));
@@ -1082,7 +1136,7 @@ window.gerarPreviewParcelas = function() {
         return;
     }
 
-    // ARREDONDAMENTO BANCÁRIO (Arredonda parcelas p/ cima, tira a diferença na última)
+    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO
     const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
     
     let html = '';
@@ -1114,7 +1168,7 @@ window.gerarPreviewParcelas = function() {
 window.calcularGarantia = function() {
     const entrega = document.getElementById('fechamento-entrega').value;
     const inputDias = document.getElementById('fechamento-garantia-dias');
-    const dias = inputDias ? (parseInt(inputDias.value) || 0) : 90; // Default de 90 dias
+    const dias = inputDias ? (parseInt(inputDias.value) || 0) : 90;
     
     if(entrega) {
         const dataGarantia = new Date(entrega);
