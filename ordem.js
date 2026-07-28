@@ -545,8 +545,7 @@ window.enviarWhatsAppDaLista = async function(event, id, celular) {
         const cliente = String(os.cliente || 'Cliente').trim();
         const calcTotalGeral = Math.max(0, Number(os.total_pecas || 0) + Number(os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
 
-        const urlL = os.url_laudo || os.link_laudo;
-        const linkLaudoTexto = urlL ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${urlL}\n` : '';
+        const linkLaudoTexto = os.link_laudo ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${os.link_laudo}\n` : '';
 
         const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
         
@@ -679,7 +678,7 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE O.S.
+// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -723,6 +722,7 @@ window.buscarDadosOs = async function(id) {
         window.osNumeroAtual = os.numero_os || os.id;
         window.itemEmEdicaoId = null;
 
+        // FUNÇÃO BLINDADA
         const setVal = (idEl, val) => { const el = document.getElementById(idEl); if(el) el.value = val; };
 
         setVal('data_hora', os.data_hora ? String(os.data_hora).slice(0, 16) : '');
@@ -1120,7 +1120,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (NOVO MODELO EDITÁVEL)
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (MÓDULO EDITÁVEL)
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1241,27 +1241,27 @@ window.gerarPreviewParcelas = function() {
             <tr class="border-b border-gray-100 dark:border-gray-800 transition-all">
                 <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300">${i}/${parcelas}</td>
                 <td class="p-2">
-                    <input type="date" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
+                    <input type="date" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
                 </td>
                 <td class="p-2">
-                    <select class="w-full px-2 py-1 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
+                    <select class="w-full px-2 py-1.5 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
                         ${optionsHtml}
                     </select>
                 </td>
                 <td class="p-2 text-right">
                     <div class="flex items-center justify-end gap-1">
                         <span class="text-xs font-bold text-gray-500">R$</span>
-                        <input type="text" class="input-val-parcela w-24 px-2 py-1 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
+                        <input type="text" class="input-val-parcela w-24 px-2 py-1.5 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
                     </div>
                 </td>
                 <td class="p-2">
-                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
+                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
                 </td>
             </tr>
         `;
         dataAtual.setMonth(dataAtual.getMonth() + 1);
     }
-    
+
     html += `
         <tr class="bg-gray-50 dark:bg-[#0f172a]">
             <td colspan="3" class="p-2 text-right text-xs font-bold text-gray-500 uppercase">Soma das Parcelas:</td>
@@ -1296,8 +1296,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.add('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = true;
-            btnConfirmar.classList.replace('bg-amber-500', 'bg-gray-400');
-            btnConfirmar.classList.replace('hover:bg-amber-600', 'hover:bg-gray-500');
+            btnConfirmar.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+            btnConfirmar.classList.add('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
             btnConfirmar.innerText = "VALORES NÃO BATEM";
         }
     } else {
@@ -1305,8 +1305,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.remove('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
-            btnConfirmar.classList.replace('bg-gray-400', 'bg-amber-500');
-            btnConfirmar.classList.replace('hover:bg-gray-500', 'hover:bg-amber-600');
+            btnConfirmar.classList.remove('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
+            btnConfirmar.classList.add('bg-amber-500', 'hover:bg-amber-600');
             btnConfirmar.innerText = "CONFIRMAR FECHAMENTO";
         }
     }
