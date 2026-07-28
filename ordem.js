@@ -228,18 +228,6 @@ window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
     }
 };
 
-window.atualizarTopHeaderVisualizacao = function(os) {
-    const hCliente = document.getElementById('header-view-cliente');
-    const hVeiculo = document.getElementById('header-view-veiculo');
-    const hPlaca = document.getElementById('header-view-placa');
-    if(hCliente) hCliente.innerText = String(os.cliente || 'CLIENTE NÃO INFORMADO').toUpperCase();
-    if(hVeiculo) hVeiculo.innerText = String(os.modelo || 'VEÍCULO NÃO INFORMADO').toUpperCase();
-    if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
-};
-
-// =========================================================================
-// O MENU SUSPENSO BLINDADO
-// =========================================================================
 window.toggleDrop = function(event, id, btnElement) {
     if(event) { event.preventDefault(); event.stopPropagation(); }
 
@@ -289,11 +277,11 @@ window.alterarStatusOsInline = async function(id, selectElement) {
     try {
         const { error } = await supabase.from('ordens_servico').update({ situacao: novaSituacao, status: novaSituacao }).eq('id', id);
         if (error) throw error;
-        if (window.mostrarToast) window.mostrarToast("Situação atualizada!", "sucesso");
-        window.carregarOrdensServico(); // Atualiza a tela para reordenar se for "Fechado"
+        if (window.mostrarToast) window.mostrarToast("Situação updated!", "sucesso");
+        window.carregarOrdensServico(); 
     } catch (e) {
         console.error("ERRO AO ATUALIZAR STATUS:", e);
-        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação. Verifique o console.", "erro");
+        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação.", "erro");
         window.carregarOrdensServico(); 
     }
 };
@@ -548,11 +536,12 @@ window.enviarWhatsAppDaLista = async function(event, id, celular) {
         const cliente = String(os.cliente || 'Cliente').trim();
         const calcTotalGeral = Math.max(0, Number(os.total_pecas || 0) + Number(os.total_servicos || 0) + Number(os.outros_valores || 0) - Number(os.desconto || 0));
 
-        const linkLaudoTexto = os.link_laudo ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${os.link_laudo}\n` : '';
+        const urlL = os.url_laudo || os.link_laudo;
+        const linkLaudoTexto = urlL ? `\n*Acesse também o Laudo Técnico e Evidências:* \n${urlL}\n` : '';
 
-        const mensagem = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
+        const message = `Olá, *${cliente}*!\n\nAqui é da *Brasil Diesel Performance*.\nSua Ordem de Serviço *#${osNum}* (Placa: ${window.formatarPlaca(os.placa)}) foi atualizada.\n\n*Situação Atual:* ${os.situacao || 'Aberto'}\n*Valor Total:* R$ ${calcTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n *Acesse seu Orçamento Detalhado em PDF aqui:* \n${linkPdf}\n${linkLaudoTexto}\nQualquer dúvida, estamos à disposição!`;
         
-        const url = `https://wa.me/55${telLimpo}?text=${encodeURIComponent(mensagem)}`;
+        const url = `https://wa.me/55${telLimpo}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
 
     } catch (e) {
@@ -603,7 +592,6 @@ window.carregarOrdensServico = async function() {
             return;
         }
 
-        // MOTOR DE ORDENAÇÃO: Fechados vão para o final
         const ordensAtivas = data.filter(os => os.situacao !== 'Fechado');
         const ordensFechadas = data.filter(os => os.situacao === 'Fechado');
         const dadosOrdenados = [...ordensAtivas, ...ordensFechadas];
@@ -662,7 +650,7 @@ window.carregarOrdensServico = async function() {
                             <button type="button" onclick="window.editarOs(event, ${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Editar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             </button>
-                            <button type="button" onclick="window.excluirOs(event, ${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
+                            <button type="button" onclick="window.excluirOs(event, ${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
 
@@ -687,7 +675,7 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE O.S.
+// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -1045,7 +1033,7 @@ window.renderizarTabelaOrcamento = function() {
     if (window.itensOrcamento.length === 0) {
         const colspan = window.modoLeitura ? 6 : 7;
         tbody.innerHTML = `<tr><td colspan="${colspan}" class="p-6 text-center text-gray-400 font-medium transition-all">Nenhum item adicionado.</td></tr>`;
-        window.atualizarTotaisOrcamento();
+        window.tailwind;
         return;
     }
 
@@ -1128,7 +1116,7 @@ window.atualizarTotaisOrcamento = function() {
 };
 
 // =========================================================================
-// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO 
+// 7. FECHAMENTO FINANCEIRO E PARCELAMENTO (MÓDULO EDITÁVEL)
 // =========================================================================
 window.abrirModalFechamento = async function() {
     if(window.itensOrcamento.length === 0) {
@@ -1246,30 +1234,30 @@ window.gerarPreviewParcelas = function() {
         `;
 
         html += `
-            <tr class="border-b border-gray-100 dark:border-gray-800 transition-all">
-                <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300">${i}/${parcelas}</td>
+            <tr class="border-b border-gray-100 dark:border-gray-800 transition-all text-row-parcela">
+                <td class="p-2 text-center font-bold text-gray-700 dark:text-gray-300 num-p-index">${i}/${parcelas}</td>
                 <td class="p-2">
-                    <input type="date" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
+                    <input type="date" class="input-data-parcela w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" value="${dataISO}">
                 </td>
                 <td class="p-2">
-                    <select class="w-full px-2 py-1 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
+                    <select class="input-op-parcela w-full px-2 py-1.5 text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors uppercase">
                         ${optionsHtml}
                     </select>
                 </td>
                 <td class="p-2 text-right">
                     <div class="flex items-center justify-end gap-1">
                         <span class="text-xs font-bold text-gray-500">R$</span>
-                        <input type="text" class="input-val-parcela w-24 px-2 py-1 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorDaParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
+                        <input type="text" class="input-val-parcela w-24 px-2 py-1.5 text-xs font-mono font-black text-amber-600 dark:text-amber-500 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] rounded outline-none focus:border-amber-500 text-right transition-colors" value="${valorParcelaBase.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="window.mascaraValorItem(this); window.validarSomaParcelas()">
                     </div>
                 </td>
                 <td class="p-2">
-                    <input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors">
+                    <input type="text" class="input-doc-parcela w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors" placeholder="NSU/Doc (Opcional)">
                 </td>
             </tr>
         `;
         dataAtual.setMonth(dataAtual.getMonth() + 1);
     }
-    
+
     html += `
         <tr class="bg-gray-50 dark:bg-[#0f172a]">
             <td colspan="3" class="p-2 text-right text-xs font-bold text-gray-500 uppercase">Soma das Parcelas:</td>
@@ -1338,33 +1326,93 @@ window.calcularGarantia = function() {
     }
 };
 
+// =========================================================================
+// PONTE TÁTICA FINANCEIRA: INGESTÃO AUTOMÁTICA EM CONTAS_RECEBER (Fase 2)
+// =========================================================================
 window.confirmarFechamentoOS = async function() {
-    const confirmou = await window.abrirConfirmacao("Concluir O.S.", "Confirmar o fechamento definitivo e a geração do financeiro?", "aviso");
+    // Validação de segurança final da soma
+    const elRestante = document.getElementById('fechamento-restante');
+    if (!elRestante) return;
+    const restante = parseFloat(elRestante.innerText.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
+    
+    let somaParcelas = 0;
+    document.querySelectorAll('.input-val-parcela').forEach(input => {
+        somaParcelas += parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+    });
+    
+    if (Math.abs(restante - somaParcelas) > 0.05) {
+        if(window.mostrarToast) window.mostrarToast("A soma das parcelas está incorreta!", "erro");
+        return;
+    }
+
+    const confirmou = await window.abrirConfirmacao("Concluir O.S.", "Confirmar o fechamento definitivo e a geração do faturamento automático?", "aviso");
     if(!confirmou) return;
     
     try {
         const elConclusao = document.getElementById('fechamento-conclusao');
         const dataConclusao = elConclusao ? elConclusao.value : null;
-        
-        // MUDANÇA DE REQUISITO: Agora a O.S. vai direto para FECHADO
         const novaSituacao = 'Fechado';
 
-        const { error } = await supabase.from('ordens_servico').update({
+        // 1. Atualiza a O.S para Travada/Fechada
+        const { error: errOS } = await supabase.from('ordens_servico').update({
             situacao: novaSituacao,
             status: novaSituacao,
             data_conclusao: dataConclusao
         }).eq('id', window.osEmEdicaoId);
         
-        if (error) throw error;
+        if (errOS) throw errOS;
 
-        if(window.mostrarToast) window.mostrarToast("O.S. Fechada com Sucesso!", "sucesso");
+        // 2. Extração segura de metadados para as parcelas
+        const clienteNome = document.getElementById('cliente')?.value || 'CLIENTE AVULSO';
+        const veiculoPlaca = document.getElementById('placa')?.value || 'AVULSA';
+        const contaDestinoGlobal = document.getElementById('fechamento-conta')?.value || 'Caixa Interno';
+        const checkboxGerarFinanceiro = document.getElementById('fechamento-gerar-financeiro')?.checked;
+
+        // Se o utilizador desmarcar a flag de faturamento, pula a inserção e encerra
+        if (checkboxGerarFinanceiro !== false && restando > 0) {
+            const linhasParcelas = document.querySelectorAll('#tbody-preview-parcelas .text-row-parcela');
+            const loteFinanceiro = [];
+
+            linhasParcelas.forEach(linha => {
+                const indexTxt = linha.querySelector('.num-p-index').innerText; // Ex: "1/3"
+                const dataVenc = linha.querySelector('.input-data-parcela').value;
+                const operacaoSel = linha.querySelector('.input-op-parcela').value;
+                const valorRaw = linha.querySelector('.input-val-parcela').value;
+                const nsuTxt = linha.querySelector('.input-doc-parcela').value || '';
+
+                const valorNum = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.')) || 0;
+
+                if (valorNum > 0) {
+                    loteFinanceiro.push({
+                        os_id: window.osEmEdicaoId,
+                        cliente: clienteNome.trim().toUpperCase(),
+                        placa: veiculoPlaca.trim().toUpperCase(),
+                        numero_parcela: indexTxt,
+                        vencimento: dataVenc,
+                        valor: valorNum,
+                        operacao: operacaoSel,
+                        conta_destino: contaDestinoGlobal,
+                        nsu_doc: nsuTxt.trim().toUpperCase(),
+                        status: 'Pendente'
+                    });
+                }
+            });
+
+            if (loteFinanceiro.length > 0) {
+                const { error: errFin } = await supabase.from('contas_receber').insert(loteFinanceiro);
+                if (errFin) throw errFin;
+                console.log(`🟢 Ponte Financeira Executada: ${loteFinanceiro.length} parcelas salvas no cofre!`);
+            }
+        }
+
+        if(window.mostrarToast) window.mostrarToast("O.S. Fechada e Financeiro Gerado!", "sucesso");
         const modalFech = document.getElementById('modal-fechamento-os');
         if(modalFech) modalFech.classList.add('hidden');
         window.fecharModalOsDireto();
         window.carregarOrdensServico();
     } catch(e) {
-        console.error(e);
-        alert("Erro ao processar o fechamento.");
+        console.error("FALHA DE ESCRITA NA PONTE FINANCEIRA:", e);
+        alert("Erro crítico no faturamento: " + e.message);
     }
 };
 
