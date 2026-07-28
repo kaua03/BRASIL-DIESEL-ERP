@@ -10,8 +10,19 @@ window.itemEmEdicaoId = null;
 window.listaVeiculosBdd = []; 
 
 // =========================================================================
-// 1. MÁSCARAS E APIS
+// 1. MÁSCARAS E FUNÇÕES GLOBAIS DE VISUALIZAÇÃO
 // =========================================================================
+
+// Função que o sistema reclama estar faltando (Blindada na primeira linha!)
+window.atualizarTopHeaderVisualizacao = function(os) {
+    const hCliente = document.getElementById('header-view-cliente');
+    const hVeiculo = document.getElementById('header-view-veiculo');
+    const hPlaca = document.getElementById('header-view-placa');
+    if(hCliente) hCliente.innerText = String(os.cliente || 'CLIENTE NÃO INFORMADO').toUpperCase();
+    if(hVeiculo) hVeiculo.innerText = String(os.modelo || 'VEÍCULO NÃO INFORMADO').toUpperCase();
+    if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
+};
+
 window.formatarPlaca = function(placa) {
     if (!placa) return '';
     let p = String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
@@ -228,16 +239,6 @@ window.atualizarTituloModalOs = function(numeroOs = null, placa = '') {
     }
 };
 
-// A FUNÇÃO QUE FALTAVA FOI RESTAURADA AQUI!
-window.atualizarTopHeaderVisualizacao = function(os) {
-    const hCliente = document.getElementById('header-view-cliente');
-    const hVeiculo = document.getElementById('header-view-veiculo');
-    const hPlaca = document.getElementById('header-view-placa');
-    if(hCliente) hCliente.innerText = String(os.cliente || 'CLIENTE NÃO INFORMADO').toUpperCase();
-    if(hVeiculo) hVeiculo.innerText = String(os.modelo || 'VEÍCULO NÃO INFORMADO').toUpperCase();
-    if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
-};
-
 window.toggleDrop = function(event, id, btnElement) {
     if(event) { event.preventDefault(); event.stopPropagation(); }
 
@@ -291,7 +292,7 @@ window.alterarStatusOsInline = async function(id, selectElement) {
         window.carregarOrdensServico(); 
     } catch (e) {
         console.error("ERRO AO ATUALIZAR STATUS:", e);
-        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação. Verifique o console.", "erro");
+        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação.", "erro");
         window.carregarOrdensServico(); 
     }
 };
@@ -608,9 +609,20 @@ window.carregarOrdensServico = async function() {
 
         tabela.innerHTML = dadosOrdenados.map(os => {
             const numeroFormatado = String(os.numero_os || os.id).padStart(4, '0');
-            const dataFormatada = os.data_hora ? new Date(os.data_hora).toLocaleString('pt-BR') : '---';
-            const placaFormatada = window.formatarPlaca(os.placa);
             
+            // CORREÇÃO: Formatação exata da Data e Hora (00:00)
+            let dataFormatada = '---';
+            if (os.data_hora) {
+                const d = new Date(os.data_hora);
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                const hora = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                dataFormatada = `${dia}/${mes}/${ano}, ${hora}:${min}`;
+            }
+
+            const placaFormatada = window.formatarPlaca(os.placa);
             const clienteFormatado = String(os.cliente || '---').trim().toUpperCase();
             const modeloUpper = String(os.modelo || '---').trim().toUpperCase();
             const veiculoFormatado = os.ano ? `${modeloUpper} - ${os.ano}` : modeloUpper;
@@ -620,15 +632,21 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            let iconeNotificacao = os.lab_atualizado ? `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse transition-all" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
+            // CORREÇÃO: Sino de Notificação removido da posição absolute para não encavalar
+            let iconeNotificacao = os.lab_atualizado ? `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="text-red-500 hover:text-red-700 animate-pulse transition-all flex-shrink-0" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
             return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border-b border-gray-100 dark:border-gray-700 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
-                    <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400">${dataFormatada}</td>
-                    <td class="p-4 font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap text-center relative">${iconeNotificacao}<span>${placaFormatada}</span></td>
+                    <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            ${iconeNotificacao}
+                            <span class="font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap">${placaFormatada}</span>
+                        </div>
+                    </td>
                     <td class="p-4 text-sm text-gray-700 dark:text-gray-300">
                         <p class="font-bold text-gray-800 dark:text-white">${clienteFormatado}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">${veiculoFormatado}</p>
@@ -1301,8 +1319,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.add('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = true;
-            btnConfirmar.classList.remove('bg-amber-500', 'hover:bg-amber-600');
-            btnConfirmar.classList.add('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
+            btnConfirmar.classList.replace('bg-amber-500', 'bg-gray-400');
+            btnConfirmar.classList.replace('hover:bg-amber-600', 'hover:bg-gray-500');
             btnConfirmar.innerText = "VALORES NÃO BATEM";
         }
     } else {
@@ -1310,8 +1328,8 @@ window.validarSomaParcelas = function() {
         footerSoma.classList.remove('text-red-600', 'dark:text-red-400');
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
-            btnConfirmar.classList.remove('bg-gray-400', 'hover:bg-gray-500', 'cursor-not-allowed');
-            btnConfirmar.classList.add('bg-amber-500', 'hover:bg-amber-600');
+            btnConfirmar.classList.replace('bg-gray-400', 'bg-amber-500');
+            btnConfirmar.classList.replace('hover:bg-gray-500', 'hover:bg-amber-600');
             btnConfirmar.innerText = "CONFIRMAR FECHAMENTO";
         }
     }
@@ -1335,9 +1353,6 @@ window.calcularGarantia = function() {
     }
 };
 
-// =========================================================================
-// PONTE TÁTICA FINANCEIRA: INGESTÃO AUTOMÁTICA EM CONTAS_RECEBER (Fase 2)
-// =========================================================================
 window.confirmarFechamentoOS = async function() {
     const elRestante = document.getElementById('fechamento-restante');
     if (!elRestante) return;
