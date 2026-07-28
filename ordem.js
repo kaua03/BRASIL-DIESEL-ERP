@@ -103,25 +103,22 @@ window.consultarCep = async function(input) {
 // =========================================================================
 window.carregarDatalists = async function() {
     try {
-        // Carrega Clientes
         const { data: clientes } = await supabase.from('clientes').select('nome, documento').order('nome');
         if (clientes) {
             const dlClientes = document.getElementById('lista-clientes');
             if (dlClientes) dlClientes.innerHTML = clientes.map(c => `<option value="${c.nome}">${c.documento || ''}</option>`).join('');
         }
 
-        // Carrega Veículos para o Gatilho da Marca
         const { data: veiculos } = await supabase.from('veiculos').select('modelo, marca').order('modelo');
         if (veiculos) {
-            window.listaVeiculosBdd = veiculos; // Guarda na memória
-            const modelosUnicos = [...new Set(veiculos.map(v => v.modelo))]; // Remove duplicatas
+            window.listaVeiculosBdd = veiculos;
+            const modelosUnicos = [...new Set(veiculos.map(v => v.modelo))];
             const dlVeiculos = document.getElementById('lista-veiculos');
             if (dlVeiculos) dlVeiculos.innerHTML = modelosUnicos.map(m => `<option value="${m}">`).join('');
         }
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
 
-// Gatilho: Identifica a Marca automaticamente ao digitar o Modelo
 document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'modelo') {
         const mod = e.target.value.trim().toUpperCase();
@@ -146,15 +143,17 @@ window.alternarModoLeitura = function(ativo) {
         if (el.type !== 'hidden') el.disabled = ativo;
     });
 
-    // Exceções e visualizações
     const btnFecharOs = document.getElementById('btn-fechar-os');
+    const btnBalcao = document.getElementById('btn-os-balcao'); // Captura o botão Avulsa
     const cabecalho = document.getElementById('cabecalho-modal-os');
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
+        if (btnBalcao) btnBalcao.classList.add('hidden'); // Oculta botão Avulsa no modo leitura
         if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
         if (btnFecharOs) btnFecharOs.classList.remove('hidden');
+        if (btnBalcao) btnBalcao.classList.remove('hidden'); // Restaura o botão
         if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
 
@@ -232,10 +231,8 @@ document.addEventListener('scroll', function(event) {
 
 window.alterarStatusOsInline = async function(id, selectElement) {
     const novaSituacao = selectElement.value;
-    
     selectElement.className = 'text-[10px] uppercase px-2 py-1 rounded-full tracking-wider outline-none cursor-pointer text-center text-center-last transition-colors font-bold shadow-sm border border-transparent hover:border-gray-300';
     
-    // Simplificando o visualizador de cores para a tabela
     if (novaSituacao === 'Aberto') selectElement.classList.add('bg-sky-100', 'text-sky-800');
     else if (novaSituacao === 'Em Execução') selectElement.classList.add('bg-indigo-100', 'text-indigo-800');
     else if (novaSituacao === 'Autorizado') selectElement.classList.add('bg-emerald-100', 'text-emerald-800');
@@ -593,24 +590,30 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL, RASTREIO E ITENS (COM MOTOR DE INTELIGÊNCIA)
+// 6. GESTÃO DO MODAL E RASTREIO DE RESPONSÁVEL (DevSecOps)
 // =========================================================================
-window.abrirModalNovaOs = function() {
+window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
     window.itensOrcamento = []; window.modoLeitura = false; window.itemEmEdicaoId = null;
     document.getElementById('form-nova-os')?.reset();
     
-    // Zera Valores Iniciais
     document.getElementById('outros-valores').value = '0,00';
+    document.getElementById('outros-porcentagem').innerText = '+ 0.00%';
     document.getElementById('desconto-valor').value = '0,00';
-    document.getElementById('desconto-porcentagem').innerText = '0.00%';
+    document.getElementById('desconto-porcentagem').innerText = 'Representa 0.00%';
     
-    // Captura o Responsável automaticamente pelo login
-    const respLogado = document.getElementById('usuario-logado')?.innerText || 'SISTEMA';
-    const campoResp = document.getElementById('responsavel_os');
-    if (campoResp) campoResp.value = respLogado;
+    // Busca do Responsável em tempo real no banco, sem depender do DOM lento da tela
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            document.getElementById('responsavel_os').value = session.user.email.split('@')[0].toUpperCase();
+        } else {
+            document.getElementById('responsavel_os').value = document.getElementById('usuario-logado')?.innerText || 'SISTEMA';
+        }
+    } catch (e) {
+        document.getElementById('responsavel_os').value = 'SISTEMA';
+    }
 
-    // Remove os segundos da Data/Hora
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('data_hora').value = now.toISOString().slice(0, 16); 
@@ -633,19 +636,16 @@ window.buscarDadosOs = async function(id) {
     window.osNumeroAtual = os.numero_os || os.id;
     window.itemEmEdicaoId = null;
 
-    // Dados base
     document.getElementById('data_hora').value = os.data_hora ? os.data_hora.slice(0, 16) : '';
     document.getElementById('responsavel_os').value = os.responsavel || 'SISTEMA';
     document.getElementById('setor_destino').value = os.setor_destino || 'Pátio';
     
-    // Veículo
     document.getElementById('placa').value = window.formatarPlaca(os.placa);
     document.getElementById('modelo').value = (os.modelo || '').trim();
     document.getElementById('marca').value = (os.marca || '').trim();
     document.getElementById('ano').value = (os.ano || '').trim();
     document.getElementById('km_veiculo').value = (os.km_veiculo || '').trim();
     
-    // Cliente
     document.getElementById('cpf_cnpj').value = (os.cpf_cnpj || '').trim();
     document.getElementById('inscricao_estadual').value = (os.inscricao_estadual || '').trim();
     document.getElementById('cliente').value = (os.cliente || '').trim();
@@ -658,7 +658,6 @@ window.buscarDadosOs = async function(id) {
     document.getElementById('numero_end').value = (os.numero_end || '').trim();
     document.getElementById('complemento').value = (os.complemento || '').trim();
     
-    // Financeiro
     document.getElementById('outros-valores').value = (os.outros_valores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     document.getElementById('desconto-tipo').value = os.desconto_tipo || 'total';
     document.getElementById('desconto-valor').value = (os.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
@@ -683,7 +682,6 @@ window.salvarOs = async function(event) {
         document.getElementById('placa').focus(); return;
     }
     
-    // Captura os valores brutos para o banco
     const tPecas = window.itensOrcamento.filter(i => i.tipo === 'Peça').reduce((acc, i) => acc + (Number(i.subtotal) || 0), 0);
     const tServ = window.itensOrcamento.filter(i => i.tipo === 'Serviço').reduce((acc, i) => acc + (Number(i.subtotal) || 0), 0);
     const valOutros = parseFloat(document.getElementById('outros-valores').value.replace(/\./g, '').replace(',', '.')) || 0;
@@ -789,7 +787,6 @@ window.atualizarVisibilidadeBotoesFechamento = function() {
         if(btnFecharOs) btnFecharOs.classList.add('hidden');
         return;
     }
-    // Mostra Botão X apenas se não houver alteração
     if (window.formAlterado) {
         if(btnX) btnX.classList.add('hidden');
     } else {
@@ -833,13 +830,12 @@ window.editarItemOrcamento = function(id) {
 };
 
 // =========================================================================
-// MOTOR DE INTELIGÊNCIA (CROSS-SELL / UP-SELL) E DESCONTO
+// MOTOR DE INTELIGÊNCIA (CROSS-SELL / UP-SELL) E CÁLCULOS
 // =========================================================================
 window.verificarMotorInteligencia = function(descricaoNova) {
     const desc = descricaoNova.toLowerCase();
     let sugestao = null; let tipoSugestao = 'Serviço';
     
-    // Regras de Negócio de Elite
     if (desc.includes('limpeza de tanque')) {
         sugestao = 'ABASTECIMENTO / COMBUSTÍVEL (DIESEL)';
         tipoSugestao = 'Peça';
@@ -889,8 +885,6 @@ window.adicionarItemOrcamento = function() {
         window.itemEmEdicaoId = null;
     } else {
         window.itensOrcamento.push({ id: Date.now(), tipo, descricao: desc, qtd, valorUnitario: vNum, subtotal: subtotal, concluido: false });
-        
-        // Aciona o Motor de I.A. assim que o item entra na lista
         window.verificarMotorInteligencia(desc);
     }
 
@@ -961,20 +955,24 @@ window.atualizarTotaisOrcamento = function() {
     let vOutros = parseFloat(txtOutros.replace(/\./g, '').replace(',', '.')) || 0;
     let vDesconto = parseFloat(txtDesconto.replace(/\./g, '').replace(',', '.')) || 0;
 
-    // A REGRIA DE BLINDAGEM DO DESCONTO: Não deixa dar desconto maior que o limite selecionado
-    const subtotalBruto = tPecas + tServ + vOutros; 
+    const subtotalBase = tPecas + tServ;
+    
+    // CORREÇÃO: Calcula porcentagem de Outros (R$) sobre Peças + Serviços
+    let percentualOutros = 0;
+    if (subtotalBase > 0 && vOutros > 0) {
+        percentualOutros = (vOutros / subtotalBase) * 100;
+    }
+    const labelOutrosPct = document.getElementById('outros-porcentagem');
+    if (labelOutrosPct) labelOutrosPct.innerText = `+ ${percentualOutros.toFixed(2)}%`;
+
+    const subtotalBruto = subtotalBase + vOutros; 
     
     if (tipoDesconto === 'pecas' && vDesconto > tPecas) {
-        vDesconto = tPecas;
-        document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        if(window.mostrarToast) window.mostrarToast("Desconto ajustado ao limite de peças.", "aviso");
+        vDesconto = tPecas; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     } else if (tipoDesconto === 'servicos' && vDesconto > tServ) {
-        vDesconto = tServ;
-        document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        if(window.mostrarToast) window.mostrarToast("Desconto ajustado ao limite de serviços.", "aviso");
+        vDesconto = tServ; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     } else if (tipoDesconto === 'total' && vDesconto > subtotalBruto) {
-        vDesconto = subtotalBruto;
-        document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        vDesconto = subtotalBruto; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     }
     
     let percentualDesconto = 0;
@@ -1006,16 +1004,14 @@ window.abrirModalFechamento = async function() {
         return;
     }
     
-    // Força gravação dos dados atuais da O.S. primeiro
     const eventoMock = { preventDefault: () => {} };
     await window.salvarOs(eventoMock); 
-    if(!window.osEmEdicaoId) return; // Só abre se salvou com sucesso
+    if(!window.osEmEdicaoId) return;
 
     window.atualizarTotaisOrcamento(); 
     document.getElementById('fechamento-total').innerText = document.getElementById('total-geral').innerText;
     window.calcularRestanteFechamento();
     
-    // Configura datas iniciais
     document.getElementById('fechamento-vencimento').value = new Date().toISOString().split('T')[0];
     const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
     document.getElementById('fechamento-conclusao').value = agora.toISOString().slice(0,16);
@@ -1069,7 +1065,7 @@ window.gerarPreviewParcelas = function() {
                 <td class="p-2"><input type="text" placeholder="NSU/Doc (Opcional)" class="w-full px-2 py-1.5 text-xs font-mono font-bold border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none focus:border-amber-500 transition-colors"></td>
             </tr>
         `;
-        dataAtual.setMonth(dataAtual.getMonth() + 1); // Adiciona 1 mês para a próxima parcela
+        dataAtual.setMonth(dataAtual.getMonth() + 1);
     }
     tbody.innerHTML = html;
 };
@@ -1078,7 +1074,6 @@ window.calcularGarantia = function() {
     const entrega = document.getElementById('fechamento-entrega').value;
     if(entrega) {
         const dataGarantia = new Date(entrega);
-        // Regra Padrão do CDC: 90 dias
         dataGarantia.setDate(dataGarantia.getDate() + 90);
         document.getElementById('fechamento-garantia').value = dataGarantia.toISOString().split('T')[0];
     }
@@ -1088,11 +1083,9 @@ window.confirmarFechamentoOS = async function() {
     const confirmou = await window.abrirConfirmacao("Concluir O.S.", "Confirmar o fechamento definitivo e a geração do financeiro?", "aviso");
     if(!confirmou) return;
     
-    // Atualiza status da O.S. para Fechado/Aguardando Pagamento
     try {
-        const gerarFinanceiro = document.getElementById('fechamento-gerar-financeiro').checked;
         const dataConclusao = document.getElementById('fechamento-conclusao').value;
-        const novaSituacao = 'Aguardando Pagamento'; // Poderia ser 'Finalizado' dependendo da sua regra
+        const novaSituacao = 'Aguardando Pagamento';
 
         const { error } = await supabase.from('ordens_servico').update({
             situacao: novaSituacao,
@@ -1101,9 +1094,6 @@ window.confirmarFechamentoOS = async function() {
         }).eq('id', window.osEmEdicaoId);
         
         if (error) throw error;
-
-        // Se gerarFinanceiro for TRUE, aqui vai o código de inserção na tabela contas_receber no futuro.
-        // O escopo de hoje foca na interface e organização dos dados, o módulo financeiro tratará a ingestão disso.
 
         if(window.mostrarToast) window.mostrarToast("O.S. Fechada com Sucesso!", "sucesso");
         document.getElementById('modal-fechamento-os').classList.add('hidden');
@@ -1115,9 +1105,6 @@ window.confirmarFechamentoOS = async function() {
     }
 };
 
-// =========================================================================
-// O.S. AVULSA / BALCÃO (Preenchimento Rápido)
-// =========================================================================
 window.preencherVeiculoAvulso = function() {
     const p = document.getElementById('placa'); const m = document.getElementById('modelo'); const ma = document.getElementById('marca'); const a = document.getElementById('ano');
     if (p) { p.value = 'AVULSA'; p.dispatchEvent(new Event('input')); }
