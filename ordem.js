@@ -163,17 +163,17 @@ window.alternarModoLeitura = function(ativo) {
 
 window.obterCoresStatus = function(situacao) {
     switch(situacao) {
-        case 'Aberto': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400';
-        case 'Orçamento': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-        case 'Aguardando Autorização': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
-        case 'Aguardando Peça': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
-        case 'Aguardando Pagamento': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-        case 'Autorizado': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
-        case 'Em Execução': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
-        case 'Garantia': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400';
-        case 'Não Usar': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-        case 'Recusado': return 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300';
-        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+        case 'Aberto': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
+        case 'Orçamento': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
+        case 'Aguardando Autorização': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200';
+        case 'Aguardando Peça': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200';
+        case 'Aguardando Pagamento': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200';
+        case 'Autorizado': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200';
+        case 'Em Execução': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-200';
+        case 'Garantia': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200';
+        case 'Não Usar': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200';
+        case 'Recusado': return 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300 border-red-300';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200';
     }
 };
 
@@ -217,13 +217,13 @@ window.toggleDrop = function(id, btnElement) {
     if (menu.classList.contains('hidden')) {
         menu.classList.remove('hidden');
         
-        // CÁLCULO FIXED: O menu agora flutua acima de tudo e não é cortado pela tabela
+        // MÁGICA DEVSECOPS: Usar Fixed para sobrepor a tabela sem cortar
         const rect = btnElement.getBoundingClientRect();
         menu.style.position = 'fixed'; 
         menu.style.top = `${rect.bottom + 4}px`;
         
-        const menuWidth = 192; // Tamanho w-48 do Tailwind
-        let leftPos = rect.right - menuWidth; 
+        const menuWidth = 192; 
+        let leftPos = rect.right - menuWidth + rect.width; 
         if (leftPos < 10) leftPos = rect.left; 
         
         menu.style.left = `${leftPos}px`;
@@ -238,16 +238,15 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// Ao rolar a tela, fecha o menu flutuante para não ficar perdido no ar
 document.addEventListener('scroll', function(event) {
-    if (event.target.closest && event.target.closest('.menu-acao-os')) return;
     document.querySelectorAll('.menu-acao-os').forEach(el => el.classList.add('hidden'));
 }, { capture: true });
 
 window.alterarStatusOsInline = async function(id, selectElement) {
     const novaSituacao = selectElement.value;
     
-    // Atualiza a cor dinamicamente com a nossa nova fábrica de cores
-    selectElement.className = `text-[10px] uppercase px-2 py-1 rounded-full font-bold tracking-wider outline-none cursor-pointer text-center text-center-last border border-transparent shadow-sm transition-colors ${window.obterCoresStatus(novaSituacao)}`;
+    selectElement.className = `text-[10px] uppercase px-2 py-1.5 rounded-lg font-black tracking-wider outline-none cursor-pointer text-center text-center-last border shadow-sm transition-colors w-full max-w-[140px] ${window.obterCoresStatus(novaSituacao)}`;
 
     try {
         const { error } = await supabase.from('ordens_servico').update({ situacao: novaSituacao, status: novaSituacao }).eq('id', id);
@@ -546,9 +545,9 @@ window.carregarOrdensServico = async function() {
             
             let iconeNotificacao = os.lab_atualizado ? `<button onclick="window.visualizarNotificacaoLab(${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
 
-            // Usa a fábrica de cores centralizada para garantir que fica igual ao select interno
             const bgStatus = window.obterCoresStatus(os.situacao);
 
+            // SELECT REFORMULADO (Forçando as cores em cada opção)
             return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
@@ -563,43 +562,43 @@ window.carregarOrdensServico = async function() {
                         <p class="font-black text-[#1a428a] dark:text-blue-400 tracking-wide">R$ ${totalMatematico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </td>
                     <td class="p-4 text-center">
-                        <select onchange="window.alterarStatusOsInline(${os.id}, this)" class="${bgStatus} text-[10px] uppercase px-2 py-1 rounded-full font-bold tracking-wider outline-none cursor-pointer text-center text-center-last border border-transparent shadow-sm">
-                            <option value="Aberto" style="background-color: #E0F2FE; color: #0369A1;" ${os.situacao === 'Aberto' ? 'selected' : ''}>ABERTO</option>
-                            <option value="Orçamento" style="background-color: #F3E8FF; color: #6B21A8;" ${os.situacao === 'Orçamento' ? 'selected' : ''}>ORÇAMENTO</option>
-                            <option value="Aguardando Autorização" style="background-color: #FEF3C7; color: #B45309;" ${os.situacao === 'Aguardando Autorização' ? 'selected' : ''}>AGUAR. AUTORIZAÇÃO</option>
-                            <option value="Aguardando Peça" style="background-color: #FFEDD5; color: #C2410C;" ${os.situacao === 'Aguardando Peça' ? 'selected' : ''}>AGUAR. PEÇA</option>
-                            <option value="Aguardando Pagamento" style="background-color: #FEF08A; color: #854D0E;" ${os.situacao === 'Aguardando Pagamento' ? 'selected' : ''}>AGUAR. PAGAMENTO</option>
-                            <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D;" ${os.situacao === 'Autorizado' ? 'selected' : ''}>AUTORIZADO</option>
-                            <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3;" ${os.situacao === 'Em Execução' ? 'selected' : ''}>EM EXECUÇÃO</option>
-                            <option value="Garantia" style="background-color: #CCFBF1; color: #0F766E;" ${os.situacao === 'Garantia' ? 'selected' : ''}>GARANTIA</option>
-                            <option value="Não Usar" style="background-color: #FEE2E2; color: #991B1B;" ${os.situacao === 'Não Usar' ? 'selected' : ''}>CANCELADA</option>
+                        <select onchange="window.alterarStatusOsInline(${os.id}, this)" class="${bgStatus} text-[10px] uppercase px-2 py-1.5 rounded-lg font-black tracking-wider outline-none cursor-pointer text-center text-center-last border shadow-sm transition-colors w-full max-w-[140px]">
+                            <option value="Aberto" style="background-color: #E0F2FE; color: #0369A1; font-weight: 800;" ${os.situacao === 'Aberto' ? 'selected' : ''}>ABERTO</option>
+                            <option value="Orçamento" style="background-color: #F3E8FF; color: #6B21A8; font-weight: 800;" ${os.situacao === 'Orçamento' ? 'selected' : ''}>ORÇAMENTO</option>
+                            <option value="Aguardando Autorização" style="background-color: #FEF3C7; color: #B45309; font-weight: 800;" ${os.situacao === 'Aguardando Autorização' ? 'selected' : ''}>AGUAR. AUTORIZAÇÃO</option>
+                            <option value="Aguardando Peça" style="background-color: #FFEDD5; color: #C2410C; font-weight: 800;" ${os.situacao === 'Aguardando Peça' ? 'selected' : ''}>AGUAR. PEÇA</option>
+                            <option value="Aguardando Pagamento" style="background-color: #FEF08A; color: #854D0E; font-weight: 800;" ${os.situacao === 'Aguardando Pagamento' ? 'selected' : ''}>AGUAR. PAGAMENTO</option>
+                            <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D; font-weight: 800;" ${os.situacao === 'Autorizado' ? 'selected' : ''}>AUTORIZADO</option>
+                            <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3; font-weight: 800;" ${os.situacao === 'Em Execução' ? 'selected' : ''}>EM EXECUÇÃO</option>
+                            <option value="Garantia" style="background-color: #CCFBF1; color: #0F766E; font-weight: 800;" ${os.situacao === 'Garantia' ? 'selected' : ''}>GARANTIA</option>
+                            <option value="Não Usar" style="background-color: #FEE2E2; color: #991B1B; font-weight: 800;" ${os.situacao === 'Não Usar' ? 'selected' : ''}>CANCELADA</option>
+                            <option value="Recusado" style="background-color: #FECACA; color: #B91C1C; font-weight: 800;" ${os.situacao === 'Recusado' ? 'selected' : ''}>RECUSADO</option>
                         </select>
                     </td>
                     <td class="p-4">
-                        <div class="flex items-center justify-center gap-3 dropdown-container">
+                        <div class="flex items-center justify-center gap-2 relative dropdown-container">
                             
-                            <!-- Botões de Ação Direta (UX Rápida) -->
-                            <button onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 transition-colors" title="Visualizar Detalhes">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            <!-- Botões de Ação Direta (Mais rápidos para a Oficina) -->
+                            <button onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Ver Detalhes">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                             </button>
-                            <button onclick="window.editarOs(${os.id})" class="text-amber-500 hover:text-amber-700 transition-colors" title="Editar O.S">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            <button onclick="window.editarOs(${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Editar O.S">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             </button>
-                            <button onclick="window.excluirOs(${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 transition-colors" title="Eliminar O.S">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <button onclick="window.excluirOs(${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Eliminar O.S">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
 
                             <!-- Dropdown de 3 Pontinhos (Ações Secundárias) -->
-                            <div class="relative">
-                                <button onclick="window.toggleDrop(${os.id}, this)" class="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors" title="Mais Opções">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                                </button>
-                                <!-- Menu Fixed Anti-Corte -->
-                                <div id="menu-${os.id}" class="menu-acao-os hidden w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[999] py-2 text-left">
-                                    <button onclick="window.imprimirOsDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
-                                    <button onclick="window.salvarComoPdfDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
-                                    <button onclick="window.enviarWhatsAppDaLista(${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> Enviar Laudo WP</button>
-                                </div>
+                            <button onclick="window.toggleDrop(${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-colors shadow-sm" title="Mais Opções">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                            </button>
+
+                            <!-- Menu Fixed Dropdown (Sobreposição Absoluta) -->
+                            <div id="menu-${os.id}" class="menu-acao-os hidden fixed w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[9999] py-2 text-left" style="min-width: 180px;">
+                                <button onclick="window.imprimirOsDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
+                                <button onclick="window.salvarComoPdfDaLista(${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
+                                <button onclick="window.enviarWhatsAppDaLista(${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> Enviar Laudo WP</button>
                             </div>
                         </div>
                     </td>
