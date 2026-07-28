@@ -1,17 +1,35 @@
 <!-- views/nav/patio.html -->
-<div class="fade-in space-y-6">
-    <!-- Cabeçalho Limpo (Sem botão atualizar) -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+<div class="fade-in space-y-6 flex flex-col h-full">
+    <!-- Cabeçalho Dinâmico -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300 shrink-0" id="header-patio">
         <div>
-            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Pátio de Execução</h2>
+            <div class="flex items-center gap-3">
+                <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Pátio de Execução</h2>
+                <!-- Indicador de Sincronização em Tempo Real -->
+                <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black tracking-widest uppercase border border-green-200 dark:border-green-800" title="Conectado ao Supabase Realtime">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    Live Sync
+                </span>
+            </div>
             <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Acompanhamento em tempo real, checklists e diário de bordo.</p>
         </div>
+        
+        <!-- Botão de Modo TV (Manual) -->
+        <button type="button" onclick="window.alternarModoTV()" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl transition-all shadow-sm border border-transparent dark:border-gray-600 hidden sm:flex" id="btn-modo-tv">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            Modo TV
+        </button>
     </div>
 
-    <!-- Grid de Cards Compactos do Pátio -->
-    <div id="grid-patio" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div class="col-span-full text-center p-12 text-gray-400 dark:text-gray-500 font-bold bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
-            A rastrear veículos no pátio...
+    <!-- Grid de Cards Compactos do Pátio (Preparado para telas gigantes) -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar pb-6">
+        <div id="grid-patio" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div class="col-span-full text-center p-12 text-gray-400 dark:text-gray-500 font-bold bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                A rastrear veículos no pátio...
+            </div>
         </div>
     </div>
 </div>
@@ -19,44 +37,46 @@
 <!-- ========================================================= -->
 <!-- MODAL DE EXECUÇÃO DO PÁTIO (Checklist e Diário)           -->
 <!-- ========================================================= -->
-<div id="modal-patio" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh] max-h-[800px] overflow-hidden transform transition-transform duration-300">
+<div id="modal-patio" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh] max-h-[800px] overflow-hidden transform transition-all duration-300 border border-transparent dark:border-gray-700">
         
         <!-- Cabeçalho do Modal -->
-        <div class="flex justify-between items-center p-5 border-b border-gray-100 bg-[#1a428a] text-white">
+        <div class="flex justify-between items-center p-5 border-b border-[#1a428a]/20 bg-[#1a428a] dark:bg-[#081121] text-white">
             <div id="modal-patio-header">
-                <h3 class="text-xl font-black tracking-tight" id="modal-patio-titulo">O.S. #0000 — PLACA</h3>
+                <h3 class="text-xl font-black tracking-tight flex items-center gap-2" id="modal-patio-titulo">
+                    O.S. #0000 — PLACA
+                </h3>
                 <p class="text-xs text-blue-200 font-medium mt-0.5" id="modal-patio-subtitulo">Veículo e Cliente</p>
             </div>
             <button type="button" onclick="window.fecharModalPatio()" class="text-blue-200 hover:text-white text-4xl leading-none font-light transition-colors">&times;</button>
         </div>
 
-        <!-- Corpo do Modal (Dividido em 2 colunas em telas grandes) -->
+        <!-- Corpo do Modal -->
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
             <!-- COLUNA ESQUERDA: CHECKLIST E PROGRESSO -->
-            <div class="flex-1 md:w-1/2 border-r border-gray-200 flex flex-col bg-white overflow-hidden">
+            <div class="flex-1 md:w-1/2 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e293b] overflow-hidden transition-colors">
                 <!-- Painel de Progresso Fixo no Topo -->
-                <div class="p-5 border-b border-gray-100 bg-gray-50/50">
-                    <div class="flex justify-between text-[11px] font-black text-gray-500 mb-2">
+                <div class="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f172a]/50">
+                    <div class="flex justify-between text-[11px] font-black text-gray-500 dark:text-gray-400 mb-2">
                         <span class="tracking-widest">PROGRESSO DE EXECUÇÃO</span>
-                        <span id="modal-patio-progresso-texto" class="text-[#1a428a] text-sm">0%</span>
+                        <span id="modal-patio-progresso-texto" class="text-[#1a428a] dark:text-[#3b82f6] text-sm">0%</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
-                        <div id="modal-patio-progresso-barra" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden shadow-inner">
+                        <div id="modal-patio-progresso-barra" class="bg-blue-500 dark:bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
                     </div>
                 </div>
                 
                 <!-- Área Rolável dos Checklists -->
-                <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white" id="modal-patio-checklist">
+                <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white dark:bg-[#1e293b]" id="modal-patio-checklist">
                     <!-- Gerado pelo JS -->
                 </div>
             </div>
 
             <!-- COLUNA DIREITA: DIÁRIO DE BORDO (CHAT) -->
-            <div class="flex-1 md:w-1/2 flex flex-col bg-gray-50 overflow-hidden relative">
-                <div class="p-3 border-b border-gray-200 bg-gray-100/80">
-                    <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+            <div class="flex-1 md:w-1/2 flex flex-col bg-gray-50 dark:bg-[#0f172a] overflow-hidden relative transition-colors">
+                <div class="p-3 border-b border-gray-200 dark:border-gray-800 bg-gray-100/80 dark:bg-[#1e293b]">
+                    <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
                         Diário de Bordo
                     </h4>
@@ -68,9 +88,9 @@
                 </div>
                 
                 <!-- Input de Envio de Mensagem Fixo no Rodapé -->
-                <div class="p-4 bg-white border-t border-gray-200 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
-                    <input type="text" id="modal-patio-input" placeholder="Escreva uma observação técnica..." class="flex-1 text-sm px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#1a428a] focus:ring-1 focus:ring-[#1a428a] transition-all bg-gray-50 focus:bg-white" onkeypress="if(event.key === 'Enter') window.enviarComentarioPatioAtual()">
-                    <button onclick="window.enviarComentarioPatioAtual()" class="bg-[#1a428a] hover:bg-blue-900 text-white px-5 py-3 rounded-xl transition-colors shadow-md flex items-center justify-center">
+                <div class="p-4 bg-white dark:bg-[#1e293b] border-t border-gray-200 dark:border-gray-800 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 transition-colors">
+                    <input type="text" id="modal-patio-input" placeholder="Escreva uma observação técnica..." class="flex-1 text-sm px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] focus:ring-1 focus:ring-[#1a428a] dark:focus:ring-[#3b82f6] transition-all bg-gray-50 dark:bg-[#0f172a] text-gray-800 dark:text-white" onkeypress="if(event.key === 'Enter') window.enviarComentarioPatioAtual()">
+                    <button onclick="window.enviarComentarioPatioAtual()" class="bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white px-5 py-3 rounded-xl transition-colors shadow-md flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
                 </div>
