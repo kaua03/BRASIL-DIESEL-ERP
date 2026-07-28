@@ -1,31 +1,30 @@
-// JS/core/auth.js (ou apenas auth.js se estiver tudo na raiz)
+// JS/core/auth.js
 import { supabase } from './config.js';
 
 // ==========================================
-// 1. O ROTEADOR SPA ANTI-TELA BRANCA & BLINDADO
+// 1. O ROTEADOR SPA ANTI-TELA BRANCA & BLINDADO (ACELERADO)
 // ==========================================
 window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null) {
     const palco = document.getElementById('conteudo-dinamico');
     if (!palco) return;
 
     // DEVSECOPS: INTERCEPTADOR DE SEGURANÇA (RBAC) DA O.S.
-    // Verifica se a tela é 'ordem' e se a sessão não foi liberada temporariamente
     if (nomeDaTela === 'ordem' && !window.osLiberadaTemporariamente) {
         const autorizado = await window.verificarPermissaoOS();
         if (!autorizado) {
             window.abrirModalSenhaLiberacaoOS();
-            return; // Aborta o carregamento do HTML da O.S.
+            return; 
         }
     }
 
-    // Grava a tela atual no sessionStorage para o requisito de recarregamento (F5) exato
+    // Grava a tela atual no sessionStorage para o F5
     sessionStorage.setItem('ultimaRota', JSON.stringify({ pasta, nomeDaTela, scriptParaChamar }));
 
-    // 1. INJETA O LOADER IMEDIATAMENTE (Acaba com a tela branca/flickering)
+    // 1. INJETA O LOADER IMEDIATAMENTE
     palco.innerHTML = `
         <div class="flex flex-col items-center justify-center h-full w-full anima-fade">
-            <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#1a428a] mb-4"></div>
-            <p class="text-[#1a428a] font-black tracking-widest uppercase text-sm animate-pulse">Carregando Módulo...</p>
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#1a428a] mb-4"></div>
+            <p class="text-[#1a428a] font-black tracking-widest uppercase text-xs animate-pulse">A carregar...</p>
         </div>
     `;
 
@@ -38,26 +37,26 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
     });
 
     try {
-        // 3. BUSCA O HTML NO SERVIDOR (CORRIGIDO PARA A RAIZ!)
+        // 3. BUSCA O HTML NO SERVIDOR
         const resposta = await fetch(`./${nomeDaTela}.html`);
         if (!resposta.ok) throw new Error(`HTML não encontrado: ${nomeDaTela}`);
         
         const html = await resposta.text();
         
-        // Dá 200ms para o usuário ver que o sistema respondeu e está fluído, depois cola o HTML
+        // ACELERAÇÃO: Reduzido de 200ms para 100ms para UX instantânea
         setTimeout(() => {
             palco.innerHTML = html;
 
-            // 4. CHAMA O BANCO DE DADOS (ex: carregarPatio)
+            // 4. CHAMA O BANCO DE DADOS DINAMICAMENTE
             if (scriptParaChamar && typeof window[scriptParaChamar] === 'function') {
                 window[scriptParaChamar]();
             }
-        }, 200);
+        }, 100);
         
     } catch (erro) {
         console.error("Erro no Roteador:", erro);
         palco.innerHTML = `
-            <div class="flex items-center justify-center h-full">
+            <div class="flex items-center justify-center h-full fade-in">
                 <div class="bg-red-50 p-6 rounded-xl border border-red-200 text-center shadow-sm">
                     <span class="text-5xl block mb-3">🚧</span>
                     <h3 class="text-red-800 font-black text-xl uppercase tracking-wider">Módulo em Construção</h3>
@@ -106,8 +105,9 @@ window.tentarLogar = async function(e) {
 
         const { data: userData } = await supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle();
 
-        // Faz transição de tela
         document.getElementById('tela-login')?.classList.add('opacity-0');
+        
+        // ACELERAÇÃO: Transição de login reduzida de 300ms para 150ms
         setTimeout(() => {
             document.getElementById('tela-login')?.classList.add('hidden');
             document.getElementById('tela-erp')?.classList.remove('hidden');
@@ -117,9 +117,9 @@ window.tentarLogar = async function(e) {
             if(document.getElementById('usuario-logado')) document.getElementById('usuario-logado').innerText = email.split('@')[0].toUpperCase();
             if(document.getElementById('cargo-logado')) document.getElementById('cargo-logado').innerText = userData?.Função || userData?.funcao || "DIRETORIA";
 
-            // AÇÃO OBRIGATÓRIA: Força a rota Pátio no primeiro login
+            // Força a rota Pátio no primeiro login
             window.carregarTela('nav', 'patio', 'carregarPatio');
-        }, 300);
+        }, 150);
 
     } catch (erro) {
         if(resultado) resultado.innerHTML = `<span class="text-red-500 font-bold">Acesso negado. Verifique os dados.</span>`;
@@ -130,8 +130,8 @@ window.tentarLogar = async function(e) {
 
 window.fazerLogout = async function() {
     await supabase.auth.signOut();
-    sessionStorage.removeItem('ultimaRota'); // Limpa a memória de navegação
-    window.osLiberadaTemporariamente = false; // Revoga a liberação gerencial
+    sessionStorage.removeItem('ultimaRota'); 
+    window.osLiberadaTemporariamente = false; 
     
     document.getElementById('tela-erp')?.classList.add('hidden');
     document.getElementById('tela-erp')?.classList.remove('flex');
@@ -151,7 +151,7 @@ window.fazerLogout = async function() {
 };
 
 // ==========================================
-// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO (Recarregamento F5 Exato)
+// 4. VERIFICAÇÃO AUTOMÁTICA DE SESSÃO
 // ==========================================
 window.restaurarSessao = async function() {
     try {
@@ -180,18 +180,16 @@ window.restaurarSessao = async function() {
             const cargoSpan = document.getElementById('cargo-logado');
             if (cargoSpan) cargoSpan.innerText = userData?.Função || userData?.funcao || "MASTER";
 
-            // Lógica de Recarregamento Inteligente (Cumprindo requisito do Pátio)
+            // ACELERAÇÃO: Fallback F5
             setTimeout(() => {
                 const rotaSalva = sessionStorage.getItem('ultimaRota');
                 if (rotaSalva) {
-                    // Retorna exatamente para onde estava
                     const { pasta, nomeDaTela, scriptParaChamar } = JSON.parse(rotaSalva);
                     window.carregarTela(pasta, nomeDaTela, scriptParaChamar);
                 } else {
-                    // Fallback de segurança para o Pátio
                     window.carregarTela('nav', 'patio', 'carregarPatio');
                 }
-            }, 100);
+            }, 50); // Baixei de 100ms para 50ms
         }
     } catch (erro) {
         console.error("Erro ao verificar sessão automática no F5:", erro);
@@ -214,7 +212,6 @@ window.verificarPermissaoOS = async function() {
 
         const funcaoUsuario = (userData?.Função || userData?.funcao || '').toUpperCase();
         
-        // Define quem tem acesso direto sem senha
         const funcoesAutorizadas = ['MASTER', 'DIRETORIA', 'GERENTE', 'ATENDENTE'];
         return funcoesAutorizadas.includes(funcaoUsuario);
     } catch (error) {
@@ -224,11 +221,10 @@ window.verificarPermissaoOS = async function() {
 };
 
 window.abrirModalSenhaLiberacaoOS = function() {
-    // Evita duplicar modal
     if (document.getElementById('modal-liberacao-os')) return;
 
     const modalHTML = `
-        <div id="modal-liberacao-os" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4 anima-fade">
+        <div id="modal-liberacao-os" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4 fade-in">
             <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border-t-4 border-red-500">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                     <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -246,15 +242,13 @@ window.abrirModalSenhaLiberacaoOS = function() {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    setTimeout(() => document.getElementById('senha-liberacao').focus(), 100);
+    setTimeout(() => document.getElementById('senha-liberacao').focus(), 50);
 };
 
 window.validarSenhaGerencial = async function(e) {
     e.preventDefault();
     const senha = document.getElementById('senha-liberacao').value;
     
-    // DEVSECOPS: Aqui chamamos a RPC no banco para validar o hash, a senha NÃO fica no Frontend.
-    // Lembre-se de criar a função RPC "validar_senha_gerencial" no Supabase posteriormente.
     try {
         const { data: aprovado, error } = await supabase.rpc('validar_senha_gerencial', { senha_tentativa: senha });
         
@@ -262,7 +256,6 @@ window.validarSenhaGerencial = async function(e) {
             document.getElementById('modal-liberacao-os').remove();
             if(window.mostrarToast) window.mostrarToast("Acesso Liberado", "sucesso");
             
-            // Cria um passe livre temporário para esta sessão
             window.osLiberadaTemporariamente = true; 
             window.carregarTela('nav', 'ordem', 'carregarOrdensServico');
         } else {
@@ -271,7 +264,6 @@ window.validarSenhaGerencial = async function(e) {
         }
     } catch (err) {
         console.error("Erro ao validar senha:", err);
-        // Fallback temporário para testes locais enquanto a RPC não é criada no Supabase
         if (senha === "123456") {
             console.warn("AVISO DEVSECOPS: Usando fallback de desenvolvimento. Crie a RPC no Supabase urgentemente.");
             document.getElementById('modal-liberacao-os').remove();
