@@ -1,12 +1,12 @@
 <!-- views/nav/ordem.html -->
 <div class="fade-in space-y-6 flex flex-col h-full">
     <!-- Cabeçalho -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300 shrink-0">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-150 shrink-0">
         <div>
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Ordens de Serviço (O.S)</h2>
             <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão completa de pátio, orçamentos e fechamento financeiro.</p>
         </div>
-        <button onclick="window.abrirModalNovaOs()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 flex items-center gap-2 shrink-0">
+        <button onclick="window.abrirModalNovaOs()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 duration-150 flex items-center gap-2 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Tabela de Listagem -->
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300 flex-1 flex flex-col">
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-150 flex-1 flex flex-col">
         <div class="overflow-x-auto flex-1 custom-scrollbar">
             <table class="w-full text-left border-collapse min-w-max">
                 <thead class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors">
@@ -42,11 +42,11 @@
 <!-- ========================================================= -->
 <!-- MODAL DE NOVA / EDITAR O.S.                               -->
 <!-- ========================================================= -->
-<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity">
+<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-150">
     <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[95vh] max-h-[900px] border border-transparent dark:border-gray-700 overflow-hidden">
 
         <!-- Cabeçalho Dinâmico -->
-        <div id="cabecalho-modal-os" class="flex justify-between items-center p-5 border-b border-gray-100 dark:border-gray-800 bg-[#1a428a] dark:bg-[#081121] text-white transition-colors duration-300 shrink-0">
+        <div id="cabecalho-modal-os" class="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800 bg-[#1a428a] dark:bg-[#081121] text-white transition-colors duration-150 shrink-0">
             <h3 id="modal-titulo-os" class="text-xl font-black tracking-wide">Ordem de Serviço — Placa: ---</h3>
             <button type="button" id="btn-fechar-x" onclick="window.fecharModalOsSeguro()" class="text-gray-300 hover:text-white transition-colors text-3xl leading-none font-light">&times;</button>
         </div>
@@ -55,19 +55,35 @@
         <form id="form-nova-os" onsubmit="window.salvarOs(event)" class="overflow-y-auto flex-1 custom-scrollbar p-6 space-y-6 relative text-sm">
             <input type="hidden" id="os-id-editando">
 
-            <!-- BLOCO 0: INFORMAÇÕES DE CONTROLE (Responsável e Setorização) -->
+            <!-- TOPO DE RESUMO RÁPIDO (Visível em Modo Leitura) -->
+            <div id="painel-topo-resumo" class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 flex justify-between items-center shadow-sm">
+                <div>
+                    <span class="text-[10px] text-blue-500 dark:text-blue-400 uppercase font-bold block mb-0.5 tracking-wider">Cliente</span>
+                    <span id="header-view-cliente" class="font-black text-sm text-blue-900 dark:text-blue-100">CRIANDO O.S...</span>
+                </div>
+                <div class="hidden sm:block">
+                    <span class="text-[10px] text-blue-500 dark:text-blue-400 uppercase font-bold block mb-0.5 tracking-wider">Veículo</span>
+                    <span id="header-view-veiculo" class="font-bold text-sm text-blue-900 dark:text-blue-100">---</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] text-blue-500 dark:text-blue-400 uppercase font-bold block mb-0.5 tracking-wider">Placa</span>
+                    <span id="header-view-placa" class="font-black text-lg text-[#1a428a] dark:text-[#3b82f6] font-mono leading-none">---</span>
+                </div>
+            </div>
+
+            <!-- BLOCO 0: INFORMAÇÕES DE CONTROLE -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Data/Hora Abertura</label>
-                    <input type="datetime-local" id="data_hora" step="60" required class="w-full bg-transparent outline-none font-mono font-bold text-gray-800 dark:text-white">
+                    <input type="datetime-local" id="data_hora" step="60" required class="w-full bg-transparent outline-none font-mono font-bold text-gray-800 dark:text-white transition-colors duration-150">
                 </div>
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Responsável</label>
-                    <input type="text" id="responsavel_os" readonly class="w-full bg-transparent outline-none font-bold text-gray-800 dark:text-white cursor-not-allowed uppercase" placeholder="Puxando login...">
+                    <input type="text" id="responsavel_os" readonly class="w-full bg-transparent outline-none font-bold text-gray-800 dark:text-white cursor-not-allowed uppercase transition-colors duration-150" placeholder="Puxando login...">
                 </div>
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Setorização de Destino</label>
-                    <select id="setor_destino" class="w-full bg-transparent outline-none font-bold text-[#1a428a] dark:text-[#3b82f6] cursor-pointer">
+                    <select id="setor_destino" class="w-full bg-transparent outline-none font-bold text-[#1a428a] dark:text-[#3b82f6] cursor-pointer transition-colors duration-150">
                         <option value="Pátio">Pátio</option>
                         <option value="Laboratório">Laboratório</option>
                         <option value="Pátio/Laboratório">Pátio & Laboratório</option>
@@ -76,12 +92,11 @@
             </div>
 
             <!-- BLOCO 1: DADOS DO VEÍCULO -->
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors relative">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150 relative">
                 <div class="flex justify-between items-center mb-4">
                     <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide">1. Dados do Veículo</h4>
                     
-                    <!-- CORREÇÃO: ID btn-os-balcao adicionado para o JS poder esconder no Modo Leitura -->
-                    <button type="button" id="btn-os-balcao" onclick="window.preencherVeiculoAvulso()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors border border-gray-200 dark:border-gray-600">
+                    <button type="button" id="btn-os-balcao" onclick="window.preencherVeiculoAvulso()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors duration-150 border border-gray-200 dark:border-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#facc15]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
                         O.S. Balcão
                     </button>
@@ -90,152 +105,152 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Placa</label>
-                        <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase font-mono font-bold transition-colors" placeholder="ABC-1234" maxlength="8">
+                        <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase font-mono font-bold transition-colors duration-150" placeholder="ABC-1234" maxlength="8">
                     </div>
                     <div class="md:col-span-2 relative">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Veículo / Modelo</label>
-                        <input type="text" id="modelo" list="lista-veiculos" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors" placeholder="Selecione ou digite...">
+                        <input type="text" id="modelo" list="lista-veiculos" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150" placeholder="Selecione ou digite...">
                         <datalist id="lista-veiculos"></datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Marca</label>
-                        <input type="text" id="marca" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors uppercase">
+                        <input type="text" id="marca" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150 uppercase">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Ano</label>
-                            <input type="text" id="ano" required class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors" maxlength="4">
+                            <input type="text" id="ano" required class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150" maxlength="4">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">KM</label>
-                            <input type="text" id="km_veiculo" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors" placeholder="0">
+                            <input type="text" id="km_veiculo" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="0">
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- BLOCO 2: DADOS DO CLIENTE & ENDEREÇO -->
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                 <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">2. Dados do Cliente & Endereço</h4>
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div class="md:col-span-2 relative">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" id="cliente" list="lista-clientes" required onchange="window.preencherDadosClienteSelecionado(this.value)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors" placeholder="Pesquisar cliente cadastrado...">
+                        <input type="text" id="cliente" list="lista-clientes" required onchange="window.preencherDadosClienteSelecionado(this.value)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors duration-150" placeholder="Pesquisar cliente cadastrado...">
                         <datalist id="lista-clientes"></datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CPF / CNPJ</label>
-                        <input type="text" id="cpf_cnpj" required oninput="window.mascaraCpfCnpj(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors" placeholder="Documento">
+                        <input type="text" id="cpf_cnpj" required oninput="window.mascaraCpfCnpj(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="Documento">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Inscrição Est. (IE)</label>
-                        <input type="text" id="inscricao_estadual" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors" placeholder="Opcional">
+                        <input type="text" id="inscricao_estadual" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="Opcional">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Celular / Tel</label>
-                        <input type="text" id="celular" oninput="window.mascaraCelular(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors" placeholder="(00) 00000-0000">
+                        <input type="text" id="celular" oninput="window.mascaraCelular(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="(00) 00000-0000">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">E-mail</label>
-                        <input type="email" id="cliente_email" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors" placeholder="cliente@email.com">
+                        <input type="email" id="cliente_email" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150" placeholder="cliente@email.com">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                     <div class="md:col-span-3">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CEP</label>
-                        <input type="text" id="cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors" placeholder="00000-000">
+                        <input type="text" id="cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="00000-000">
                     </div>
                     <div class="md:col-span-6">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Endereço</label>
-                        <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors" readonly>
+                        <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                     </div>
                     <div class="md:col-span-3">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bairro</label>
-                        <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors" readonly>
+                        <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                     </div>
                     <div class="md:col-span-5">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cidade / UF</label>
-                        <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors" readonly>
+                        <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nº</label>
-                        <input type="text" id="numero_end" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors">
+                        <input type="text" id="numero_end" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                     </div>
                     <div class="md:col-span-5">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Complemento</label>
-                        <input type="text" id="complemento" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors" placeholder="Sala, Lote, etc.">
+                        <input type="text" id="complemento" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors duration-150" placeholder="Sala, Lote, etc.">
                     </div>
                 </div>
             </div>
 
             <!-- BLOCO 3: SITUAÇÃO E RELATOS -->
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                 <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">3. Situação e Relatos</h4>
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div class="md:col-span-4">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Situação Operacional</label>
-                        <select id="situacao" onchange="window.atualizarCorSelectSituacao(this)" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none font-black tracking-wide text-sm shadow-inner transition-colors disabled:opacity-75">
+                        <select id="situacao" onchange="window.atualizarCorSelectSituacao(this)" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none font-black tracking-wide text-sm shadow-inner transition-colors duration-150 disabled:opacity-75">
                             <option value="Aberto" style="background-color: #E0F2FE; color: #0369A1;">ABERTO</option>
                             <option value="Orçamento" style="background-color: #F3E8FF; color: #6B21A8;">ORÇAMENTO</option>
-                            <option value="Aguardando Autorização" style="background-color: #FEF3C7; color: #B45309;">AGUARDANDO AUTORIZAÇÃO</option>
-                            <option value="Aguardando Peça" style="background-color: #FFEDD5; color: #C2410C;">AGUARDANDO PEÇA</option>
+                            <option value="Aguardando Autorização" style="background-color: #FFEDD5; color: #C2410C;">AGUAR. AUTORIZAÇÃO</option>
+                            <option value="Aguardando Peça" style="background-color: #FEF3C7; color: #B45309;">AGUAR. PEÇA</option>
+                            <option value="Aguardando Pagamento" style="background-color: #FEF08A; color: #854D0E;">AGUAR. PAGAMENTO</option>
                             <option value="Autorizado" style="background-color: #DCFCE7; color: #15803D;">AUTORIZADO</option>
                             <option value="Em Execução" style="background-color: #E0E7FF; color: #3730A3;">EM EXECUÇÃO</option>
                             <option value="Garantia" style="background-color: #CCFBF1; color: #0F766E;">GARANTIA</option>
-                            <option value="Aguardando Pagamento" style="background-color: #FEF08A; color: #854D0E;">AGUARDANDO PAGAMENTO</option>
                             <option value="Não Usar" style="background-color: #FEE2E2; color: #991B1B;">NÃO USAR (CANCELADA)</option>
                             <option value="Recusado" style="background-color: #FECACA; color: #B91C1C;">RECUSADO</option>
                         </select>
                     </div>
                     <div class="md:col-span-8">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Relato do Condutor / Diagnóstico Técnico</label>
-                        <textarea id="defeito" rows="3" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors custom-scrollbar" placeholder="Descreva os sintomas ou relato inicial..."></textarea>
+                        <textarea id="defeito" rows="3" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150 custom-scrollbar" placeholder="Descreva os sintomas ou relato inicial..."></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- BLOCO 4: ORÇAMENTO FINANCEIRO -->
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors relative">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150 relative">
                 <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">4. Orçamento de Peças e Serviços</h4>
 
                 <!-- Painel Inteligente de Adição -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5 bg-gray-50 dark:bg-[#0f172a] p-4 rounded-xl border border-gray-200 dark:border-gray-700 items-end transition-colors" id="painel-adicionar-item">
+                <div id="painel-adicionar-item" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5 bg-gray-50 dark:bg-[#0f172a] p-4 rounded-xl border border-gray-200 dark:border-gray-700 items-end transition-colors duration-150">
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Tipo</label>
-                        <select id="item-tipo" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none font-bold text-sm transition-colors">
+                        <select id="item-tipo" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none font-bold text-sm transition-colors duration-150">
                             <option value="Peça" class="text-purple-700 dark:text-purple-400">Peça</option>
                             <option value="Serviço" class="text-amber-700 dark:text-amber-400">Serviço</option>
                         </select>
                     </div>
                     <div class="md:col-span-4 relative">
                         <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Item / Referência</label>
-                        <input type="text" id="item-descricao" list="lista-itens-banco" autocomplete="off" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm outline-none focus:border-[#1a428a] transition-colors" placeholder="Buscar no sistema...">
+                        <input type="text" id="item-descricao" list="lista-itens-banco" autocomplete="off" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm outline-none focus:border-[#1a428a] transition-colors duration-150" placeholder="Buscar no sistema...">
                         <datalist id="lista-itens-banco"></datalist>
                     </div>
                     <div class="md:col-span-1">
                         <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 text-center">Qtd</label>
-                        <input type="number" id="item-qtd" value="1" min="1" oninput="window.calcularSubtotalItem()" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm text-center font-mono font-bold transition-colors">
+                        <input type="number" id="item-qtd" value="1" min="1" oninput="window.calcularSubtotalItem()" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm text-center font-mono font-bold transition-colors duration-150">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 text-right">Unitário (R$)</label>
-                        <input type="text" id="item-valor" oninput="window.mascaraValorItem(this); window.calcularSubtotalItem()" autocomplete="off" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm text-right font-mono font-bold transition-colors" placeholder="0,00">
+                        <input type="text" id="item-valor" oninput="window.mascaraValorItem(this); window.calcularSubtotalItem()" autocomplete="off" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg text-sm text-right font-mono font-bold transition-colors duration-150" placeholder="0,00">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 text-right">Total (R$)</label>
-                        <input type="text" id="item-subtotal" class="w-full px-3 py-2.5 border border-transparent bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-right font-mono font-bold text-[#1a428a] dark:text-[#3b82f6] cursor-not-allowed transition-colors" placeholder="0,00" readonly>
+                        <input type="text" id="item-subtotal" class="w-full px-3 py-2.5 border border-transparent bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-right font-mono font-bold text-[#1a428a] dark:text-[#3b82f6] cursor-not-allowed transition-colors duration-150" placeholder="0,00" readonly>
                     </div>
                     <div class="md:col-span-1">
-                        <button type="button" onclick="window.adicionarItemOrcamento()" class="w-full bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white font-black py-2.5 rounded-lg transition-colors shadow-md text-lg flex justify-center items-center h-[42px]">+</button>
+                        <button type="button" onclick="window.adicionarItemOrcamento()" class="w-full bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white font-black py-2.5 rounded-lg transition-colors duration-150 shadow-md text-lg flex justify-center items-center h-[42px]">+</button>
                     </div>
                 </div>
 
                 <!-- Tabela de Itens -->
-                <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1e293b] shadow-sm mb-5 transition-colors">
+                <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1e293b] shadow-sm mb-5 transition-colors duration-150">
                     <table class="w-full text-left text-sm min-w-[700px]">
                         <thead class="bg-gray-50 dark:bg-[#0f172a] text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 text-xs font-black uppercase tracking-wider">
                             <tr>
@@ -245,10 +260,10 @@
                                 <th class="p-3 w-20 text-center">Qtd</th>
                                 <th class="p-3 w-32 text-right">V. Unit</th>
                                 <th class="p-3 w-32 text-right">V. Total</th>
-                                <th id="th-acao-orcamento" class="p-3 w-12 text-center"></th>
+                                <th class="p-3 w-12 text-center"></th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-orcamento" class="divide-y divide-gray-100 dark:divide-gray-800 transition-colors">
+                        <tbody id="tbody-orcamento" class="divide-y divide-gray-100 dark:divide-gray-800 transition-colors duration-150">
                             <tr>
                                 <td colspan="7" class="p-8 text-center text-gray-400 font-medium">Nenhum item adicionado ao orçamento.</td>
                             </tr>
@@ -256,8 +271,8 @@
                     </table>
                 </div>
 
-                <!-- Resumo Financeiro Avançado (Com Motores de Desconto e Acréscimo) -->
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gray-50 dark:bg-[#0f172a] p-5 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors">
+                <!-- Resumo Financeiro Avançado -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gray-50 dark:bg-[#0f172a] p-5 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-150">
                     
                     <!-- Motor de Desconto -->
                     <div class="w-full md:w-1/3 bg-white dark:bg-[#1e293b] p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -265,7 +280,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Aplicar sobre:</label>
-                                <select id="desconto-tipo" onchange="window.atualizarTotaisOrcamento()" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-[#0f172a] dark:text-white text-xs font-bold outline-none mt-1">
+                                <select id="desconto-tipo" onchange="window.atualizarTotaisOrcamento()" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-[#0f172a] dark:text-white text-xs font-bold outline-none mt-1 transition-colors duration-150">
                                     <option value="total">Valor Total da O.S.</option>
                                     <option value="pecas">Somente Peças</option>
                                     <option value="servicos">Somente Serviços</option>
@@ -273,7 +288,7 @@
                             </div>
                             <div class="flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-2 mt-2">
                                 <span class="font-bold text-gray-700 dark:text-gray-300 text-sm">Valor (R$):</span>
-                                <input type="text" id="desconto-valor" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-28 px-2 py-1 border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 rounded text-right font-mono font-bold text-red-600 dark:text-red-400 outline-none focus:border-red-500">
+                                <input type="text" id="desconto-valor" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-28 px-2 py-1 border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 rounded text-right font-mono font-bold text-red-600 dark:text-red-400 outline-none focus:border-red-500 transition-colors duration-150">
                             </div>
                             <div class="text-right">
                                 <span id="desconto-porcentagem" class="text-[10px] text-red-500 font-bold tracking-wider">Representa 0.00%</span>
@@ -296,18 +311,18 @@
                             <span id="total-servicos" class="font-mono">R$ 0,00</span>
                         </div>
                         
-                        <!-- CORREÇÃO: Outros (R$) agora é verde e tem a porcentagem embutida -->
+                        <!-- OUTROS: Verde Esmeralda com Porcentagem -->
                         <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-1">
                             <div class="flex flex-col">
                                 <span class="font-bold uppercase text-[10px] tracking-wider">Outros (R$):</span>
                                 <span id="outros-porcentagem" class="text-[9px] text-emerald-500 font-bold tracking-wider mt-0.5">+ 0.00%</span>
                             </div>
-                            <input type="text" id="outros-valores" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-28 px-2 py-1 border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded text-right font-mono font-bold outline-none focus:border-emerald-500">
+                            <input type="text" id="outros-valores" value="0,00" oninput="window.mascaraValorItem(this); window.atualizarTotaisOrcamento()" class="w-28 px-2 py-1 border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded text-right font-mono font-bold outline-none focus:border-emerald-500 transition-colors duration-150">
                         </div>
                     </div>
 
                     <!-- Total Master -->
-                    <div class="w-full md:w-1/3 bg-[#1a428a] dark:bg-[#081121] text-white p-4 rounded-xl shadow-inner text-right">
+                    <div class="w-full md:w-1/3 bg-[#1a428a] dark:bg-[#081121] text-white p-4 rounded-xl shadow-inner text-right transition-colors duration-150">
                         <span class="block text-xs text-blue-200 font-black uppercase tracking-widest mb-1">Valor Total Líquido</span>
                         <span id="total-geral" class="text-3xl font-black font-mono tracking-tighter">R$ 0,00</span>
                     </div>
@@ -318,17 +333,16 @@
             <!-- ============================================================== -->
             <!-- PAINÉIS DE AÇÃO (SALVAR, CANCELAR E FECHAMENTO)                -->
             <!-- ============================================================== -->
-            <div class="sticky bottom-0 bg-gray-50 dark:bg-[#0f172a] p-4 border-t border-gray-200 dark:border-gray-800 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-between items-center z-20 transition-colors">
+            <div class="sticky bottom-0 bg-gray-50 dark:bg-[#0f172a] p-4 border-t border-gray-200 dark:border-gray-800 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-between items-center z-20 transition-colors duration-150">
                 
-                <!-- Botão de Fechamento (Escondido por padrão, o JS decide quando mostrar) -->
-                <button type="button" id="btn-fechar-os" onclick="window.abrirModalFechamento()" class="hidden bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-lg font-black shadow-md transition-colors flex items-center gap-2">
+                <button type="button" id="btn-fechar-os" onclick="window.abrirModalFechamento()" class="hidden bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-lg font-black shadow-md transition-colors duration-150 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>
                     FECHAMENTO FINANCEIRO
                 </button>
                 
                 <div id="painel-botoes-edicao" class="flex gap-3 ml-auto">
-                    <button type="button" id="btn-cancelar-alteracoes" onclick="window.tentarCancelarOs()" class="hidden px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors">Descartar Alterações</button>
-                    <button type="submit" id="btn-salvar-os" class="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black tracking-wide rounded-lg shadow-lg transition-colors flex items-center gap-2">
+                    <button type="button" id="btn-cancelar-alteracoes" onclick="window.tentarCancelarOs()" class="hidden px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors duration-150">Descartar Alterações</button>
+                    <button type="submit" id="btn-salvar-os" class="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black tracking-wide rounded-lg shadow-lg transition-colors duration-150 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                         Salvar O.S.
                     </button>
@@ -341,8 +355,8 @@
 <!-- ========================================================= -->
 <!-- MODAL DE INTELIGÊNCIA (CROSS-SELL / UP-SELL)              -->
 <!-- ========================================================= -->
-<div id="modal-inteligencia" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center">
+<div id="modal-inteligencia" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center transition-colors duration-150">
         <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4">
             <span class="text-2xl">💡</span>
         </div>
@@ -350,8 +364,8 @@
         <p id="msg-inteligencia" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Mensagem da IA.</p>
         
         <div class="flex justify-center gap-3">
-            <button onclick="document.getElementById('modal-inteligencia').classList.add('hidden')" class="px-5 py-2 text-gray-500 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Ignorar</button>
-            <button id="btn-aceitar-sugestao" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
+            <button onclick="document.getElementById('modal-inteligencia').classList.add('hidden')" class="px-5 py-2 text-gray-500 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-150">Ignorar</button>
+            <button id="btn-aceitar-sugestao" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg shadow-md transition-colors duration-150 flex items-center gap-2">
                 Adicionar Sugestão
             </button>
         </div>
@@ -359,12 +373,13 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- MODAL DE FECHAMENTO FINANCEIRO (NOVO REQUISITO)           -->
+<!-- MODAL DE FECHAMENTO FINANCEIRO                            -->
 <!-- ========================================================= -->
-<div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 anima-fade">
+<div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150">
+        
         <!-- Cabeçalho -->
-        <div class="bg-amber-500 text-white p-5 flex justify-between items-center shrink-0">
+        <div class="bg-amber-500 text-white p-5 flex justify-between items-center shrink-0 transition-colors duration-150">
             <div>
                 <h3 class="text-xl font-black flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
@@ -372,7 +387,7 @@
                 </h3>
                 <p class="text-amber-100 text-xs font-medium mt-1">Configuração de parcelamento, garantias e faturamento.</p>
             </div>
-            <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="text-amber-200 hover:text-white text-3xl font-light">&times;</button>
+            <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="text-amber-200 hover:text-white text-3xl font-light transition-colors duration-150">&times;</button>
         </div>
 
         <!-- Corpo Rolável -->
@@ -380,22 +395,22 @@
             
             <!-- Resumo de Valores e Condição -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center transition-colors duration-150">
                     <span class="block text-xs font-bold text-gray-500 uppercase">Total Líquido</span>
                     <span id="fechamento-total" class="block text-2xl font-black text-[#1a428a] dark:text-[#3b82f6] font-mono mt-1">R$ 0,00</span>
                 </div>
-                <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-150">
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Entrada (R$)</label>
-                    <input type="text" id="fechamento-entrada" value="0,00" oninput="window.mascaraValorItem(this); window.calcularRestanteFechamento()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-right font-mono font-bold focus:border-amber-500 dark:bg-[#0f172a] dark:text-white">
+                    <input type="text" id="fechamento-entrada" value="0,00" oninput="window.mascaraValorItem(this); window.calcularRestanteFechamento()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-right font-mono font-bold focus:border-amber-500 dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                 </div>
-                <div class="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+                <div class="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800 text-center transition-colors duration-150">
                     <span class="block text-xs font-bold text-amber-700 dark:text-amber-500 uppercase">Restante a Parcelar</span>
                     <span id="fechamento-restante" class="block text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">R$ 0,00</span>
                 </div>
             </div>
 
             <!-- Dados de Faturamento -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-150">
                 <div class="md:col-span-4 flex items-center gap-3 mb-2 pb-3 border-b border-gray-100 dark:border-gray-800">
                     <input type="checkbox" id="fechamento-gerar-financeiro" checked class="w-5 h-5 text-amber-500 rounded border-gray-300 focus:ring-amber-500">
                     <label class="text-sm font-black text-gray-800 dark:text-white">Gerar Contas a Receber (Faturamento Automático)</label>
@@ -403,23 +418,23 @@
                 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Qtd. Parcelas</label>
-                    <input type="number" id="fechamento-parcelas" value="1" min="1" max="12" oninput="window.gerarPreviewParcelas()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none focus:border-amber-500 font-mono text-center dark:bg-[#0f172a] dark:text-white">
+                    <input type="number" id="fechamento-parcelas" value="1" min="1" max="12" oninput="window.gerarPreviewParcelas()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none focus:border-amber-500 font-mono text-center dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">1º Vencimento</label>
-                    <input type="date" id="fechamento-vencimento" onchange="window.gerarPreviewParcelas()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none focus:border-amber-500 font-mono dark:bg-[#0f172a] dark:text-white">
+                    <input type="date" id="fechamento-vencimento" onchange="window.gerarPreviewParcelas()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none focus:border-amber-500 font-mono dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Conta Destino</label>
-                    <select id="fechamento-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-sm dark:bg-[#0f172a] dark:text-white">
+                    <select id="fechamento-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-sm dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                         <option value="Caixa Interno">Caixa Interno</option>
                         <option value="Banco do Brasil">Banco do Brasil</option>
-                        <option value="Sicoob">Sicoob</option>
+                        <option value="Vale">Vale</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Operação</label>
-                    <select id="fechamento-operacao" onchange="window.gerarPreviewParcelas()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-sm dark:bg-[#0f172a] dark:text-white">
+                    <select id="fechamento-operacao" onchange="window.atualizarVencimentoPorOperacao()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded outline-none text-sm dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                         <option value="PIX">PIX</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Cartão de Crédito">Cartão de Crédito</option>
@@ -429,10 +444,10 @@
                 </div>
             </div>
 
-            <!-- Preview das Parcelas (A inteligência vai gerar aqui) -->
+            <!-- Preview das Parcelas -->
             <div>
                 <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Pré-visualização do Faturamento</h4>
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-150">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                             <tr>
@@ -443,37 +458,45 @@
                                 <th class="p-2">Nº Auxiliar (Doc/Cartão)</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-preview-parcelas" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[#1e293b]">
+                        <tbody id="tbody-preview-parcelas" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[#1e293b] transition-colors duration-150">
                             <!-- Gerado pelo JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Rastreio e Garantia -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 dark:bg-blue-900/10 p-5 rounded-xl border border-blue-100 dark:border-blue-900">
-                <div>
+            <!-- Rastreio e Garantia (COM CALCULADORA DE DIAS) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-blue-50 dark:bg-blue-900/10 p-5 rounded-xl border border-blue-100 dark:border-blue-900 transition-colors duration-150">
+                <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Data de Conclusão</label>
-                    <input type="datetime-local" id="fechamento-conclusao" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-white dark:bg-[#0f172a] dark:text-white">
+                    <input type="datetime-local" id="fechamento-conclusao" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-white dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Data de Entrega</label>
-                    <input type="date" id="fechamento-entrega" onchange="window.calcularGarantia()" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-white dark:bg-[#0f172a] dark:text-white">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Data de Entrega (Veículo/Peça)</label>
+                    <input type="date" id="fechamento-entrega" onchange="window.calcularGarantia()" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-white dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Fim da Garantia (90 Dias)</label>
-                    <input type="date" id="fechamento-garantia" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500" readonly>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Dias de Garantia</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="fechamento-garantia-dias" value="90" min="0" oninput="window.calcularGarantia()" class="w-24 px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm text-center bg-white dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
+                        <span class="text-xs font-bold text-blue-700 dark:text-blue-400">Dias</span>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Vencimento da Garantia</label>
+                    <input type="date" id="fechamento-garantia" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-blue-100/50 dark:bg-gray-800 cursor-not-allowed text-blue-900 dark:text-blue-200 font-bold transition-colors duration-150" readonly>
                 </div>
             </div>
 
         </div>
 
         <!-- Rodapé do Fechamento -->
-        <div class="bg-gray-50 dark:bg-[#0f172a] p-5 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0">
+        <div class="bg-gray-50 dark:bg-[#0f172a] p-5 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center shrink-0 transition-colors duration-150">
             <span class="text-xs text-gray-500 font-bold">* Ao confirmar, a O.S. será travada para edição técnica.</span>
             <div class="flex gap-3">
-                <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors">Voltar</button>
-                <button onclick="window.confirmarFechamentoOS()" class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black tracking-wide rounded-lg shadow-lg transition-colors">
+                <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors duration-150">Voltar</button>
+                <button onclick="window.confirmarFechamentoOS()" class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black tracking-wide rounded-lg shadow-lg transition-colors duration-150">
                     CONFIRMAR FECHAMENTO
                 </button>
             </div>
