@@ -20,6 +20,7 @@ window.formatarPlaca = function(placa) {
 };
 
 window.mascaraPlaca = function(input) {
+    if(!input) return;
     let p = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     input.value = p;
     if (typeof window.atualizarTituloModalOs === 'function') window.atualizarTituloModalOs(window.osNumeroAtual, input.value);
@@ -31,6 +32,7 @@ window.validarPlacaBrasil = function(placa) {
 };
 
 window.mascaraCpfCnpj = function(input) {
+    if(!input) return;
     let v = input.value.replace(/\D/g, "");
     if (v.length <= 11) v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
     else v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
@@ -38,24 +40,28 @@ window.mascaraCpfCnpj = function(input) {
 };
 
 window.mascaraCelular = function(input) {
+    if(!input) return;
     let v = input.value.replace(/\D/g, "").substring(0, 11);
     v = v.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
     input.value = v;
 };
 
 window.mascaraCep = function(input) {
+    if(!input) return;
     let v = input.value.replace(/\D/g, "").substring(0, 8);
     v = v.replace(/^(\d{5})(\d)/, "$1-$2");
     input.value = v;
 };
 
 window.mascaraValorItem = function(input) {
+    if(!input) return;
     let v = input.value.replace(/\D/g, '');
     if (v === "") { input.value = ""; return; }
     input.value = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 window.consultarCnpj = async function(input) {
+    if(!input) return;
     let doc = input.value.replace(/\D/g, '');
     if (doc.length === 14) {
         if (window.mostrarToast) window.mostrarToast("Consultando CNPJ...", "aviso");
@@ -63,15 +69,17 @@ window.consultarCnpj = async function(input) {
             let res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`);
             if (res.ok) {
                 let dados = await res.json();
-                document.getElementById('cliente').value = String(dados.razao_social || dados.nome_fantasia || '').trim();
+                const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+                
+                setVal('cliente', String(dados.razao_social || dados.nome_fantasia || '').trim());
                 if (dados.ddd_telefone_1) {
-                    document.getElementById('celular').value = dados.ddd_telefone_1;
+                    setVal('celular', dados.ddd_telefone_1);
                     window.mascaraCelular(document.getElementById('celular'));
                 }
-                if (dados.email && dados.email.trim() !== "") document.getElementById('cliente_email').value = String(dados.email).toLowerCase().trim();
-                if (dados.numero) document.getElementById('numero_end').value = String(dados.numero).trim();
+                if (dados.email && dados.email.trim() !== "") setVal('cliente_email', String(dados.email).toLowerCase().trim());
+                if (dados.numero) setVal('numero_end', String(dados.numero).trim());
                 if (dados.cep) {
-                    document.getElementById('cep').value = String(dados.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
+                    setVal('cep', String(dados.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2"));
                     window.consultarCep(document.getElementById('cep'));
                 }
                 if (window.mostrarToast) window.mostrarToast("Dados do CNPJ preenchidos!", "sucesso");
@@ -81,6 +89,7 @@ window.consultarCnpj = async function(input) {
 };
 
 window.consultarCep = async function(input) {
+    if(!input) return;
     let cep = input.value.replace(/\D/g, '');
     if (cep.length === 8) {
         try {
@@ -88,9 +97,10 @@ window.consultarCep = async function(input) {
             if (res.ok) {
                 let dados = await res.json();
                 if (!dados.erro) {
-                    document.getElementById('endereco').value = String(dados.logradouro || '').trim();
-                    document.getElementById('bairro').value = String(dados.bairro || '').trim();
-                    document.getElementById('cidade').value = `${String(dados.localidade || '').trim()} / ${String(dados.uf || '').trim()}`;
+                    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+                    setVal('endereco', String(dados.logradouro || '').trim());
+                    setVal('bairro', String(dados.bairro || '').trim());
+                    setVal('cidade', `${String(dados.localidade || '').trim()} / ${String(dados.uf || '').trim()}`);
                     document.getElementById('numero_end')?.focus();
                 }
             }
@@ -125,7 +135,8 @@ document.addEventListener('input', function(e) {
         if (window.listaVeiculosBdd && mod.length > 2) {
             const achou = window.listaVeiculosBdd.find(v => v.modelo && String(v.modelo).toUpperCase() === mod);
             if (achou && achou.marca) {
-                document.getElementById('marca').value = String(achou.marca).toUpperCase();
+                const elMarca = document.getElementById('marca');
+                if(elMarca) elMarca.value = String(achou.marca).toUpperCase();
             }
         }
     }
@@ -224,7 +235,7 @@ window.atualizarTopHeaderVisualizacao = function(os) {
     if(hPlaca) hPlaca.innerText = window.formatarPlaca(os.placa);
 };
 
-// MOTOR ANTI-CORTE DO DROPDOWN (Blindado contra Scroll)
+// MOTOR ANTI-CORTE DO DROPDOWN
 window.toggleDrop = function(id, btnElement) {
     document.querySelectorAll('.menu-acao-os').forEach(el => {
         if (el.id !== `menu-${id}`) el.classList.add('hidden');
@@ -273,8 +284,8 @@ window.alterarStatusOsInline = async function(id, selectElement) {
         if (error) throw error;
         if (window.mostrarToast) window.mostrarToast("Situação atualizada!", "sucesso");
     } catch (e) {
-        console.error(e);
-        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação.", "erro");
+        console.error("ERRO AO ATUALIZAR STATUS:", e);
+        if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação. Verifique o console.", "erro");
         window.carregarOrdensServico(); 
     }
 };
@@ -449,7 +460,10 @@ window.imprimirOsDaLista = async function(id) {
         win.document.close();
         win.focus();
         setTimeout(() => win.print(), 800);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error(e); 
+        if(window.mostrarToast) window.mostrarToast("Erro ao imprimir.", "erro");
+    }
 };
 
 window.salvarComoPdfDaLista = async function(id) {
@@ -478,7 +492,10 @@ window.salvarComoPdfDaLista = async function(id) {
         html2pdf().set(opt).from(divContainer.firstElementChild).save().then(() => {
             if (window.mostrarToast) window.mostrarToast("PDF Salvo com Sucesso!", "sucesso");
         });
-    } catch (e) { console.error(e); if (window.mostrarToast) window.mostrarToast("Erro ao gerar PDF.", "erro"); }
+    } catch (e) { 
+        console.error(e); 
+        if (window.mostrarToast) window.mostrarToast("Erro ao gerar PDF.", "erro"); 
+    }
 };
 
 window.enviarWhatsAppDaLista = async function(id, celular) {
@@ -589,7 +606,7 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            let iconeNotificacao = os.lab_atualizado ? `<button onclick="window.visualizarNotificacaoLab(${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse transition-all" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
+            let iconeNotificacao = os.lab_atualizado ? `<button type="button" onclick="window.visualizarNotificacaoLab(${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute -left-6 text-red-500 hover:text-red-700 animate-pulse transition-all" title="Laboratório enviou atualizações!"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>` : '';
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
@@ -622,17 +639,17 @@ window.carregarOrdensServico = async function() {
                     </td>
                     <td class="p-4">
                         <div class="flex items-center justify-center gap-2 relative dropdown-container">
-                            <button onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Ver Detalhes">
+                            <button type="button" onclick="window.visualizarOs(${os.id})" class="text-blue-500 hover:text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Ver Detalhes">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                             </button>
-                            <button onclick="window.editarOs(${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Editar O.S">
+                            <button type="button" onclick="window.editarOs(${os.id})" class="text-amber-500 hover:text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Editar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             </button>
-                            <button onclick="window.excluirOs(${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
+                            <button type="button" onclick="window.excluirOs(${os.id}, '${os.placa}', '${numeroFormatado}')" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Eliminar O.S">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
 
-                            <button onclick="window.toggleDrop(${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Mais Opções">
+                            <button type="button" onclick="window.toggleDrop(${os.id}, this)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent dark:border-gray-600 p-2 rounded-lg transition-all shadow-sm" title="Mais Opções">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
                             </button>
                         </div>
@@ -644,7 +661,7 @@ window.carregarOrdensServico = async function() {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL E RASTREIO DE RESPONSÁVEL (DevSecOps)
+// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -679,95 +696,103 @@ window.abrirModalNovaOs = async function() {
 };
 
 window.buscarDadosOs = async function(id) {
-    const { data: os, error } = await supabase.from('ordens_servico').select('*').eq('id', id).single();
-    if (error) throw error;
+    try {
+        const { data: os, error } = await supabase.from('ordens_servico').select('*').eq('id', id).single();
+        if (error) throw error;
 
-    window.osEmEdicaoId = os.id;
-    window.osEmEdicaoNumero = os.numero_os || os.id;
-    window.osNumeroAtual = os.numero_os || os.id;
-    window.itemEmEdicaoId = null;
+        window.osEmEdicaoId = os.id;
+        window.osEmEdicaoNumero = os.numero_os || os.id;
+        window.osNumeroAtual = os.numero_os || os.id;
+        window.itemEmEdicaoId = null;
 
-    // BLINDAGEM DE STRING NOS CAMPOS
-    document.getElementById('data_hora').value = os.data_hora ? String(os.data_hora).slice(0, 16) : '';
-    document.getElementById('responsavel_os').value = String(os.responsavel || 'SISTEMA');
-    document.getElementById('setor_destino').value = String(os.setor_destino || 'Pátio');
-    
-    document.getElementById('placa').value = window.formatarPlaca(os.placa);
-    document.getElementById('modelo').value = String(os.modelo || '').trim();
-    document.getElementById('marca').value = String(os.marca || '').trim();
-    document.getElementById('ano').value = String(os.ano || '').trim();
-    document.getElementById('km_veiculo').value = String(os.km_veiculo || '').trim();
-    
-    document.getElementById('cpf_cnpj').value = String(os.cpf_cnpj || '').trim();
-    document.getElementById('inscricao_estadual').value = String(os.inscricao_estadual || '').trim();
-    document.getElementById('cliente').value = String(os.cliente || '').trim();
-    document.getElementById('celular').value = String(os.celular || '').trim();
-    document.getElementById('cliente_email').value = String(os.email || '').trim();
-    document.getElementById('cep').value = String(os.cep || '').trim();
-    document.getElementById('endereco').value = String(os.endereco || '').trim();
-    document.getElementById('bairro').value = String(os.bairro || '').trim();
-    document.getElementById('cidade').value = String(os.cidade || '').trim();
-    document.getElementById('numero_end').value = String(os.numero_end || '').trim();
-    document.getElementById('complemento').value = String(os.complemento || '').trim();
-    
-    document.getElementById('outros-valores').value = Number(os.outros_valores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    document.getElementById('desconto-tipo').value = String(os.desconto_tipo || 'total');
-    document.getElementById('desconto-valor').value = Number(os.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        // FUNÇÃO BLINDADA: Tenta preencher; se o HTML não existir, não quebra o código.
+        const setVal = (idEl, val) => { const el = document.getElementById(idEl); if(el) el.value = val; };
 
-    const sel = document.getElementById('situacao');
-    if(sel) { sel.value = os.situacao || 'Aberto'; window.atualizarCorSelectSituacao(sel); }
-    document.getElementById('defeito').value = String(os.defeito || '').trim();
+        setVal('data_hora', os.data_hora ? String(os.data_hora).slice(0, 16) : '');
+        setVal('responsavel_os', String(os.responsavel || 'SISTEMA'));
+        setVal('setor_destino', String(os.setor_destino || 'Pátio'));
+        setVal('placa', window.formatarPlaca(os.placa));
+        setVal('modelo', String(os.modelo || '').trim());
+        setVal('marca', String(os.marca || '').trim());
+        setVal('ano', String(os.ano || '').trim());
+        setVal('km_veiculo', String(os.km_veiculo || '').trim());
+        setVal('cpf_cnpj', String(os.cpf_cnpj || '').trim());
+        setVal('inscricao_estadual', String(os.inscricao_estadual || '').trim());
+        setVal('cliente', String(os.cliente || '').trim());
+        setVal('celular', String(os.celular || '').trim());
+        setVal('cliente_email', String(os.email || '').trim());
+        setVal('cep', String(os.cep || '').trim());
+        setVal('endereco', String(os.endereco || '').trim());
+        setVal('bairro', String(os.bairro || '').trim());
+        setVal('cidade', String(os.cidade || '').trim());
+        setVal('numero_end', String(os.numero_end || '').trim());
+        setVal('complemento', String(os.complemento || '').trim());
+        setVal('outros-valores', Number(os.outros_valores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        setVal('desconto-tipo', String(os.desconto_tipo || 'total'));
+        setVal('desconto-valor', Number(os.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        
+        const sel = document.getElementById('situacao');
+        if(sel) { sel.value = os.situacao || 'Aberto'; window.atualizarCorSelectSituacao(sel); }
+        setVal('defeito', String(os.defeito || '').trim());
 
-    const { data: itens } = await supabase.from('itens_orcamento').select('*').eq('os_id', id);
-    window.itensOrcamento = itens ? itens.map(i => ({ id: i.id || Date.now(), tipo: i.tipo, descricao: i.descricao, qtd: i.quantidade, valorUnitario: i.valor_unitario, subtotal: i.subtotal, concluido: i.concluido })) : [];
+        const { data: itens } = await supabase.from('itens_orcamento').select('*').eq('os_id', id);
+        window.itensOrcamento = itens ? itens.map(i => ({ id: i.id || Date.now(), tipo: i.tipo, descricao: i.descricao, qtd: i.quantidade, valorUnitario: i.valor_unitario, subtotal: i.subtotal, concluido: i.concluido })) : [];
 
-    window.atualizarTituloModalOs(window.osNumeroAtual, os.placa);
-    window.atualizarTopHeaderVisualizacao(os); 
+        window.atualizarTituloModalOs(window.osNumeroAtual, os.placa);
+        window.atualizarTopHeaderVisualizacao(os);
+    } catch (error) {
+        console.error("ERRO GRAVE AO BUSCAR DADOS DA O.S:", error);
+        throw error; // Repassa o erro para o botão que chamou
+    }
 };
 
 window.salvarOs = async function(event) {
     event.preventDefault();
     if(window.modoLeitura) return;
 
-    const placa = window.formatarPlaca(document.getElementById('placa').value);
+    // FUNÇÃO BLINDADA: Lê com fallback caso o HTML não exista
+    const getVal = (idEl, fallback='') => { const el = document.getElementById(idEl); return el ? el.value : fallback; };
+
+    const placaBruta = getVal('placa');
+    const placa = window.formatarPlaca(placaBruta);
     if (!window.validarPlacaBrasil(placa)) {
         if (window.mostrarToast) window.mostrarToast("Placa inválida!", "erro");
-        document.getElementById('placa').focus(); return;
+        document.getElementById('placa')?.focus(); return;
     }
     
     const tPecas = window.itensOrcamento.filter(i => i.tipo === 'Peça').reduce((acc, i) => acc + (Number(i.subtotal) || 0), 0);
     const tServ = window.itensOrcamento.filter(i => i.tipo === 'Serviço').reduce((acc, i) => acc + (Number(i.subtotal) || 0), 0);
-    const valOutros = parseFloat(document.getElementById('outros-valores').value.replace(/\./g, '').replace(',', '.')) || 0;
-    const valDesconto = parseFloat(document.getElementById('desconto-valor').value.replace(/\./g, '').replace(',', '.')) || 0;
+    const valOutros = parseFloat(getVal('outros-valores').replace(/\./g, '').replace(',', '.')) || 0;
+    const valDesconto = parseFloat(getVal('desconto-valor').replace(/\./g, '').replace(',', '.')) || 0;
     const calcTotalGeral = Math.max(0, tPecas + tServ + valOutros - valDesconto);
 
     const dadosOs = {
-        data_hora: document.getElementById('data_hora').value,
-        responsavel: document.getElementById('responsavel_os').value,
-        setor_destino: document.getElementById('setor_destino').value,
+        data_hora: getVal('data_hora'),
+        responsavel: getVal('responsavel_os', 'SISTEMA'),
+        setor_destino: getVal('setor_destino', 'Pátio'),
         placa: placa, veiculo_placa: placa.replace('-', ''),
-        modelo: document.getElementById('modelo').value.trim(), 
-        marca: document.getElementById('marca').value.trim(),
-        ano: document.getElementById('ano').value.trim(), 
-        km_veiculo: document.getElementById('km_veiculo').value.trim(),
-        cpf_cnpj: document.getElementById('cpf_cnpj').value.trim(),
-        inscricao_estadual: document.getElementById('inscricao_estadual').value.trim(),
-        cliente: document.getElementById('cliente').value.trim(), 
-        celular: document.getElementById('celular').value.trim(),
-        email: document.getElementById('cliente_email').value.trim(), 
-        cep: document.getElementById('cep').value.trim(),
-        endereco: document.getElementById('endereco').value.trim(), 
-        bairro: document.getElementById('bairro').value.trim(),
-        cidade: document.getElementById('cidade').value.trim(), 
-        numero_end: document.getElementById('numero_end').value.trim(),
-        complemento: document.getElementById('complemento').value.trim(), 
-        situacao: document.getElementById('situacao').value,
-        status: document.getElementById('situacao').value, 
-        defeito: document.getElementById('defeito').value.trim(),
+        modelo: String(getVal('modelo')).trim(), 
+        marca: String(getVal('marca')).trim(),
+        ano: String(getVal('ano')).trim(), 
+        km_veiculo: String(getVal('km_veiculo')).trim(),
+        cpf_cnpj: String(getVal('cpf_cnpj')).trim(),
+        inscricao_estadual: String(getVal('inscricao_estadual')).trim(),
+        cliente: String(getVal('cliente')).trim(), 
+        celular: String(getVal('celular')).trim(),
+        email: String(getVal('cliente_email')).trim(), 
+        cep: String(getVal('cep')).trim(),
+        endereco: String(getVal('endereco')).trim(), 
+        bairro: String(getVal('bairro')).trim(),
+        cidade: String(getVal('cidade')).trim(), 
+        numero_end: String(getVal('numero_end')).trim(),
+        complemento: String(getVal('complemento')).trim(), 
+        situacao: getVal('situacao', 'Aberto'),
+        status: getVal('situacao', 'Aberto'), 
+        defeito: String(getVal('defeito')).trim(),
         total_pecas: tPecas,
         total_servicos: tServ,
         outros_valores: valOutros,
-        desconto_tipo: document.getElementById('desconto-tipo').value,
+        desconto_tipo: getVal('desconto-tipo', 'total'),
         desconto: valDesconto,
         total_geral: calcTotalGeral
     };
@@ -800,7 +825,7 @@ window.salvarOs = async function(event) {
         window.carregarOrdensServico();
     } catch (err) {
         console.error("FALHA DE INTEGRIDADE NO BANCO:", err);
-        if (window.mostrarToast) window.mostrarToast("Erro ao gravar O.S. (Veja o console)", "erro");
+        if (window.mostrarToast) window.mostrarToast("Erro ao gravar O.S. Limpe o Cache do Supabase (Veja o console).", "erro");
     }
 };
 
@@ -813,8 +838,8 @@ window.editarOs = async function(id) {
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
     } catch (e) {
-        console.error("ERRO AO ABRIR EDIÇÃO:", e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: " + e.message, "erro");
+        console.error("ERRO AO EDITAR:", e);
+        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: Limpe o Cache do Supabase e aperte CTRL+F5.", "erro");
     }
 };
 
@@ -826,8 +851,8 @@ window.visualizarOs = async function(id) {
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
     } catch (e) {
-        console.error("ERRO AO ABRIR VISUALIZAÇÃO:", e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: " + e.message, "erro");
+        console.error("ERRO AO VISUALIZAR:", e);
+        if(window.mostrarToast) window.mostrarToast("Erro ao abrir O.S: Limpe o Cache do Supabase e aperte CTRL+F5.", "erro");
     }
 };
 
@@ -902,7 +927,7 @@ window.editarItemOrcamento = function(id) {
 };
 
 // =========================================================================
-// MOTOR DE INTELIGÊNCIA (CROSS-SELL / UP-SELL) E CÁLCULOS
+// MOTOR DE INTELIGÊNCIA E CÁLCULOS
 // =========================================================================
 window.verificarMotorInteligencia = function(descricaoNova) {
     const desc = descricaoNova.toLowerCase();
@@ -1020,9 +1045,10 @@ window.atualizarTotaisOrcamento = function() {
         if (i.tipo === 'Serviço') tServ += (Number(i.subtotal) || 0);
     });
 
-    const txtOutros = document.getElementById('outros-valores')?.value || '0,00';
-    const tipoDesconto = document.getElementById('desconto-tipo')?.value || 'total';
-    const txtDesconto = document.getElementById('desconto-valor')?.value || '0,00';
+    const getVal = (id, f) => { const el = document.getElementById(id); return el ? el.value : f; };
+    const txtOutros = getVal('outros-valores', '0,00');
+    const tipoDesconto = getVal('desconto-tipo', 'total');
+    const txtDesconto = getVal('desconto-valor', '0,00');
     
     let vOutros = parseFloat(txtOutros.replace(/\./g, '').replace(',', '.')) || 0;
     let vDesconto = parseFloat(txtDesconto.replace(/\./g, '').replace(',', '.')) || 0;
@@ -1039,11 +1065,11 @@ window.atualizarTotaisOrcamento = function() {
     const subtotalBruto = subtotalBase + vOutros; 
     
     if (tipoDesconto === 'pecas' && vDesconto > tPecas) {
-        vDesconto = tPecas; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        vDesconto = tPecas; const el = document.getElementById('desconto-valor'); if(el) el.value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     } else if (tipoDesconto === 'servicos' && vDesconto > tServ) {
-        vDesconto = tServ; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        vDesconto = tServ; const el = document.getElementById('desconto-valor'); if(el) el.value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     } else if (tipoDesconto === 'total' && vDesconto > subtotalBruto) {
-        vDesconto = subtotalBruto; document.getElementById('desconto-valor').value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        vDesconto = subtotalBruto; const el = document.getElementById('desconto-valor'); if(el) el.value = vDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     }
     
     let percentualDesconto = 0;
@@ -1060,10 +1086,11 @@ window.atualizarTotaisOrcamento = function() {
 
     const totalGeral = subtotalBruto - vDesconto;
 
-    document.getElementById('qtd-total-itens').innerText = qtdTotal;
-    document.getElementById('total-pecas').innerText = 'R$ ' + tPecas.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    document.getElementById('total-servicos').innerText = 'R$ ' + tServ.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    document.getElementById('total-geral').innerText = 'R$ ' + Math.max(0, totalGeral).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+    setTxt('qtd-total-itens', qtdTotal);
+    setTxt('total-pecas', 'R$ ' + tPecas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+    setTxt('total-servicos', 'R$ ' + tServ.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+    setTxt('total-geral', 'R$ ' + Math.max(0, totalGeral).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
 };
 
 // =========================================================================
@@ -1080,24 +1107,36 @@ window.abrirModalFechamento = async function() {
     if(!window.osEmEdicaoId) return;
 
     window.atualizarTotaisOrcamento(); 
-    document.getElementById('fechamento-total').innerText = document.getElementById('total-geral').innerText;
+    
+    const elTotal = document.getElementById('fechamento-total');
+    const elGeral = document.getElementById('total-geral');
+    if(elTotal && elGeral) elTotal.innerText = elGeral.innerText;
+
     window.calcularRestanteFechamento();
     
-    document.getElementById('fechamento-vencimento').value = new Date().toISOString().split('T')[0];
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+    setVal('fechamento-vencimento', new Date().toISOString().split('T')[0]);
+    
     const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-    document.getElementById('fechamento-conclusao').value = agora.toISOString().slice(0,16);
-    document.getElementById('fechamento-entrega').value = new Date().toISOString().split('T')[0];
+    setVal('fechamento-conclusao', agora.toISOString().slice(0,16));
+    setVal('fechamento-entrega', new Date().toISOString().split('T')[0]);
     
     window.atualizarVencimentoPorOperacao();
     window.calcularGarantia();
     
-    document.getElementById('modal-fechamento-os').classList.remove('hidden');
-    document.getElementById('modal-fechamento-os').classList.add('flex');
+    const modalFech = document.getElementById('modal-fechamento-os');
+    if(modalFech) {
+        modalFech.classList.remove('hidden');
+        modalFech.classList.add('flex');
+    }
 };
 
 window.atualizarVencimentoPorOperacao = function() {
-    const operacao = document.getElementById('fechamento-operacao').value;
+    const elOperacao = document.getElementById('fechamento-operacao');
     const inputVenc = document.getElementById('fechamento-vencimento');
+    if(!elOperacao || !inputVenc) return;
+
+    const operacao = elOperacao.value;
     const dataAtual = new Date();
     
     if (operacao === 'PIX' || operacao === 'Dinheiro') {
@@ -1112,31 +1151,44 @@ window.atualizarVencimentoPorOperacao = function() {
 };
 
 window.calcularRestanteFechamento = function() {
-    const totalTxt = document.getElementById('fechamento-total').innerText;
-    const entradaTxt = document.getElementById('fechamento-entrada').value || '0,00';
+    const elTotal = document.getElementById('fechamento-total');
+    const elEntrada = document.getElementById('fechamento-entrada');
+    const elRestante = document.getElementById('fechamento-restante');
+    
+    if(!elTotal || !elEntrada || !elRestante) return;
+
+    const totalTxt = elTotal.innerText;
+    const entradaTxt = elEntrada.value || '0,00';
     
     const vTotal = parseFloat(totalTxt.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
     const vEntrada = parseFloat(entradaTxt.replace(/\./g, '').replace(',', '.')) || 0;
     
     const restante = Math.max(0, vTotal - vEntrada);
-    document.getElementById('fechamento-restante').innerText = 'R$ ' + restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    elRestante.innerText = 'R$ ' + restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     window.gerarPreviewParcelas();
 };
 
 window.gerarPreviewParcelas = function() {
-    const restanteTxt = document.getElementById('fechamento-restante').innerText;
-    const restante = parseFloat(restanteTxt.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
-    const parcelas = parseInt(document.getElementById('fechamento-parcelas').value) || 1;
-    const operacao = document.getElementById('fechamento-operacao').value;
-    const venciInicial = document.getElementById('fechamento-vencimento').value;
+    const elRestante = document.getElementById('fechamento-restante');
+    const elParcelas = document.getElementById('fechamento-parcelas');
+    const elOperacao = document.getElementById('fechamento-operacao');
+    const elVenciInicial = document.getElementById('fechamento-vencimento');
     const tbody = document.getElementById('tbody-preview-parcelas');
+    
+    if(!elRestante || !elParcelas || !elOperacao || !elVenciInicial || !tbody) return;
+
+    const restanteTxt = elRestante.innerText;
+    const restante = parseFloat(restanteTxt.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) || 0;
+    const parcelas = parseInt(elParcelas.value) || 1;
+    const operacao = elOperacao.value;
+    const venciInicial = elVenciInicial.value;
     
     if(restante <= 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-bold transition-all">A entrada cobriu o valor total. Sem parcelas pendentes.</td></tr>';
         return;
     }
 
-    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO
+    // ARREDONDAMENTO BANCÁRIO MATEMÁTICO (Joga centavos pra cima)
     const valorParcelaBase = Math.ceil((restante / parcelas) * 100) / 100;
     
     let html = '';
@@ -1166,15 +1218,20 @@ window.gerarPreviewParcelas = function() {
 };
 
 window.calcularGarantia = function() {
-    const entrega = document.getElementById('fechamento-entrega').value;
+    const elEntrega = document.getElementById('fechamento-entrega');
     const inputDias = document.getElementById('fechamento-garantia-dias');
+    const elGarantia = document.getElementById('fechamento-garantia');
+    
+    if(!elEntrega || !elGarantia) return;
+
+    const entrega = elEntrega.value;
     const dias = inputDias ? (parseInt(inputDias.value) || 0) : 90;
     
     if(entrega) {
         const dataGarantia = new Date(entrega);
         dataGarantia.setMinutes(dataGarantia.getMinutes() + dataGarantia.getTimezoneOffset());
         dataGarantia.setDate(dataGarantia.getDate() + dias);
-        document.getElementById('fechamento-garantia').value = dataGarantia.toISOString().split('T')[0];
+        elGarantia.value = dataGarantia.toISOString().split('T')[0];
     }
 };
 
@@ -1183,7 +1240,8 @@ window.confirmarFechamentoOS = async function() {
     if(!confirmou) return;
     
     try {
-        const dataConclusao = document.getElementById('fechamento-conclusao').value;
+        const elConclusao = document.getElementById('fechamento-conclusao');
+        const dataConclusao = elConclusao ? elConclusao.value : null;
         const novaSituacao = 'Aguardando Pagamento';
 
         const { error } = await supabase.from('ordens_servico').update({
@@ -1195,7 +1253,8 @@ window.confirmarFechamentoOS = async function() {
         if (error) throw error;
 
         if(window.mostrarToast) window.mostrarToast("O.S. Fechada com Sucesso!", "sucesso");
-        document.getElementById('modal-fechamento-os').classList.add('hidden');
+        const modalFech = document.getElementById('modal-fechamento-os');
+        if(modalFech) modalFech.classList.add('hidden');
         window.fecharModalOsDireto();
         window.carregarOrdensServico();
     } catch(e) {
@@ -1205,10 +1264,10 @@ window.confirmarFechamentoOS = async function() {
 };
 
 window.preencherVeiculoAvulso = function() {
-    const p = document.getElementById('placa'); const m = document.getElementById('modelo'); const ma = document.getElementById('marca'); const a = document.getElementById('ano');
-    if (p) { p.value = 'AVULSA'; p.dispatchEvent(new Event('input')); }
-    if (m) { m.value = 'VENDA BALCÃO / AVULSA'; m.dispatchEvent(new Event('input')); }
-    if (ma) { ma.value = 'N/A'; ma.dispatchEvent(new Event('input')); }
-    if (a) { a.value = new Date().getFullYear(); a.dispatchEvent(new Event('input')); }
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el){ el.value = val; el.dispatchEvent(new Event('input')); } };
+    setVal('placa', 'AVULSA');
+    setVal('modelo', 'VENDA BALCÃO / AVULSA');
+    setVal('marca', 'N/A');
+    setVal('ano', new Date().getFullYear());
     if(window.mostrarToast) window.mostrarToast("Modo O.S. Avulsa ativado!", "info");
 };
