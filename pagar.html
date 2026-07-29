@@ -1,7 +1,6 @@
 <!-- views/nav/pagar.html -->
 <div class="fade-in space-y-6 flex flex-col h-full text-sm">
     
-    <!-- Cards Superiores (Resumo) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 md:col-span-2 flex flex-col justify-center transition-all duration-150">
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Contas a Pagar</h2>
@@ -19,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Barra de Filtros, Abas e Botões -->
     <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col xl:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
         
         <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
@@ -61,24 +59,25 @@
         </div>
     </div>
 
-    <!-- Área da Tabela -->
+    <!-- Área da Tabela - COM A NOVA COLUNA DE DATA DE LANÇAMENTO -->
     <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar pb-8 relative">
         <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden inline-block min-w-full align-middle h-fit transition-colors duration-150">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     <tr>
                         <th class="p-4 w-12 text-center border-r border-gray-200 dark:border-gray-700"></th>
+                        <th class="p-4 w-[12%] text-center">Data / Hora</th> <!-- NOVA COLUNA -->
                         <th class="p-4 w-[25%]">Operação / Fornecedor / Descrição</th>
-                        <th class="p-4 w-[15%] text-center">Nº Documento / Lançamento</th>
-                        <th class="p-4 text-center w-[15%]">Vencimento</th>
-                        <th class="p-4 text-center w-[15%]">Meio / Conta Origem</th>
-                        <th class="p-4 text-right w-[15%]">Valor</th>
+                        <th class="p-4 w-[10%] text-center">Nº Documento</th>
+                        <th class="p-4 text-center w-[12%]">Vencimento</th>
+                        <th class="p-4 text-center w-[14%]">Meio / Conta Origem</th>
+                        <th class="p-4 text-right w-[12%]">Valor</th>
                         <th class="p-4 text-center w-[15%]">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-dados-pagar" class="transition-colors duration-150">
                     <tr>
-                        <td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td>
+                        <td colspan="8" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td>
                     </tr>
                 </tbody>
             </table>
@@ -97,16 +96,24 @@
         </div>
 
         <form id="form-novo-pagar" onsubmit="window.salvarNovaDespesa(event)" class="p-6 space-y-4">
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Fornecedor / Favorecido</label>
-                <input type="text" id="pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
+            
+            <!-- NOVA LINHA: DATA DE LANÇAMENTO E FORNECEDOR -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Data Lançamento</label>
+                    <input type="datetime-local" id="pagar-data-lancamento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-mono font-bold focus:border-red-500 transition-colors">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Fornecedor / Favorecido</label>
+                    <input type="text" id="pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
+                </div>
             </div>
+
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Descrição / Custo</label>
                 <input type="text" id="pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase" placeholder="Ex: COMPRA DE FILTROS, ENERGIA, ETC.">
             </div>
 
-            <!-- Novo Grid Reorganizado -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Tipo de Operação</label>
@@ -176,15 +183,21 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 Editar Despesa
             </h3>
-            <button onclick="document.getElementById('modal-editar-pagar').classList.add('hidden'); document.getElementById('modal-editar-pagar').classList.remove('flex');" class="text-amber-100 hover:text-white text-2xl leading-none transition-colors">&times;</button>
+            <button type="button" onclick="document.getElementById('modal-editar-pagar').classList.add('hidden'); document.getElementById('modal-editar-pagar').classList.remove('flex');" class="text-amber-100 hover:text-white text-2xl leading-none transition-colors">&times;</button>
         </div>
         <form onsubmit="window.salvarEdicaoPagar(event)" class="p-5 space-y-4">
             <input type="hidden" id="edit-pagar-id">
             
-            <div>
-                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Fornecedor / Descrição</label>
-                <input type="text" id="edit-pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors mb-2">
-                <input type="text" id="edit-pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Data/Hora Lançamento</label>
+                    <input type="datetime-local" id="edit-pagar-data-lancamento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-xs transition-colors">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Fornecedor / Descrição</label>
+                    <input type="text" id="edit-pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors mb-2">
+                    <input type="text" id="edit-pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors">
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -261,7 +274,6 @@
 
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
             
-            <!-- Linha 1: Quem Vendeu e Quem Comprou -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <h4 class="text-[10px] font-black uppercase text-indigo-500 mb-3 tracking-widest border-b border-indigo-200 dark:border-indigo-800 pb-1">🏢 Dados do Emitente (Fornecedor)</h4>
@@ -292,10 +304,9 @@
                 </div>
             </div>
 
-            <!-- Linha 2: Informações da Nota e Configuração Financeira (Com o novo grid de 3 colunas) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <!-- Resumo da Nota -->
-                <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center lg:col-span-1">
+            <!-- NOVO GRID DE CONFIGURAÇÃO COM 4 COLUNAS (INCLUINDO DATA DE LANÇAMENTO) -->
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center xl:col-span-1">
                     <div>
                         <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Nº da NFe</span>
                         <span id="xml-nota-numero" class="font-mono font-black text-gray-800 dark:text-white text-lg">---</span>
@@ -308,9 +319,12 @@
                     </div>
                 </div>
 
-                <!-- Configuração Padrão -->
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center lg:col-span-2">
-                    <div class="grid grid-cols-3 gap-3">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center xl:col-span-3">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[9px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1 text-red-500">Data/Hora Lançamento</label>
+                            <input type="datetime-local" id="xml-data-lancamento" required class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-mono font-bold text-[10px] focus:border-indigo-500 transition-colors">
+                        </div>
                         <div>
                             <label class="block text-[9px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Tipo de Operação</label>
                             <select id="xml-tipo-operacao" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-[10px] uppercase focus:border-indigo-500 transition-colors">
@@ -342,7 +356,6 @@
                 </div>
             </div>
 
-            <!-- Tabela de Duplicatas -->
             <div>
                 <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
