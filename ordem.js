@@ -629,22 +629,21 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            // SINO FLUTUANTE (left-2): Fica entre a data e a placa, ancorado à esquerda da célula, sem empurrar nada.
+            // SINO FLUTUANTE (left-3): Fica perfeitamente no meio do espaço vazio sem empurrar a placa
             let iconeNotificacao = os.lab_atualizado ? 
-                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse flex-shrink-0" title="Laboratório enviou atualizações!">
+                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse" title="Laboratório enviou atualizações!">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
                 </button>` : '';
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
-            // Removi a classe border-b daqui, pois o divide-y no HTML já faz as linhas de forma perfeita
+            // BORDAS AQUI (border-b explícito) PARA RECRIAR AS LINHAS
             return `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 border-b border-gray-200 dark:border-gray-700 last:border-none ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
                     
-                    <!-- A CÉLULA DA PLACA: relative permite que o sino flutue solto dentro dela -->
                     <td class="p-4 text-center relative">
                         ${iconeNotificacao}
                         <span class="font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap">${placaFormatada}</span>
@@ -690,7 +689,7 @@ window.carregarOrdensServico = async function() {
                             </button>
 
                             <div id="menu-${os.id}" class="menu-acao-os hidden fixed w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 text-left" style="min-width: 180px; z-index: 99999;">
-                                <button type="button" onclick="window.imprimirOsDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
+                                <button type="button" onclick="window.imprimirOsDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
                                 <button type="button" onclick="window.salvarComoPdfDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
                                 
                                 <button type="button" onclick="window.enviarWhatsAppDaLista(event, ${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-[#25D366] hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1">
