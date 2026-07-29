@@ -9,7 +9,7 @@ window.vigilanciaReceberAtiva = false;
 window.receberIdsSelecionados = new Set();
 window.receberIdsFiltradosTela = []; 
 
-// Função auxiliar para remover acentos e normalizar a busca (Ex: "crédito" = "credito")
+// Normalizador para buscas (Remove acentos e minúsculas)
 const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
@@ -26,7 +26,7 @@ window.ativarVigilanciaReceber = function() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_receber' }, payload => {
             const tbody = document.getElementById('tabela-dados-receber');
             if (tbody) {
-                console.log('📡 [Tesouraria] Sincronizando modificação no cofre...');
+                console.log('📡 [Tesouraria] Modificação Externa detectada! Atualizando...');
                 window.carregarContasReceber(true); 
             }
         })
@@ -172,7 +172,7 @@ window.renderizarReceber = function() {
             }
         }
 
-        // Botoes Táticos (Baixa e Estorno) - Agora em formato quadrado igual Editar/Excluir
+        // Botoes Táticos
         let btnBaixa = '';
         if (conta.status === 'Pendente') {
             btnBaixa = `
@@ -278,6 +278,9 @@ window.excluirContasMassa = async function() {
         
         window.receberIdsSelecionados.clear();
         if (window.mostrarToast) window.mostrarToast(`${total} parcelas eliminadas!`, "sucesso");
+        
+        // 🔴 Recarregamento Expresso
+        setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (err) {
         console.error("ERRO NA EXCLUSÃO EM MASSA:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao excluir parcelas.", "erro");
@@ -335,6 +338,9 @@ window.excluirContaReceberDireto = async function(idsArray) {
         window.atualizarInterfaceExclusaoMassa();
         
         if (window.mostrarToast) window.mostrarToast("Exclusão concluída com sucesso!", "sucesso");
+        
+        // 🔴 Recarregamento Expresso
+        setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (err) {
         console.error("ERRO AO EXCLUIR:", err);
         if (window.mostrarToast) window.mostrarToast("Falha técnica ao excluir.", "erro");
@@ -389,6 +395,9 @@ window.salvarEdicaoReceber = async function(event) {
         
         document.getElementById('modal-editar-receber').classList.add('hidden');
         document.getElementById('modal-editar-receber').classList.remove('flex');
+        
+        // 🔴 Recarregamento Expresso
+        setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (e) {
         console.error("FALHA AO EDITAR:", e);
         if (window.mostrarToast) window.mostrarToast("Erro crítico ao salvar edição.", "erro");
