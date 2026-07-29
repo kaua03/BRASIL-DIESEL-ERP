@@ -1,7 +1,6 @@
 <!-- views/nav/cliente.html -->
 <div class="fade-in space-y-6 flex flex-col h-full text-sm">
     
-    <!-- Cards Superiores (Resumo) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 md:col-span-2 flex flex-col justify-center transition-all duration-150">
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Central de Clientes & CRM</h2>
@@ -19,32 +18,22 @@
         </div>
     </div>
 
-    <!-- Barra de Filtros e Botões -->
     <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
         
         <div class="flex bg-gray-100 dark:bg-[#0f172a] p-1 rounded-xl w-full sm:w-auto border border-transparent dark:border-gray-800">
-            <button onclick="window.mudarFiltroCliente('TODOS')" id="btn-tab-cli-todos" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">
-                Todos
-            </button>
-            <button onclick="window.mudarFiltroCliente('Física')" id="btn-tab-cli-pf" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent">
-                Física (PF)
-            </button>
-            <button onclick="window.mudarFiltroCliente('Jurídica')" id="btn-tab-cli-pj" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent">
-                Jurídica (PJ)
-            </button>
+            <button onclick="window.mudarFiltroCliente('TODOS')" id="btn-tab-cli-todos" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">Todos</button>
+            <button onclick="window.mudarFiltroCliente('Física')" id="btn-tab-cli-pf" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent">Física (PF)</button>
+            <button onclick="window.mudarFiltroCliente('Jurídica')" id="btn-tab-cli-pj" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent">Jurídica (PJ)</button>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
             <input type="text" id="filtro-busca-cliente" oninput="window.renderizarClientes()" class="w-full sm:w-64 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Buscar Nome, CPF/CNPJ ou Tel...">
-
             <button onclick="window.abrirModalCliente()" class="w-full sm:w-auto bg-[#1a428a] hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                Novo Cliente
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> Novo Cliente
             </button>
         </div>
     </div>
 
-    <!-- Área da Tabela -->
     <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar pb-8 relative">
         <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden inline-block min-w-full align-middle h-fit transition-colors duration-150">
             <table class="w-full text-left border-collapse">
@@ -59,31 +48,24 @@
                     </tr>
                 </thead>
                 <tbody id="tabela-dados-clientes" class="transition-colors duration-150">
-                    <tr>
-                        <td colspan="6" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando banco de clientes...</td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando banco de clientes...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- MODAL: CLIENTE (NOVO E EDIÇÃO) COM AUTOMAÇÃO DA RECEITA   -->
-<!-- ========================================================= -->
+<!-- MODAL: CLIENTE (NOVO E EDIÇÃO) COM AUTOMAÇÃO DA RECEITA E CEP -->
 <div id="modal-cliente" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade">
         <div class="bg-[#1a428a] dark:bg-[#081121] text-white p-4 flex justify-between items-center shrink-0 border-b border-blue-800 dark:border-gray-800">
             <h3 id="titulo-modal-cliente" class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                Cadastrar Cliente
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Cadastrar Cliente
             </h3>
             <button type="button" onclick="document.getElementById('modal-cliente').classList.add('hidden'); document.getElementById('modal-cliente').classList.remove('flex');" class="text-blue-200 hover:text-white text-2xl leading-none font-light transition-colors">&times;</button>
         </div>
 
         <form id="form-cliente" onsubmit="window.salvarCliente(event)" class="p-6 space-y-4 relative">
-            
-            <!-- Carregando Receita Federal Invisível -->
             <div id="loading-receita" class="absolute inset-0 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-sm z-10 hidden flex-col items-center justify-center rounded-xl">
                 <svg class="animate-spin h-8 w-8 text-[#1a428a] mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <span class="font-black tracking-widest text-[#1a428a] dark:text-blue-400 uppercase text-xs">Consultando Receita Federal...</span>
@@ -102,7 +84,6 @@
                 </label>
             </div>
 
-            <!-- INVERSÃO DE LAYOUT: Documento Primeiro (Esquerda), Nome/Razão à Direita -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-1">
                     <label id="lbl-cli-doc" class="block text-xs font-bold uppercase text-gray-500 mb-1">CPF</label>
@@ -125,9 +106,32 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Endereço Completo</label>
-                <input type="text" id="cli-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] transition-colors uppercase" placeholder="RUA, NÚMERO, BAIRRO, CIDADE - UF">
+            <!-- NOVO BLOCO DE ENDEREÇO SEPARADO -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-gray-50 dark:bg-[#0f172a] rounded-xl border border-gray-200 dark:border-gray-700">
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CEP</label>
+                    <input type="text" id="cli-cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this, 'cli-')" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono transition-colors duration-150" placeholder="00000-000">
+                </div>
+                <div class="md:col-span-7">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Endereço (Rua/Av)</label>
+                    <input type="text" id="cli-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150" placeholder="NOME DA RUA">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nº</label>
+                    <input type="text" id="cli-numero_end" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bairro</label>
+                    <input type="text" id="cli-bairro" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cidade / UF</label>
+                    <input type="text" id="cli-cidade" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Complemento</label>
+                    <input type="text" id="cli-complemento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150" placeholder="Sala, Lote...">
+                </div>
             </div>
             
             <div>
@@ -138,28 +142,20 @@
             <div class="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
                 <button type="button" onclick="document.getElementById('modal-cliente').classList.add('hidden'); document.getElementById('modal-cliente').classList.remove('flex');" class="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors uppercase">Cancelar</button>
                 <button type="submit" class="px-8 py-2.5 bg-[#1a428a] hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-colors flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                    Gravar Ficha
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gravar Ficha
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- MODAL CRM: RAIO-X DO CLIENTE (VISÃO 360)                  -->
-<!-- ========================================================= -->
+<!-- MODAL CRM: RAIO-X DO CLIENTE (VISÃO 360) -->
 <div id="modal-perfil-cliente" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[250] hidden items-center justify-center p-4 transition-opacity duration-150">
     <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh] max-h-[850px] overflow-hidden border border-gray-300 dark:border-gray-700 anima-fade">
-        
-        <!-- HEADER CRM -->
         <div class="bg-gradient-to-r from-[#1a428a] to-blue-600 text-white p-6 shrink-0 relative">
             <button type="button" onclick="document.getElementById('modal-perfil-cliente').classList.add('hidden'); document.getElementById('modal-perfil-cliente').classList.remove('flex');" class="absolute top-4 right-4 text-blue-200 hover:text-white text-3xl leading-none font-light">&times;</button>
-            
             <div class="flex items-center gap-4">
-                <div class="h-16 w-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border-2 border-white/30 text-2xl shadow-inner">
-                    👤
-                </div>
+                <div class="h-16 w-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border-2 border-white/30 text-2xl shadow-inner">👤</div>
                 <div>
                     <h2 id="crm-nome" class="text-2xl font-black uppercase tracking-wide truncate max-w-2xl">CARREGANDO...</h2>
                     <div class="flex items-center gap-3 mt-1 text-blue-100 text-xs font-mono font-bold">
@@ -171,8 +167,6 @@
         </div>
 
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-            
-            <!-- METRICS GRID (LTV) -->
             <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 dark:border-gray-800 pb-1">Inteligência Comercial (LTV)</h4>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -193,13 +187,10 @@
                 </div>
             </div>
 
-            <!-- TABS & LISTS -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- FROTA -->
                 <div>
                     <h4 class="text-xs font-black text-[#1a428a] dark:text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                        Frota / Veículos Vinculados
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg> Frota / Veículos Vinculados
                     </h4>
                     <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
                         <ul id="crm-lista-veiculos" class="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto custom-scrollbar">
@@ -207,12 +198,9 @@
                         </ul>
                     </div>
                 </div>
-
-                <!-- HISTÓRICO OS -->
                 <div>
                     <h4 class="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Histórico de O.S. (Últimas 10)
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Histórico de O.S. (Últimas 10)
                     </h4>
                     <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
                         <ul id="crm-lista-os" class="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto custom-scrollbar">
@@ -221,7 +209,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
