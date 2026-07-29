@@ -8,7 +8,7 @@ window.formAlterado = false;
 window.modoLeitura = false;
 window.itemEmEdicaoId = null;
 window.listaVeiculosBdd = []; 
-window.listaClientesBdd = []; // CÉREBRO DE CLIENTES
+window.listaClientesBdd = []; 
 
 // =========================================================================
 // 1. MÁSCARAS E FUNÇÕES GLOBAIS DE VISUALIZAÇÃO
@@ -42,7 +42,6 @@ window.validarPlacaBrasil = function(placa) {
     return true; 
 };
 
-// 🔴 MÁSCARA LIMPA (SEM BRASIL API AQUI) 🔴
 window.mascaraCpfCnpj = function(input) {
     if(!input) return;
     let v = input.value.replace(/\D/g, "");
@@ -76,7 +75,8 @@ window.mascaraValorItem = function(input) {
     input.value = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-window.consultarCep = async function(input) {
+// Modificado para servir tanto para a O.S quanto para o Cadastro Rápido
+window.consultarCep = async function(input, prefixo = '') {
     if(!input) return;
     let cep = input.value.replace(/\D/g, '');
     if (cep.length === 8) {
@@ -85,11 +85,11 @@ window.consultarCep = async function(input) {
             if (res.ok) {
                 let dados = await res.json();
                 if (!dados.erro) {
-                    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+                    const setVal = (id, val) => { const el = document.getElementById(prefixo + id); if(el) el.value = val; };
                     setVal('endereco', String(dados.logradouro || '').trim().toUpperCase());
                     setVal('bairro', String(dados.bairro || '').trim().toUpperCase());
                     setVal('cidade', `${String(dados.localidade || '').trim().toUpperCase()} / ${String(dados.uf || '').trim().toUpperCase()}`);
-                    document.getElementById('numero_end')?.focus();
+                    document.getElementById(prefixo + 'numero_end')?.focus();
                 }
             }
         } catch (e) { console.error(e); }
@@ -120,12 +120,10 @@ window.carregarDatalists = async function() {
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
 
-// 🔴 O CÉREBRO DE AUTOFILL DE CLIENTES 🔴
 window.preencherDadosClienteSelecionado = function(nomeDigitado) {
     if (!nomeDigitado) return;
     const nomeUpper = nomeDigitado.trim().toUpperCase();
     
-    // Procura no cérebro se o cliente existe
     const clienteEncontrado = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === nomeUpper);
     
     if (clienteEncontrado) {
@@ -134,15 +132,20 @@ window.preencherDadosClienteSelecionado = function(nomeDigitado) {
         setVal('cpf_cnpj', clienteEncontrado.cpf_cnpj || '');
         setVal('celular', clienteEncontrado.telefone || '');
         setVal('cliente_email', clienteEncontrado.email || '');
+        
+        // Puxa o endereço fragmentado da base para a O.S
+        if(clienteEncontrado.cep) setVal('cep', clienteEncontrado.cep);
         if(clienteEncontrado.endereco) setVal('endereco', clienteEncontrado.endereco);
+        if(clienteEncontrado.numero_end) setVal('numero_end', clienteEncontrado.numero_end);
+        if(clienteEncontrado.complemento) setVal('complemento', clienteEncontrado.complemento);
+        if(clienteEncontrado.bairro) setVal('bairro', clienteEncontrado.bairro);
+        if(clienteEncontrado.cidade) setVal('cidade', clienteEncontrado.cidade);
         
         if (window.mostrarToast) window.mostrarToast("Dados do cliente carregados!", "sucesso");
     }
 };
 
-// Gatilhos de escuta nos inputs
 document.addEventListener('input', function(e) {
-    // Para Veículos
     if (e.target && e.target.id === 'modelo') {
         const mod = e.target.value.trim().toUpperCase();
         if (window.listaVeiculosBdd && mod.length > 2) {
@@ -154,7 +157,6 @@ document.addEventListener('input', function(e) {
         }
     }
     
-    // Para Clientes (Escuta enquanto digita/seleciona)
     if (e.target && e.target.id === 'cliente') {
         const val = e.target.value.trim().toUpperCase();
         const achou = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === val);
@@ -186,7 +188,6 @@ window.trocarTipoRapidoUI = function() {
     inDoc.value = '';
 };
 
-// 🔴 O VERDADEIRO MOTOR DO CNPJ FICA SÓ AQUI 🔴
 window.mascaraCpfCnpjRapido = function(input) {
     let v = input.value.replace(/\D/g, ""); 
     const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
@@ -216,20 +217,24 @@ window.buscarCnpjRapido = async function(cnpjLimpo) {
         
         document.getElementById('cli-rapido-nome').value = data.razao_social || data.nome_fantasia || '';
         document.getElementById('cli-rapido-email').value = data.email || '';
-        
         if (data.ddd_telefone_1) {
             const telInput = document.getElementById('cli-rapido-tel');
             telInput.value = data.ddd_telefone_1;
             window.mascaraCelular(telInput);
         }
 
-        const enderecoCompleto = `${data.logradouro || ''}, ${data.numero || 'S/N'}, ${data.bairro || ''}, ${data.municipio || ''} - ${data.uf || ''}`;
-        document.getElementById('cli-rapido-endereco').value = enderecoCompleto.replace(/^, | , | ,$/g, '').trim().toUpperCase();
+        if (data.cep) {
+            const cepInput = document.getElementById('cli-rapido-cep');
+            cepInput.value = String(data.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
+            window.consultarCep(cepInput, 'cli-rapido-'); 
+        }
+        
+        if(data.numero) document.getElementById('cli-rapido-numero_end').value = data.numero;
+        if(data.complemento) document.getElementById('cli-rapido-complemento').value = data.complemento;
 
         if(window.mostrarToast) window.mostrarToast("Dados da Receita preenchidos!", "sucesso");
     } catch (error) {
         console.error(error);
-        if(window.mostrarToast) window.mostrarToast("CNPJ não localizado.", "aviso");
     } finally {
         if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
     }
@@ -249,38 +254,46 @@ window.salvarClienteRapido = async function(e) {
     e.preventDefault();
     
     const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
-    const nome = document.getElementById('cli-rapido-nome').value.trim().toUpperCase();
-    const doc = document.getElementById('cli-rapido-doc').value.trim();
-    const tel = document.getElementById('cli-rapido-tel').value.trim();
-    const email = document.getElementById('cli-rapido-email').value.trim().toLowerCase();
-    const end = document.getElementById('cli-rapido-endereco').value.trim().toUpperCase();
+    
+    const getVal = (id) => document.getElementById(id)?.value || '';
+
+    const payload = {
+        tipo_cliente: isPj ? 'Jurídica' : 'Física',
+        nome_razao: getVal('cli-rapido-nome').trim().toUpperCase(),
+        cpf_cnpj: getVal('cli-rapido-doc').trim(),
+        telefone: getVal('cli-rapido-tel').trim(),
+        email: getVal('cli-rapido-email').trim().toLowerCase(),
+        cep: getVal('cli-rapido-cep').trim(),
+        endereco: getVal('cli-rapido-endereco').trim().toUpperCase(),
+        numero_end: getVal('cli-rapido-numero_end').trim(),
+        bairro: getVal('cli-rapido-bairro').trim().toUpperCase(),
+        cidade: getVal('cli-rapido-cidade').trim().toUpperCase(),
+        complemento: getVal('cli-rapido-complemento').trim().toUpperCase(),
+    };
     
     if(window.mostrarToast) window.mostrarToast("Salvando cliente no cofre...", "aviso");
 
     try {
-        const { data, error } = await supabase.from('clientes').insert([{
-            nome_razao: nome,
-            cpf_cnpj: doc,
-            telefone: tel,
-            email: email,
-            endereco: end,
-            tipo_cliente: isPj ? 'Jurídica' : 'Física'
-        }]).select().single();
+        const { data, error } = await supabase.from('clientes').insert([payload]).select().single();
 
         if (error) throw error;
 
         if(window.mostrarToast) window.mostrarToast("Cliente salvo e vinculado!", "sucesso");
         
-        // Atualiza a memória de clientes para o Datalist
         await window.carregarDatalists();
         
         // Injeta os dados na O.S. imediatamente
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
-        setVal('cliente', nome);
-        setVal('cpf_cnpj', doc);
-        setVal('celular', tel);
-        setVal('cliente_email', email);
-        setVal('endereco', end);
+        setVal('cliente', payload.nome_razao);
+        setVal('cpf_cnpj', payload.cpf_cnpj);
+        setVal('celular', payload.telefone);
+        setVal('cliente_email', payload.email);
+        setVal('cep', payload.cep);
+        setVal('endereco', payload.endereco);
+        setVal('numero_end', payload.numero_end);
+        setVal('bairro', payload.bairro);
+        setVal('cidade', payload.cidade);
+        setVal('complemento', payload.complemento);
 
         document.getElementById('modal-cliente-rapido').classList.add('hidden');
         document.getElementById('modal-cliente-rapido').classList.remove('flex');
@@ -308,7 +321,7 @@ window.alternarModoLeitura = function(ativo) {
     const painelEdicao = document.getElementById('painel-botoes-edicao');
     const cabecalho = document.getElementById('cabecalho-modal-os');
     const painelTopoResumo = document.getElementById('painel-topo-resumo');
-    const btnAddCliente = document.getElementById('btn-add-cliente'); // Botão novo de cliente
+    const btnAddCliente = document.getElementById('btn-add-cliente'); 
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
@@ -728,7 +741,6 @@ window.visualizarNotificacaoLab = async function(event, osId, osNum, placa, situ
 // 5. BANCO DE DADOS, TABELA PRINCIPAL E VIGILÂNCIA REALTIME
 // =========================================================================
 
-// Configuração do Radar Realtime
 window.ativarVigilanciaRealtime = function() {
     if(window.osRealtimeAtivo) return; 
     window.osRealtimeAtivo = true;
@@ -756,7 +768,7 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
         tabela.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 font-bold">A carregar base de dados...</td></tr>';
     }
     
-    window.ativarVigilanciaRealtime(); // Liga o radar ao abrir a tela
+    window.ativarVigilanciaRealtime(); 
 
     try {
         const { data, error } = await supabase.from('ordens_servico').select('*, itens_orcamento(*)').order('id', { ascending: false });
@@ -793,7 +805,6 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            // SINO FLUTUANTE AJUSTADO: Absoluto com margem à esquerda calculada
             let iconeNotificacao = os.lab_atualizado ? 
                 `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse flex-shrink-0" title="Laboratório enviou atualizações!">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
@@ -801,14 +812,12 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
-            // BORDAS PURAS INJETADAS DIRETAMENTE NA TR
             return `
                 <tr class="border-b border-gray-200 dark:border-gray-700 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
                     
-                    <!-- PLACA CENTRALIZADA COM SINO FLUTUANTE -->
                     <td class="p-4 text-center relative">
                         ${iconeNotificacao}
                         <span class="font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap">${placaFormatada}</span>
@@ -819,7 +828,6 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">${veiculoFormatado}</p>
                     </td>
                     
-                    <!-- SEM BORDAS VERTICAIS QUE CORTAVAM A LINHA -->
                     <td class="p-4 text-right text-sm">
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Itens: <span class="font-bold text-gray-800 dark:text-white">${qtdItens}</span></p>
                         <p class="font-black text-[#1a428a] dark:text-blue-400 tracking-wide">R$ ${totalMatematico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -873,7 +881,7 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE O.S. (BLINDAGEM E TRY/CATCH ALARMADOS)
+// 6. GESTÃO DO MODAL DE O.S. E BOTÃO DESCARTAR
 // =========================================================================
 window.abrirModalNovaOs = async function() {
     window.osEmEdicaoId = null; window.osNumeroAtual = null;
@@ -885,7 +893,6 @@ window.abrirModalNovaOs = async function() {
     document.getElementById('desconto-valor').value = '0,00';
     document.getElementById('desconto-porcentagem').innerText = 'Representa 0.00%';
     
-    // Atualiza a memória de clientes para garantir que o Datalist está fresco
     window.carregarDatalists();
     
     try {
@@ -1048,7 +1055,7 @@ window.editarOs = async function(event, id) {
         window.modoLeitura = false; 
         await window.buscarDadosOs(id); 
         window.alternarModoLeitura(false); 
-        window.carregarDatalists(); // Atualiza a memória
+        window.carregarDatalists(); 
         window.configurarRastreioAlteracoes(); 
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
@@ -1102,17 +1109,29 @@ window.marcarComoAlterado = function() {
 window.atualizarVisibilidadeBotoesFechamento = function() {
     const btnX = document.getElementById('btn-fechar-x');
     const btnFecharOs = document.getElementById('btn-fechar-os');
+    const btnCancelar = document.getElementById('btn-cancelar-alteracoes'); // O novo botão de fuga
     
     if (window.modoLeitura) {
         if(btnX) btnX.classList.remove('hidden');
         if(btnFecharOs) btnFecharOs.classList.add('hidden');
+        if(btnCancelar) btnCancelar.classList.add('hidden');
         return;
     }
+    
+    // Se o formulário foi alterado, o X some e o Cancelar aparece!
     if (window.formAlterado) {
         if(btnX) btnX.classList.add('hidden');
+        if(btnCancelar) btnCancelar.classList.remove('hidden');
     } else {
         if(btnX) btnX.classList.remove('hidden');
+        if(btnCancelar) btnCancelar.classList.add('hidden');
     }
+};
+
+// A Função de Fuga Tática
+window.tentarCancelarOs = async function() {
+    const confirmar = await window.abrirConfirmacao("Descartar Alterações", "Tem certeza que deseja sair sem salvar as modificações feitas nesta O.S?", "aviso");
+    if (confirmar) window.fecharModalOsDireto();
 };
 
 window.fecharModalOsSeguro = async function() {
