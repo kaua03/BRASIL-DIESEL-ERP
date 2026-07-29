@@ -8,16 +8,15 @@ window.vigilanciaPagarAtiva = false;
 // Sistema de Memória para Seleção
 window.pagarIdsSelecionados = new Set();
 window.pagarIdsFiltradosTela = []; 
-
-// Variável para armazenar as parcelas temporárias do XML
 window.parcelasXmlTemporarias = [];
 
-// Normalizador para buscas sem acentos
+// =========================================================================
+// 0. UTILITÁRIOS E FORMATADORES
+// =========================================================================
 const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
-// Formatadores para a Auditoria XML
 const formatarCnpj = (cnpj) => {
     if (!cnpj) return '---';
     return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
@@ -31,6 +30,13 @@ const formatarDataIso = (isoStr) => {
     } catch {
         return isoStr;
     }
+};
+
+// Transforma Data/Hora ISO para o formato do input HTML datetime-local (YYYY-MM-DDTHH:mm)
+const formatarDataHoraInput = (isoString) => {
+    const data = isoString ? new Date(isoString) : new Date();
+    data.setMinutes(data.getMinutes() - data.getTimezoneOffset());
+    return data.toISOString().slice(0, 16); 
 };
 
 // =========================================================================
@@ -57,7 +63,7 @@ window.carregarContasPagar = async function(isSilencioso = false) {
     if (!tbody) return;
 
     if (!isSilencioso) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando livro de despesas...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando livro de despesas...</td></tr>';
     }
 
     window.ativarVigilanciaPagar(); 
@@ -75,7 +81,7 @@ window.carregarContasPagar = async function(isSilencioso = false) {
 
     } catch (err) {
         console.error("ERRO AO CARREGAR FINANCEIRO PAGAR:", err);
-        if (!isSilencioso) tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-red-500 font-bold">Erro de conexão ao banco.</td></tr>';
+        if (!isSilencioso) tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-red-500 font-bold">Erro de conexão ao banco.</td></tr>';
     }
 };
 
@@ -146,7 +152,7 @@ window.renderizarPagar = function() {
     window.atualizarInterfaceExclusaoMassaPagar();
 
     if (dadosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Nenhuma despesa ${window.abaPagarAtual.toLowerCase()} encontrada.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-gray-400 font-bold italic">Nenhuma despesa ${window.abaPagarAtual.toLowerCase()} encontrada.</td></tr>`;
         return;
     }
 
@@ -155,18 +161,19 @@ window.renderizarPagar = function() {
         const descFmt = String(conta.descricao || '---').toUpperCase();
         const docFmt = String(conta.numero_documento || 'S/N');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        
-        // Formatação do Tipo de Operação
         const tipoOperacaoFmt = String(conta.tipo_operacao || 'FINANCEIRO DESPESAS').toUpperCase();
         
-        // Formatação da Data e Hora do Lançamento (Auditoria)
-        let dataLancamentoFmt = '---';
-        if (conta.created_at) {
-            const dLanc = new Date(conta.created_at);
-            dataLancamentoFmt = dLanc.toLocaleDateString('pt-BR') + ' às ' + dLanc.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        // Puxa a nova Data de Lançamento (com fallback de segurança para quem já tinha sistema rodando)
+        const valorDataReal = conta.data_lancamento || conta.created_at;
+        
+        let dataLancData = '---';
+        let dataLancHora = '---';
+        if (valorDataReal) {
+            const dLanc = new Date(valorDataReal);
+            dataLancData = dLanc.toLocaleDateString('pt-BR');
+            dataLancHora = dLanc.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         }
 
-        // MOTOR VISUAL DE ALERTAS DE VENCIMENTO
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -213,23 +220,31 @@ window.renderizarPagar = function() {
                 <td class="p-4 text-center border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f172a]/50">
                     <input type="checkbox" value="${conta.id}" onchange="window.toggleCheckContaPagar(${conta.id}, this)" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600 cursor-pointer bg-white dark:bg-gray-700" ${isChecked}>
                 </td>
+                
+                <td class="p-4 text-center font-mono">
+                    <span class="block font-bold text-gray-800 dark:text-white text-xs">${dataLancData}</span>
+                    <span class="block text-[10px] text-gray-500 mt-1 uppercase">${dataLancHora}</span>
+                </td>
+
                 <td class="p-4">
                     <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded text-[9px] font-black tracking-wider uppercase mb-1">${tipoOperacaoFmt}</span>
                     <span class="block text-xs font-black text-gray-800 dark:text-white uppercase truncate max-w-[250px]" title="${fornecedorFmt}">${fornecedorFmt}</span>
                     <span class="block text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 uppercase truncate max-w-[250px]" title="${descFmt}">${descFmt}</span>
                 </td>
-                <td class="p-4 text-center font-mono">
-                    <span class="block font-bold text-gray-600 dark:text-gray-400 text-xs">${docFmt}</span>
-                    <span class="block text-[9px] text-gray-400 mt-1 uppercase" title="Data/Hora do Lançamento no Cofre">Lanç.: ${dataLancamentoFmt}</span>
-                </td>
+                
+                <td class="p-4 text-center font-mono font-bold text-gray-600 dark:text-gray-400 text-xs">${docFmt}</td>
+                
                 <td class="p-4 text-center font-mono">
                     ${statusVencimentoVisual}
                 </td>
+                
                 <td class="p-4 text-center">
                     <span class="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase">${conta.operacao}</span>
-                    <span class="block text-[10px] text-gray-500 mt-0.5 uppercase">${conta.conta_origem}</span>
+                    <span class="block text-[10px] text-gray-500 mt-0.5">${conta.conta_origem}</span>
                 </td>
+                
                 <td class="p-4 text-right font-mono font-black text-red-600 dark:text-red-400 text-sm whitespace-nowrap">R$ ${valorFmt}</td>
+                
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
                         ${btnBaixa}
@@ -325,6 +340,9 @@ window.abrirModalNovoPagar = function() {
     const form = document.getElementById('form-novo-pagar');
     if (form) form.reset();
     
+    // Injeta a Data de Lançamento Padrão (Agora mesmo)
+    document.getElementById('pagar-data-lancamento').value = formatarDataHoraInput();
+    
     const hoje = new Date();
     hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
     const inputVenc = document.getElementById('pagar-vencimento');
@@ -346,8 +364,13 @@ window.salvarNovaDespesa = async function(event) {
         return;
     }
 
+    // O input datetime-local devolve YYYY-MM-DDTHH:mm, precisamos mandar como ISO pro banco
+    const dataLancRaw = document.getElementById('pagar-data-lancamento').value;
+    const dataLancIso = new Date(dataLancRaw).toISOString();
+
     const dadosDespesa = {
-        tipo_operacao: getVal('pagar-tipo-operacao'), // O novo campo sendo atirado pro banco
+        data_lancamento: dataLancIso,
+        tipo_operacao: getVal('pagar-tipo-operacao'),
         fornecedor: getVal('pagar-fornecedor').trim().toUpperCase(),
         descricao: getVal('pagar-descricao').trim().toUpperCase(),
         numero_documento: getVal('pagar-documento').trim().toUpperCase(),
@@ -378,8 +401,11 @@ window.abrirModalEditarPagar = function(id) {
     const conta = window.dadosPagarGerais.find(c => c.id === id);
     if (!conta) return;
 
+    const dataRealInput = conta.data_lancamento || conta.created_at;
+
     document.getElementById('edit-pagar-id').value = conta.id;
-    document.getElementById('edit-pagar-tipo-operacao').value = conta.tipo_operacao || 'Financeiro Despesas'; // Puxa o dado do banco
+    document.getElementById('edit-pagar-data-lancamento').value = formatarDataHoraInput(dataRealInput);
+    document.getElementById('edit-pagar-tipo-operacao').value = conta.tipo_operacao || 'Financeiro Despesas'; 
     document.getElementById('edit-pagar-fornecedor').value = conta.fornecedor || '';
     document.getElementById('edit-pagar-descricao').value = conta.descricao || '';
     document.getElementById('edit-pagar-doc').value = conta.numero_documento || '';
@@ -398,8 +424,12 @@ window.salvarEdicaoPagar = async function(event) {
     const id = document.getElementById('edit-pagar-id').value;
     const valStr = document.getElementById('edit-pagar-valor').value;
     const valNum = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
+    
+    const dataLancRaw = document.getElementById('edit-pagar-data-lancamento').value;
+    const dataLancIso = new Date(dataLancRaw).toISOString();
 
     const payload = {
+        data_lancamento: dataLancIso,
         tipo_operacao: document.getElementById('edit-pagar-tipo-operacao').value,
         fornecedor: document.getElementById('edit-pagar-fornecedor').value.toUpperCase(),
         descricao: document.getElementById('edit-pagar-descricao').value.toUpperCase(),
@@ -483,7 +513,7 @@ window.estornarPagar = async function(id, btnElement) {
 };
 
 // =========================================================================
-// 7. A MAGIA DO XML: LEITURA, AUDITORIA E PROTEÇÃO CONTRA DUPLICIDADE
+// 7. A MAGIA DO XML: LEITURA E PROCESSAMENTO
 // =========================================================================
 
 window.processarXmlNfe = async function(event) {
@@ -573,6 +603,9 @@ window.processarXmlNfe = async function(event) {
                 });
             }
 
+            // Define a hora do Lote para AGORA
+            document.getElementById('xml-data-lancamento').value = formatarDataHoraInput();
+
             document.getElementById('xml-fornecedor-nome').innerText = emitNome;
             document.getElementById('xml-fornecedor-cnpj').innerText = formatarCnpj(emitCnpj);
             document.getElementById('xml-dest-nome').innerText = destNome;
@@ -618,9 +651,12 @@ window.processarXmlNfe = async function(event) {
 window.salvarXmlLote = async function() {
     const fornecedor = document.getElementById('xml-fornecedor-nome').dataset.raw.toUpperCase();
     const documento = document.getElementById('xml-nota-numero').dataset.raw.toUpperCase();
-    const tipoOp = document.getElementById('xml-tipo-operacao').value; // O Novo Campo do XML
+    const tipoOp = document.getElementById('xml-tipo-operacao').value; 
     const conta = document.getElementById('xml-conta').value;
     const operacao = document.getElementById('xml-operacao').value;
+
+    const dataLancRaw = document.getElementById('xml-data-lancamento').value;
+    const dataLancIso = new Date(dataLancRaw).toISOString();
 
     let payloadLote = [];
 
@@ -636,6 +672,7 @@ window.salvarXmlLote = async function() {
         }
 
         payloadLote.push({
+            data_lancamento: dataLancIso, // Injetando a Data Editável
             tipo_operacao: tipoOp,
             fornecedor: fornecedor,
             descricao: desc,
@@ -648,7 +685,7 @@ window.salvarXmlLote = async function() {
         });
     }
 
-    if (window.mostrarToast) window.mostrarToast(`Injetando ${payloadLote.length} despesa(s) no cofre...`, "info");
+    if (window.mostrarToast) window.mostrarToast(`Injetando ${payloadLote.length} despesa(s) no cofre...`, "sucesso");
 
     try {
         const { error } = await supabase.from('contas_pagar').insert(payloadLote);
