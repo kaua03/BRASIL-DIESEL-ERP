@@ -1,5 +1,5 @@
 <!-- views/nav/ordem.html -->
-<div class="fade-in space-y-6">
+<div class="fade-in space-y-6 pb-8">
     <!-- Cabeçalho -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-150 shrink-0">
         <div>
@@ -14,8 +14,8 @@
         </button>
     </div>
 
-   <!-- Tabela de O.S. (Ajustada para ficar Rente e com Linhas) -->
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+   <!-- Tabela de O.S. (Agora abraça o conteúdo e não estica) -->
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse min-w-max">
                 <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
@@ -29,8 +29,7 @@
                         <th class="p-4 text-center w-[16%]">Ações</th>
                     </tr>
                 </thead>
-                <!-- DIVIDE-Y CRIA AS LINHAS PERFEITAS ENTRE AS O.S -->
-                <tbody id="tabela-ordens-servico" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[#1e293b] transition-all duration-150">
+                <tbody id="tabela-ordens-servico" class="bg-white dark:bg-[#1e293b] transition-all duration-150">
                     <tr>
                         <td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Carregando Ordens de Serviço...</td>
                     </tr>
@@ -73,7 +72,7 @@
 
             <!-- BLOCO 0: INFORMAÇÕES DE CONTROLE -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-[] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Data/Hora Abertura</label>
                     <input type="datetime-local" id="data_hora" step="60" required class="w-full bg-transparent outline-none font-mono font-bold text-gray-800 dark:text-white transition-colors duration-150">
                 </div>
