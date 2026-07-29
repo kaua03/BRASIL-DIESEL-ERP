@@ -8,7 +8,7 @@ window.formAlterado = false;
 window.modoLeitura = false;
 window.itemEmEdicaoId = null;
 window.listaVeiculosBdd = []; 
-window.listaClientesBdd = []; // <--- NOVO CÉREBRO DE CLIENTES
+window.listaClientesBdd = []; // CÉREBRO DE CLIENTES
 
 // =========================================================================
 // 1. MÁSCARAS E FUNÇÕES GLOBAIS DE VISUALIZAÇÃO
@@ -42,24 +42,16 @@ window.validarPlacaBrasil = function(placa) {
     return true; 
 };
 
-// 🔴 NOVA MÁSCARA CPF/CNPJ COM GATILHO DA BRASILAPI 🔴
+// 🔴 MÁSCARA LIMPA (SEM BRASIL API AQUI) 🔴
 window.mascaraCpfCnpj = function(input) {
     if(!input) return;
     let v = input.value.replace(/\D/g, "");
-    
-    // Auto-detecta CPF ou CNPJ pelo tamanho enquanto digita
     if (v.length <= 11) {
         v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         input.value = v;
     } else {
         v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
         input.value = v;
-        
-        // Se bateu 14 digitos puros, ativa o gatilho!
-        const limpo = v.replace(/\D/g, "");
-        if (limpo.length === 14) {
-            window.consultarCnpj(limpo);
-        }
     }
 };
 
@@ -82,32 +74,6 @@ window.mascaraValorItem = function(input) {
     let v = input.value.replace(/\D/g, '');
     if (v === "") { input.value = ""; return; }
     input.value = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-// 🔴 INTEGRAÇÃO BRASILAPI 🔴
-window.consultarCnpj = async function(cnpjLimpo) {
-    if(!cnpjLimpo) return;
-    if (window.mostrarToast) window.mostrarToast("Consultando CNPJ...", "aviso");
-    try {
-        let res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
-        if (res.ok) {
-            let dados = await res.json();
-            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-            
-            setVal('cliente', String(dados.razao_social || dados.nome_fantasia || '').trim().toUpperCase());
-            if (dados.ddd_telefone_1) {
-                setVal('celular', dados.ddd_telefone_1);
-                window.mascaraCelular(document.getElementById('celular'));
-            }
-            if (dados.email && dados.email.trim() !== "") setVal('cliente_email', String(dados.email).toLowerCase().trim());
-            if (dados.numero) setVal('numero_end', String(dados.numero).trim());
-            if (dados.cep) {
-                setVal('cep', String(dados.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2"));
-                window.consultarCep(document.getElementById('cep'));
-            }
-            if (window.mostrarToast) window.mostrarToast("Dados preenchidos pela Receita!", "sucesso");
-        }
-    } catch (e) { console.error(e); }
 };
 
 window.consultarCep = async function(input) {
@@ -135,7 +101,6 @@ window.consultarCep = async function(input) {
 // =========================================================================
 window.carregarDatalists = async function() {
     try {
-        // Puxa toda a tabela de clientes para o cérebro da O.S.[cite: 5]
         const { data: clientes } = await supabase.from('clientes').select('*').order('nome_razao');
         if (clientes) {
             window.listaClientesBdd = clientes;
@@ -169,12 +134,7 @@ window.preencherDadosClienteSelecionado = function(nomeDigitado) {
         setVal('cpf_cnpj', clienteEncontrado.cpf_cnpj || '');
         setVal('celular', clienteEncontrado.telefone || '');
         setVal('cliente_email', clienteEncontrado.email || '');
-        
-        // Se o cliente tem endereço registado, injeta
-        if(clienteEncontrado.endereco) {
-            // Como no cliente o endereço é um stringão, colocamos no campo endereço da OS
-            setVal('endereco', clienteEncontrado.endereco);
-        }
+        if(clienteEncontrado.endereco) setVal('endereco', clienteEncontrado.endereco);
         
         if (window.mostrarToast) window.mostrarToast("Dados do cliente carregados!", "sucesso");
     }
@@ -196,7 +156,9 @@ document.addEventListener('input', function(e) {
     
     // Para Clientes (Escuta enquanto digita/seleciona)
     if (e.target && e.target.id === 'cliente') {
-        window.preencherDadosClienteSelecionado(e.target.value);
+        const val = e.target.value.trim().toUpperCase();
+        const achou = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === val);
+        if(achou) window.preencherDadosClienteSelecionado(val);
     }
 });
 
@@ -224,6 +186,7 @@ window.trocarTipoRapidoUI = function() {
     inDoc.value = '';
 };
 
+// 🔴 O VERDADEIRO MOTOR DO CNPJ FICA SÓ AQUI 🔴
 window.mascaraCpfCnpjRapido = function(input) {
     let v = input.value.replace(/\D/g, ""); 
     const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
@@ -252,14 +215,21 @@ window.buscarCnpjRapido = async function(cnpjLimpo) {
         const data = await response.json();
         
         document.getElementById('cli-rapido-nome').value = data.razao_social || data.nome_fantasia || '';
+        document.getElementById('cli-rapido-email').value = data.email || '';
+        
         if (data.ddd_telefone_1) {
             const telInput = document.getElementById('cli-rapido-tel');
             telInput.value = data.ddd_telefone_1;
             window.mascaraCelular(telInput);
         }
+
+        const enderecoCompleto = `${data.logradouro || ''}, ${data.numero || 'S/N'}, ${data.bairro || ''}, ${data.municipio || ''} - ${data.uf || ''}`;
+        document.getElementById('cli-rapido-endereco').value = enderecoCompleto.replace(/^, | , | ,$/g, '').trim().toUpperCase();
+
         if(window.mostrarToast) window.mostrarToast("Dados da Receita preenchidos!", "sucesso");
     } catch (error) {
         console.error(error);
+        if(window.mostrarToast) window.mostrarToast("CNPJ não localizado.", "aviso");
     } finally {
         if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
     }
@@ -282,6 +252,8 @@ window.salvarClienteRapido = async function(e) {
     const nome = document.getElementById('cli-rapido-nome').value.trim().toUpperCase();
     const doc = document.getElementById('cli-rapido-doc').value.trim();
     const tel = document.getElementById('cli-rapido-tel').value.trim();
+    const email = document.getElementById('cli-rapido-email').value.trim().toLowerCase();
+    const end = document.getElementById('cli-rapido-endereco').value.trim().toUpperCase();
     
     if(window.mostrarToast) window.mostrarToast("Salvando cliente no cofre...", "aviso");
 
@@ -290,6 +262,8 @@ window.salvarClienteRapido = async function(e) {
             nome_razao: nome,
             cpf_cnpj: doc,
             telefone: tel,
+            email: email,
+            endereco: end,
             tipo_cliente: isPj ? 'Jurídica' : 'Física'
         }]).select().single();
 
@@ -305,6 +279,8 @@ window.salvarClienteRapido = async function(e) {
         setVal('cliente', nome);
         setVal('cpf_cnpj', doc);
         setVal('celular', tel);
+        setVal('cliente_email', email);
+        setVal('endereco', end);
 
         document.getElementById('modal-cliente-rapido').classList.add('hidden');
         document.getElementById('modal-cliente-rapido').classList.remove('flex');
@@ -780,7 +756,6 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
         tabela.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 font-bold">A carregar base de dados...</td></tr>';
     }
     
-    window.carregarDatalists(); 
     window.ativarVigilanciaRealtime(); // Liga o radar ao abrir a tela
 
     try {
@@ -909,6 +884,9 @@ window.abrirModalNovaOs = async function() {
     document.getElementById('outros-porcentagem').innerText = '+ 0.00%';
     document.getElementById('desconto-valor').value = '0,00';
     document.getElementById('desconto-porcentagem').innerText = 'Representa 0.00%';
+    
+    // Atualiza a memória de clientes para garantir que o Datalist está fresco
+    window.carregarDatalists();
     
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -1070,6 +1048,7 @@ window.editarOs = async function(event, id) {
         window.modoLeitura = false; 
         await window.buscarDadosOs(id); 
         window.alternarModoLeitura(false); 
+        window.carregarDatalists(); // Atualiza a memória
         window.configurarRastreioAlteracoes(); 
         document.getElementById('modal-os')?.classList.remove('hidden'); 
         document.getElementById('modal-os')?.classList.add('flex'); 
