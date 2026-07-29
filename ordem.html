@@ -1,10 +1,11 @@
 <!-- views/nav/ordem.html -->
 <div class="fade-in space-y-6 pb-8">
-    <!-- Cabeçalho -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-150 shrink-0">
+    
+    <!-- Cabeçalho (Igual ao Lab) -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
-            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Ordens de Serviço (O.S)</h2>
-            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão completa de pátio, orçamentos e fechamento financeiro.</p>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] transition-colors">Ordens de Serviço (O.S)</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1 transition-colors">Gestão completa de pátio, orçamentos e fechamento financeiro.</p>
         </div>
         <button onclick="window.abrirModalNovaOs()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 duration-150 flex items-center gap-2 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -14,25 +15,23 @@
         </button>
     </div>
 
-   <!-- Tabela de O.S. -->
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse min-w-max">
-                <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                    <tr>
-                        <th class="p-4 w-[8%] text-center">Nº O.S</th>
-                        <th class="p-4 w-[12%]">Data/Hora</th>
-                        <th class="p-4 text-center w-[12%]">Placa</th>
-                        <th class="p-4 w-[25%]">Cliente / Veículo</th>
-                        <th class="p-4 text-right w-[15%]">Resumo Financeiro</th>
-                        <th class="p-4 text-center w-[12%]">Situação</th>
-                        <th class="p-4 text-center w-[16%]">Ações</th>
+   <!-- Tabela de O.S. (Clonada do Lab.html) -->
+    <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-[#0f2757] dark:bg-gray-800 text-white text-xs uppercase tracking-wider border-b border-transparent dark:border-gray-700 transition-colors">
+                        <th class="p-4 font-bold w-[8%] text-center">Nº O.S</th>
+                        <th class="p-4 font-bold w-[12%]">Data/Hora</th>
+                        <th class="p-4 font-bold text-center w-[12%]">Placa</th>
+                        <th class="p-4 font-bold w-[25%]">Cliente / Veículo</th>
+                        <th class="p-4 font-bold text-right w-[15%]">Resumo Financeiro</th>
+                        <th class="p-4 font-bold text-center w-[12%]">Situação</th>
+                        <th class="p-4 font-bold text-center w-[16%]">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tabela-ordens-servico" class="bg-white dark:bg-[#1e293b] transition-all duration-150">
-                    <tr>
-                        <td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Carregando Ordens de Serviço...</td>
-                    </tr>
+                <tbody id="tabela-ordens-servico" class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-[#1e293b] transition-colors">
+                    <tr><td colspan="7" class="text-center p-8 text-gray-500 dark:text-gray-400 font-bold">Aguardando dados...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -41,9 +40,9 @@
 <!-- ========================================================= -->
 <!-- MODAL DE NOVA / EDITAR O.S. (ARQUITETURA BLINDADA)        -->
 <!-- ========================================================= -->
-<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
-    <!-- CÁLCULO MATEMÁTICO: h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)]. Garante janela gigante sem bater no teto! -->
-    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] border border-transparent dark:border-gray-700 overflow-hidden">
+<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <!-- CÁLCULO DE TITÂNIO: h-[90vh] garante janela longa mas deixa exatos 5% de margem no teto e 5% no chão -->
+    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[90vh] border border-transparent dark:border-gray-700 overflow-hidden transition-colors duration-300">
 
         <!-- 1. Cabeçalho Fixo -->
         <div id="cabecalho-modal-os" class="shrink-0 flex justify-between items-center p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-[#1a428a] dark:bg-[#081121] text-white transition-colors duration-150">
@@ -353,7 +352,7 @@
 <!-- MODAL DE INTELIGÊNCIA E FECHAMENTO (INTACTOS)             -->
 <!-- ========================================================= -->
 <div id="modal-inteligencia" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center transition-colors duration-150 max-h-full overflow-y-auto custom-scrollbar">
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center transition-colors duration-150 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4"><span class="text-2xl">💡</span></div>
         <h3 class="text-xl font-black text-gray-800 dark:text-white mb-2">Sugestão Técnica</h3>
         <p id="msg-inteligencia" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Mensagem da IA.</p>
@@ -365,8 +364,8 @@
 </div>
 
 <div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
-    <!-- CÁLCULO MATEMÁTICO: Mesma trava da tela de O.S -->
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
+    <!-- CÁLCULO DE TITÂNIO: Mesma trava da tela de O.S (h-[90vh]) -->
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
         
         <div class="shrink-0 bg-amber-500 text-white p-4 sm:p-5 flex justify-between items-center transition-colors duration-150">
             <div>
