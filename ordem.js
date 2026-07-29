@@ -584,14 +584,39 @@ window.visualizarNotificacaoLab = async function(event, osId, osNum, placa, situ
 };
 
 // =========================================================================
-// 5. BANCO DE DADOS E TABELA PRINCIPAL (COM ORGANIZAÇÃO INTELIGENTE)
+// 5. BANCO DE DADOS, TABELA PRINCIPAL E VIGILÂNCIA REALTIME
 // =========================================================================
-window.carregarOrdensServico = async function() {
+
+// Configuração do Radar Realtime
+window.ativarVigilanciaRealtime = function() {
+    if(window.osRealtimeAtivo) return; 
+    window.osRealtimeAtivo = true;
+
+    supabase.channel('vigilancia-ordens')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ordens_servico' }, payload => {
+            const tabela = document.getElementById('tabela-ordens-servico');
+            if (tabela) {
+                console.log('📡 Atualização Realtime Recebida! Atualizando a tabela...');
+                window.carregarOrdensServico(true); 
+            }
+        })
+        .subscribe((status) => {
+            if(status === 'SUBSCRIBED') {
+                console.log('📡 Radar Realtime de O.S Ativado com Sucesso!');
+            }
+        });
+};
+
+window.carregarOrdensServico = async function(isSilencioso = false) {
     const tabela = document.getElementById('tabela-ordens-servico');
     if (!tabela) return;
 
-    tabela.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 font-bold">A carregar base de dados...</td></tr>';
+    if(!isSilencioso) {
+        tabela.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500 font-bold">A carregar base de dados...</td></tr>';
+    }
+    
     window.carregarDatalists(); 
+    window.ativarVigilanciaRealtime(); // Liga o radar ao abrir a tela
 
     try {
         const { data, error } = await supabase.from('ordens_servico').select('*, itens_orcamento(*)').order('id', { ascending: false });
@@ -628,8 +653,9 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
+            // SINO FLUTUANTE AJUSTADO: Absoluto com margem à esquerda calculada
             let iconeNotificacao = os.lab_atualizado ? 
-                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse" title="Laboratório enviou atualizações!">
+                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse flex-shrink-0" title="Laboratório enviou atualizações!">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
                 </button>` : '';
 
@@ -637,11 +663,12 @@ window.carregarOrdensServico = async function() {
 
             // BORDAS PURAS INJETADAS DIRETAMENTE NA TR
             return `
-                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
+                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
                     
+                    <!-- PLACA CENTRALIZADA COM SINO FLUTUANTE -->
                     <td class="p-4 text-center relative">
                         ${iconeNotificacao}
                         <span class="font-black text-[#1a428a] dark:text-blue-400 tracking-wider text-lg whitespace-nowrap">${placaFormatada}</span>
@@ -652,7 +679,7 @@ window.carregarOrdensServico = async function() {
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">${veiculoFormatado}</p>
                     </td>
                     
-                    <!-- SEM BORDAS VERTICAIS, TOTALMENTE LIMPO -->
+                    <!-- SEM BORDAS VERTICAIS QUE CORTAVAM A LINHA -->
                     <td class="p-4 text-right text-sm">
                         <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Itens: <span class="font-bold text-gray-800 dark:text-white">${qtdItens}</span></p>
                         <p class="font-black text-[#1a428a] dark:text-blue-400 tracking-wide">R$ ${totalMatematico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
