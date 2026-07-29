@@ -5,35 +5,39 @@ window.dadosClientesGerais = [];
 window.filtroClienteAtual = 'TODOS'; 
 window.vigilanciaClienteAtiva = false; 
 
-// Normalizador para buscas sem acentos
 const removerAcentos = (str) => {
     if(!str) return '';
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
 // =========================================================================
-// 0. A MÁGICA DA RECEITA FEDERAL E MÁSCARAS INTELIGENTES
+// 0. A MÁGICA DA RECEITA FEDERAL E MÁSCARAS INTELIGENTES SEPARADAS
 // =========================================================================
-window.mascaraCpfCnpj = function(input) {
-    let v = input.value.replace(/\D/g, ""); 
 
-    if (v.length <= 11) { // CPF
+// Função unificada de máscara com limites específicos para CPF e CNPJ
+window.mascaraDoc = function(input, fromUserInput = true) {
+    let v = input.value.replace(/\D/g, ""); 
+    const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
+
+    if (!isPj) { 
+        // Lógica CPF (Limite de 14 caracteres)
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
         v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    } else { // CNPJ
+        input.value = v.substring(0, 14);
+    } else { 
+        // Lógica CNPJ (Limite de 18 caracteres)
         v = v.replace(/^(\d{2})(\d)/, "$1.$2");
         v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
         v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
         v = v.replace(/(\d{4})(\d)/, "$1-$2");
-    }
-    
-    input.value = v.substring(0, 18);
+        input.value = v.substring(0, 18);
 
-    // 🔴 O GATILHO DA BRASILAPI: Se completou o CNPJ (14 dígitos limpos), busca sozinho!
-    const limpo = input.value.replace(/\D/g, "");
-    if (limpo.length === 14) {
-        window.buscarCnpjNaReceita(limpo);
+        // O GATILHO DA BRASILAPI (SÓ DISPARA SE FOR O USUÁRIO DIGITANDO)
+        const limpo = input.value.replace(/\D/g, "");
+        if (fromUserInput && limpo.length === 14) {
+            window.buscarCnpjNaReceita(limpo);
+        }
     }
 };
 
@@ -57,7 +61,7 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
         loading.classList.add('flex');
     }
 
-    if(window.mostrarToast) window.mostrarToast("Consultando Receita Federal...", "info");
+    if(window.mostrarToast) window.mostrarToast("Consultando Receita Federal...", "sucesso");
 
     try {
         const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
@@ -65,18 +69,15 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
 
         const data = await response.json();
         
-        // Preenchimento Tático dos Campos
         document.getElementById('cli-nome').value = data.razao_social || data.nome_fantasia || '';
         document.getElementById('cli-email').value = data.email || '';
         
-        // Monta o telefone
         if (data.ddd_telefone_1) {
             const telInput = document.getElementById('cli-telefone');
             telInput.value = data.ddd_telefone_1;
             window.mascaraTelefone(telInput);
         }
 
-        // Monta o endereço rico
         const enderecoCompleto = `${data.logradouro || ''}, ${data.numero || 'S/N'}, ${data.bairro || ''}, ${data.municipio || ''} - ${data.uf || ''}`;
         document.getElementById('cli-endereco').value = enderecoCompleto.replace(/^, | , | ,$/g, '').trim().toUpperCase();
 
@@ -84,7 +85,7 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
 
     } catch (error) {
         console.error("ERRO BRASILAPI:", error);
-        if(window.mostrarToast) window.mostrarToast("CNPJ não encontrado ou sistema offline.", "aviso");
+        if(window.mostrarToast) window.mostrarToast("CNPJ não encontrado ou offline.", "aviso");
     } finally {
         if(loading) {
             loading.classList.add('hidden');
@@ -209,7 +210,6 @@ window.renderizarClientes = function() {
             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
             : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
 
-        // NOVO BOTÃO CRM (VER PERFIL)
         const btnCrm = `
             <button onclick="window.abrirPerfilCrmCliente(${cli.id})" class="w-8 h-8 flex items-center justify-center bg-[#1a428a] hover:bg-blue-800 text-white rounded transition-all duration-150 shadow" title="Raio-X do Cliente (CRM)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
@@ -264,12 +264,10 @@ window.abrirPerfilCrmCliente = async function(id) {
     const cli = window.dadosClientesGerais.find(c => c.id === id);
     if (!cli) return;
 
-    // 1. Preenche o Cabeçalho
     document.getElementById('crm-nome').innerText = cli.nome_razao || 'DESCONHECIDO';
     document.getElementById('crm-doc').innerText = cli.cpf_cnpj || 'S/ DOCUMENTO';
     document.getElementById('crm-tipo').innerText = cli.tipo_cliente;
 
-    // Reseta as abas de loading
     document.getElementById('crm-ltv').innerText = 'Calculando...';
     document.getElementById('crm-ticket').innerText = '---';
     document.getElementById('crm-total-os').innerText = '0';
@@ -281,24 +279,19 @@ window.abrirPerfilCrmCliente = async function(id) {
     document.getElementById('modal-perfil-cliente').classList.remove('hidden');
     document.getElementById('modal-perfil-cliente').classList.add('flex');
 
-    // 2. Faz a caçada relacional no banco de dados
     try {
-        // Busca O.S. (Mapeamento pelo ID do Cliente ou Nome, dependendo da sua arquitetura)
-        // Se ainda não tiver a tabela ordens_servico desenhada perfeitamente, o try/catch protege o sistema.
         const { data: osData, error: osError } = await supabase
             .from('ordens_servico')
             .select('numero_os, valor_total, created_at, status')
             .eq('cliente_id', id)
             .order('created_at', { ascending: false })
-            .limit(10); // Busca as últimas 10
+            .limit(10); 
 
-        // Busca Veículos 
         const { data: veiData, error: veiError } = await supabase
             .from('veiculos')
             .select('placa, marca, modelo, ano')
             .eq('cliente_id', id);
 
-        // 3. Processa LTV (Lifetime Value) e O.S.
         if (!osError && osData) {
             const totalOs = osData.length;
             let ltv = 0;
@@ -317,7 +310,6 @@ window.abrirPerfilCrmCliente = async function(id) {
                 document.getElementById('crm-ultima-visita').innerText = "Nenhuma O.S.";
             }
 
-            // Renderiza Lista de O.S.
             if(totalOs > 0) {
                 document.getElementById('crm-lista-os').innerHTML = osData.map(os => {
                     const dataOs = new Date(os.created_at).toLocaleDateString('pt-BR');
@@ -336,14 +328,12 @@ window.abrirPerfilCrmCliente = async function(id) {
                 document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Cliente ainda não abriu Ordens de Serviço.</li>';
             }
         } else {
-            // Se a tabela O.S ainda não existir, cai aqui suavemente.
             document.getElementById('crm-ltv').innerText = "R$ 0,00";
             document.getElementById('crm-ticket').innerText = "R$ 0,00";
             document.getElementById('crm-ultima-visita').innerText = "---";
             document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Módulo de O.S. não conectado.</li>';
         }
 
-        // 4. Processa Veículos
         if (!veiError && veiData && veiData.length > 0) {
             document.getElementById('crm-lista-veiculos').innerHTML = veiData.map(v => `
                 <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -379,13 +369,16 @@ window.trocarTipoClienteUI = function() {
         lblDoc.innerText = "CNPJ";
         inNome.placeholder = "EMPRESA LTDA";
         inDoc.placeholder = "00.000.000/0000-00";
+        inDoc.maxLength = 18; // Limite tático do CNPJ
     } else {
         lblNome.innerText = "Nome Completo";
         lblDoc.innerText = "CPF";
         inNome.placeholder = "NOME DO CLIENTE";
         inDoc.placeholder = "000.000.000-00";
+        inDoc.maxLength = 14; // Limite tático do CPF
     }
-    window.mascaraCpfCnpj(inDoc);
+    
+    inDoc.value = ''; // Limpa o campo para evitar máscaras partidas
 };
 
 window.abrirModalCliente = function() {
@@ -411,15 +404,20 @@ window.abrirModalEditarCliente = function(id) {
 
     document.getElementById('cli-id').value = cli.id;
     
+    // Seleciona e limpa a máscara inicial
     document.querySelector(`input[name="cli-tipo"][value="${cli.tipo_cliente}"]`).checked = true;
     window.trocarTipoClienteUI();
 
+    // Injeta os dados limpos e aplica a máscara EM MODO INVISÍVEL (sem disparar API)
     document.getElementById('cli-nome').value = cli.nome_razao || '';
-    document.getElementById('cli-doc').value = cli.cpf_cnpj || '';
     document.getElementById('cli-telefone').value = cli.telefone || '';
     document.getElementById('cli-email').value = cli.email || '';
     document.getElementById('cli-endereco').value = cli.endereco || '';
     document.getElementById('cli-obs').value = cli.observacoes || '';
+    
+    const docInput = document.getElementById('cli-doc');
+    docInput.value = cli.cpf_cnpj || '';
+    window.mascaraDoc(docInput, false); // O "false" é o silenciador da BrasilAPI
 
     document.getElementById('titulo-modal-cliente').innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
