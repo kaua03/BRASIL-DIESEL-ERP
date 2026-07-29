@@ -1,7 +1,7 @@
 <!-- views/nav/ordem.html -->
 <div class="fade-in space-y-6 pb-8">
     
-    <!-- Cabeçalho (Igual ao Lab) -->
+    <!-- Cabeçalho Principal -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] transition-colors">Ordens de Serviço (O.S)</h2>
@@ -15,7 +15,7 @@
         </button>
     </div>
 
-   <!-- Tabela de O.S. (Clonada do Lab.html) -->
+   <!-- Tabela de O.S. Perfeita -->
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -38,11 +38,13 @@
     </div>
 
 <!-- ========================================================= -->
-<!-- MODAL DE NOVA / EDITAR O.S. (ARQUITETURA BLINDADA)        -->
+<!-- MODAL DE NOVA / EDITAR O.S. (BLINDAGEM GEOMÉTRICA)        -->
 <!-- ========================================================= -->
-<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-150">
-    <!-- CÁLCULO DE TITÂNIO: h-[90vh] garante janela longa mas deixa exatos 5% de margem no teto e 5% no chão -->
-    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[90vh] border border-transparent dark:border-gray-700 overflow-hidden transition-colors duration-300">
+<!-- Removido o items-center. Adicionado p-4 sm:p-6 para criar uma margem de proteção inquebrável -->
+<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden p-4 sm:p-6 transition-opacity duration-150">
+    
+    <!-- h-full obriga a janela a crescer exatamente até à margem de proteção. NUNCA corta o teto! -->
+    <div class="mx-auto w-full max-w-6xl h-full flex flex-col bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-transparent dark:border-gray-700 overflow-hidden transition-colors duration-300">
 
         <!-- 1. Cabeçalho Fixo -->
         <div id="cabecalho-modal-os" class="shrink-0 flex justify-between items-center p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-[#1a428a] dark:bg-[#081121] text-white transition-colors duration-150">
@@ -53,7 +55,7 @@
         <!-- Formulário Flexível com min-h-0 -->
         <form id="form-nova-os" onsubmit="window.salvarOs(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             
-            <!-- 2. Miolo Rolável -->
+            <!-- 2. Miolo Rolável (Desliza suavemente por dentro da janela gigante) -->
             <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6 relative text-sm">
                 <input type="hidden" id="os-id-editando">
 
@@ -249,9 +251,9 @@
                         </div>
                     </div>
 
-                    <!-- Tabela de Itens -->
+                    <!-- Tabela de Itens (Sem limitação de largura mínima, limpa como no Lab) -->
                     <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1e293b] shadow-sm mb-5 transition-colors duration-150">
-                        <table class="w-full text-left text-sm min-w-[700px]">
+                        <table class="w-full text-left text-sm">
                             <thead class="bg-gray-50 dark:bg-[#0f172a] text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 text-xs font-black uppercase tracking-wider">
                                 <tr>
                                     <th class="p-3 w-16 text-center">N°</th>
@@ -349,10 +351,10 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- MODAL DE INTELIGÊNCIA E FECHAMENTO (INTACTOS)             -->
+<!-- MODAL DE INTELIGÊNCIA E FECHAMENTO (BLINDADOS)            -->
 <!-- ========================================================= -->
-<div id="modal-inteligencia" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center transition-colors duration-150 max-h-[90vh] overflow-y-auto custom-scrollbar">
+<div id="modal-inteligencia" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[250] hidden flex-col items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-500 anima-fade text-center transition-colors duration-150 max-h-full overflow-y-auto custom-scrollbar">
         <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4"><span class="text-2xl">💡</span></div>
         <h3 class="text-xl font-black text-gray-800 dark:text-white mb-2">Sugestão Técnica</h3>
         <p id="msg-inteligencia" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Mensagem da IA.</p>
@@ -363,9 +365,9 @@
     </div>
 </div>
 
-<div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
-    <!-- CÁLCULO DE TITÂNIO: Mesma trava da tela de O.S (h-[90vh]) -->
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
+<div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden p-4 sm:p-6 transition-opacity duration-150">
+    <!-- CÁLCULO DE TITÂNIO IGUAL AO MODAL PRINCIPAL: h-full ocupa tudo sem bater no teto -->
+    <div class="mx-auto w-full max-w-4xl h-full flex flex-col bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
         
         <div class="shrink-0 bg-amber-500 text-white p-4 sm:p-5 flex justify-between items-center transition-colors duration-150">
             <div>
