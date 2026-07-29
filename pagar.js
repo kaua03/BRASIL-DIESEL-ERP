@@ -490,7 +490,7 @@ window.processarXmlNfe = async function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (window.mostrarToast) window.mostrarToast("Analisando xml da Nota Fiscal...", "info");
+    if (window.mostrarToast) window.mostrarToast("Analisando Raio-X da Nota Fiscal...", "sucesso");
 
     const reader = new FileReader();
     
