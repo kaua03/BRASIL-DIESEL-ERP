@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <!-- Barra de Filtros, Abas e Exclusão em Massa -->
+    <!-- Barra de Filtros e Abas -->
     <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
         
         <div class="flex flex-wrap items-center gap-4 w-full sm:w-auto">
@@ -31,8 +31,7 @@
                     Recebidas
                 </button>
             </div>
-
-            <!-- Botão de Exclusão em Massa (Aparece ao selecionar caixas individuais) -->
+            
             <button type="button" id="btn-excluir-massa" onclick="window.excluirContasMassa()" class="hidden px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow-sm flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 Excluir Selecionadas (<span id="qtd-selecionadas">0</span>)
@@ -57,16 +56,14 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     <tr>
-                        <th class="p-4 w-12 text-center border-r border-gray-200 dark:border-gray-700">
-                            <!-- REMOVIDO CHECKBOX MESTRE AQUI (Proteção contra cliques acidentais) -->
-                        </th>
+                        <th class="p-4 w-12 text-center border-r border-gray-200 dark:border-gray-700"></th>
                         <th class="p-4 text-center w-[10%]">Ref. O.S</th>
                         <th class="p-4 w-[25%]">Cliente</th>
                         <th class="p-4 text-center w-[10%]">Placa</th>
                         <th class="p-4 text-center w-[15%]">Vencimento</th>
                         <th class="p-4 text-center w-[15%]">Operação / Conta</th>
-                        <th class="p-4 text-right w-[15%]">Valor</th>
-                        <th class="p-4 text-center w-[10%]">Ações</th>
+                        <th class="p-4 text-right w-[12%]">Valor</th>
+                        <th class="p-4 text-center w-[13%]">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-dados-receber" class="transition-colors duration-150">
