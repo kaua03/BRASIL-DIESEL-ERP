@@ -12,10 +12,10 @@ const removerAcentos = (str) => {
 };
 
 // =========================================================================
-// 0. MÁSCARAS INTELIGENTES (CPF/CNPJ E TELEFONE)
+// 0. A MÁGICA DA RECEITA FEDERAL E MÁSCARAS INTELIGENTES
 // =========================================================================
 window.mascaraCpfCnpj = function(input) {
-    let v = input.value.replace(/\D/g, ""); // Remove tudo o que não é dígito
+    let v = input.value.replace(/\D/g, ""); 
 
     if (v.length <= 11) { // CPF
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
@@ -28,22 +28,69 @@ window.mascaraCpfCnpj = function(input) {
         v = v.replace(/(\d{4})(\d)/, "$1-$2");
     }
     
-    // Limita a 18 caracteres (tamanho máximo da máscara do CNPJ)
     input.value = v.substring(0, 18);
+
+    // 🔴 O GATILHO DA BRASILAPI: Se completou o CNPJ (14 dígitos limpos), busca sozinho!
+    const limpo = input.value.replace(/\D/g, "");
+    if (limpo.length === 14) {
+        window.buscarCnpjNaReceita(limpo);
+    }
 };
 
 window.mascaraTelefone = function(input) {
     let v = input.value.replace(/\D/g, "");
-    
-    if (v.length > 10) { // Celular: (11) 90000-0000
+    if (v.length > 10) { 
         v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
         v = v.replace(/(\d{5})(\d)/, "$1-$2");
-    } else { // Fixo: (11) 0000-0000
+    } else { 
         v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
         v = v.replace(/(\d{4})(\d)/, "$1-$2");
     }
-    
     input.value = v.substring(0, 15);
+};
+
+// MOTOR DE BUSCA DE CNPJ (BRASILAPI)
+window.buscarCnpjNaReceita = async function(cnpjLimpo) {
+    const loading = document.getElementById('loading-receita');
+    if(loading) {
+        loading.classList.remove('hidden');
+        loading.classList.add('flex');
+    }
+
+    if(window.mostrarToast) window.mostrarToast("Consultando Receita Federal...", "info");
+
+    try {
+        const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+        if (!response.ok) throw new Error("CNPJ não encontrado");
+
+        const data = await response.json();
+        
+        // Preenchimento Tático dos Campos
+        document.getElementById('cli-nome').value = data.razao_social || data.nome_fantasia || '';
+        document.getElementById('cli-email').value = data.email || '';
+        
+        // Monta o telefone
+        if (data.ddd_telefone_1) {
+            const telInput = document.getElementById('cli-telefone');
+            telInput.value = data.ddd_telefone_1;
+            window.mascaraTelefone(telInput);
+        }
+
+        // Monta o endereço rico
+        const enderecoCompleto = `${data.logradouro || ''}, ${data.numero || 'S/N'}, ${data.bairro || ''}, ${data.municipio || ''} - ${data.uf || ''}`;
+        document.getElementById('cli-endereco').value = enderecoCompleto.replace(/^, | , | ,$/g, '').trim().toUpperCase();
+
+        if(window.mostrarToast) window.mostrarToast("Ficha preenchida pela Receita!", "sucesso");
+
+    } catch (error) {
+        console.error("ERRO BRASILAPI:", error);
+        if(window.mostrarToast) window.mostrarToast("CNPJ não encontrado ou sistema offline.", "aviso");
+    } finally {
+        if(loading) {
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
+        }
+    }
 };
 
 // =========================================================================
@@ -79,7 +126,7 @@ window.carregarClientes = async function(isSilencioso = false) {
         const { data, error } = await supabase
             .from('clientes')
             .select('*')
-            .order('nome_razao', { ascending: true }); // Ordem alfabética
+            .order('nome_razao', { ascending: true });
 
         if (error) throw error;
         
@@ -123,7 +170,6 @@ window.renderizarClientes = function() {
     let totalPf = 0;
     let totalPj = 0;
 
-    // Calcula Totais
     window.dadosClientesGerais.forEach(cli => {
         if (cli.tipo_cliente === 'Física') totalPf++;
         if (cli.tipo_cliente === 'Jurídica') totalPj++;
@@ -163,6 +209,13 @@ window.renderizarClientes = function() {
             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
             : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
 
+        // NOVO BOTÃO CRM (VER PERFIL)
+        const btnCrm = `
+            <button onclick="window.abrirPerfilCrmCliente(${cli.id})" class="w-8 h-8 flex items-center justify-center bg-[#1a428a] hover:bg-blue-800 text-white rounded transition-all duration-150 shadow" title="Raio-X do Cliente (CRM)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+            </button>
+        `;
+
         const btnEditar = `
             <button onclick="window.abrirModalEditarCliente(${cli.id})" class="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Ficha">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -194,6 +247,7 @@ window.renderizarClientes = function() {
                 </td>
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
+                        ${btnCrm}
                         ${btnEditar}
                         ${btnExcluir}
                     </div>
@@ -204,7 +258,113 @@ window.renderizarClientes = function() {
 };
 
 // =========================================================================
-// 3. LÓGICA DO FORMULÁRIO (NOVO E EDIÇÃO)
+// 3. O RAIO-X DO CLIENTE (MÓDULO CRM E LTV)
+// =========================================================================
+window.abrirPerfilCrmCliente = async function(id) {
+    const cli = window.dadosClientesGerais.find(c => c.id === id);
+    if (!cli) return;
+
+    // 1. Preenche o Cabeçalho
+    document.getElementById('crm-nome').innerText = cli.nome_razao || 'DESCONHECIDO';
+    document.getElementById('crm-doc').innerText = cli.cpf_cnpj || 'S/ DOCUMENTO';
+    document.getElementById('crm-tipo').innerText = cli.tipo_cliente;
+
+    // Reseta as abas de loading
+    document.getElementById('crm-ltv').innerText = 'Calculando...';
+    document.getElementById('crm-ticket').innerText = '---';
+    document.getElementById('crm-total-os').innerText = '0';
+    document.getElementById('crm-ultima-visita').innerText = 'Buscando...';
+    
+    document.getElementById('crm-lista-veiculos').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Consultando frota...</li>';
+    document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Consultando histórico...</li>';
+
+    document.getElementById('modal-perfil-cliente').classList.remove('hidden');
+    document.getElementById('modal-perfil-cliente').classList.add('flex');
+
+    // 2. Faz a caçada relacional no banco de dados
+    try {
+        // Busca O.S. (Mapeamento pelo ID do Cliente ou Nome, dependendo da sua arquitetura)
+        // Se ainda não tiver a tabela ordens_servico desenhada perfeitamente, o try/catch protege o sistema.
+        const { data: osData, error: osError } = await supabase
+            .from('ordens_servico')
+            .select('numero_os, valor_total, created_at, status')
+            .eq('cliente_id', id)
+            .order('created_at', { ascending: false })
+            .limit(10); // Busca as últimas 10
+
+        // Busca Veículos 
+        const { data: veiData, error: veiError } = await supabase
+            .from('veiculos')
+            .select('placa, marca, modelo, ano')
+            .eq('cliente_id', id);
+
+        // 3. Processa LTV (Lifetime Value) e O.S.
+        if (!osError && osData) {
+            const totalOs = osData.length;
+            let ltv = 0;
+            osData.forEach(os => ltv += Number(os.valor_total || 0));
+            
+            const ticketMedio = totalOs > 0 ? (ltv / totalOs) : 0;
+
+            document.getElementById('crm-total-os').innerText = totalOs;
+            document.getElementById('crm-ltv').innerText = `R$ ${ltv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('crm-ticket').innerText = `R$ ${ticketMedio.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            if (totalOs > 0 && osData[0].created_at) {
+                const ultima = new Date(osData[0].created_at);
+                document.getElementById('crm-ultima-visita').innerText = ultima.toLocaleDateString('pt-BR');
+            } else {
+                document.getElementById('crm-ultima-visita').innerText = "Nenhuma O.S.";
+            }
+
+            // Renderiza Lista de O.S.
+            if(totalOs > 0) {
+                document.getElementById('crm-lista-os').innerHTML = osData.map(os => {
+                    const dataOs = new Date(os.created_at).toLocaleDateString('pt-BR');
+                    const valFmt = Number(os.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                    return `
+                        <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <div>
+                                <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">O.S. #${String(os.numero_os).padStart(4, '0')}</span>
+                                <span class="block text-[9px] text-gray-500 uppercase mt-0.5">${dataOs} | Status: ${os.status}</span>
+                            </div>
+                            <span class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">R$ ${valFmt}</span>
+                        </li>
+                    `;
+                }).join('');
+            } else {
+                document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Cliente ainda não abriu Ordens de Serviço.</li>';
+            }
+        } else {
+            // Se a tabela O.S ainda não existir, cai aqui suavemente.
+            document.getElementById('crm-ltv').innerText = "R$ 0,00";
+            document.getElementById('crm-ticket').innerText = "R$ 0,00";
+            document.getElementById('crm-ultima-visita').innerText = "---";
+            document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Módulo de O.S. não conectado.</li>';
+        }
+
+        // 4. Processa Veículos
+        if (!veiError && veiData && veiData.length > 0) {
+            document.getElementById('crm-lista-veiculos').innerHTML = veiData.map(v => `
+                <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <div>
+                        <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">${v.marca} ${v.modelo}</span>
+                        <span class="block text-[9px] text-gray-500 uppercase mt-0.5">Ano: ${v.ano || '---'}</span>
+                    </div>
+                    <span class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono font-black text-[#1a428a] dark:text-blue-400 text-xs tracking-widest">${v.placa}</span>
+                </li>
+            `).join('');
+        } else {
+            document.getElementById('crm-lista-veiculos').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Nenhum veículo vinculado a este cliente.</li>';
+        }
+
+    } catch(e) {
+        console.error("ERRO NO CRM:", e);
+    }
+};
+
+// =========================================================================
+// 4. LÓGICA DO FORMULÁRIO (NOVO E EDIÇÃO)
 // =========================================================================
 
 window.trocarTipoClienteUI = function() {
