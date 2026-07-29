@@ -106,9 +106,9 @@ window.mudarFiltroCliente = function(status) {
     const classeAtiva = "flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm";
     const classeInativa = "flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent";
 
-    btnTodos.className = status === 'TODOS' ? classeAtiva : classeInativa;
-    btnPf.className = status === 'Física' ? classeAtiva : classeInativa;
-    btnPj.className = status === 'Jurídica' ? classeAtiva : classeInativa;
+    if(btnTodos) btnTodos.className = status === 'TODOS' ? classeAtiva : classeInativa;
+    if(btnPf) btnPf.className = status === 'Física' ? classeAtiva : classeInativa;
+    if(btnPj) btnPj.className = status === 'Jurídica' ? classeAtiva : classeInativa;
     
     window.renderizarClientes();
 };
@@ -123,7 +123,7 @@ window.renderizarClientes = function() {
     let totalPf = 0;
     let totalPj = 0;
 
-    // Calcula Totais (Ignorando busca de texto)
+    // Calcula Totais
     window.dadosClientesGerais.forEach(cli => {
         if (cli.tipo_cliente === 'Física') totalPf++;
         if (cli.tipo_cliente === 'Jurídica') totalPj++;
@@ -225,7 +225,6 @@ window.trocarTipoClienteUI = function() {
         inNome.placeholder = "NOME DO CLIENTE";
         inDoc.placeholder = "000.000.000-00";
     }
-    // Re-aplica a máscara se tiver valor
     window.mascaraCpfCnpj(inDoc);
 };
 
@@ -239,6 +238,7 @@ window.abrirModalCliente = function() {
         Cadastrar Cliente
     `;
     
+    document.querySelector('input[name="cli-tipo"][value="Física"]').checked = true;
     window.trocarTipoClienteUI();
 
     document.getElementById('modal-cliente').classList.remove('hidden');
@@ -251,7 +251,6 @@ window.abrirModalEditarCliente = function(id) {
 
     document.getElementById('cli-id').value = cli.id;
     
-    // Seleciona o radio certo
     document.querySelector(`input[name="cli-tipo"][value="${cli.tipo_cliente}"]`).checked = true;
     window.trocarTipoClienteUI();
 
@@ -288,16 +287,14 @@ window.salvarCliente = async function(event) {
         observacoes: getVal('cli-obs').trim().toUpperCase()
     };
 
-    if (window.mostrarToast) window.mostrarToast("Salvando ficha do cliente...", "info");
+    if (window.mostrarToast) window.mostrarToast("Salvando ficha do cliente...", "sucesso");
 
     try {
         if (id) {
-            // Edição
             const { error } = await supabase.from('clientes').update(payload).eq('id', id);
             if (error) throw error;
             if (window.mostrarToast) window.mostrarToast("Ficha atualizada com sucesso!", "sucesso");
         } else {
-            // Novo
             const { error } = await supabase.from('clientes').insert([payload]);
             if (error) throw error;
             if (window.mostrarToast) window.mostrarToast("Novo cliente cadastrado!", "sucesso");
@@ -324,8 +321,6 @@ window.excluirCliente = async function(id, btnElement) {
     }
 
     try {
-        // ATENÇÃO: Dependendo de como você criar as O.S., apagar o cliente pode dar erro de chave estrangeira.
-        // O ideal depois é fazer "Soft Delete" (status: Inativo), mas por enquanto faremos o delete físico.
         const { error } = await supabase.from('clientes').delete().eq('id', id);
         if (error) throw error;
         
