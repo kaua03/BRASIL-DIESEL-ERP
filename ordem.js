@@ -13,7 +13,6 @@ window.listaVeiculosBdd = [];
 // 1. MÁSCARAS E FUNÇÕES GLOBAIS DE VISUALIZAÇÃO
 // =========================================================================
 
-// Função que o sistema reclama estar faltando (Blindada na primeira linha!)
 window.atualizarTopHeaderVisualizacao = function(os) {
     const hCliente = document.getElementById('header-view-cliente');
     const hVeiculo = document.getElementById('header-view-veiculo');
@@ -629,17 +628,16 @@ window.carregarOrdensServico = async function() {
             const tServ = os.itens_orcamento ? os.itens_orcamento.filter(i => i.tipo === 'Serviço').reduce((a, i) => a + (Number(i.subtotal) || 0), 0) : 0;
             const totalMatematico = Math.max(0, tPecas + tServ + Number(os.outros_valores || 0) - Number(os.desconto || 0));
             
-            // SINO FLUTUANTE (left-3): Fica perfeitamente no meio do espaço vazio sem empurrar a placa
             let iconeNotificacao = os.lab_atualizado ? 
-                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse" title="Laboratório enviou atualizações!">
+                `<button type="button" onclick="window.visualizarNotificacaoLab(event, ${os.id}, '${numeroFormatado}', '${os.placa}', '${os.situacao}')" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 animate-pulse flex-shrink-0" title="Laboratório enviou atualizações!">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
                 </button>` : '';
 
             const bgStatus = window.obterCoresStatus(os.situacao);
 
-            // BORDAS AQUI (border-b explícito) PARA RECRIAR AS LINHAS
+            // BORDAS PURAS INJETADAS DIRETAMENTE NA TR
             return `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 border-b border-gray-200 dark:border-gray-700 last:border-none ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
+                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
