@@ -48,7 +48,6 @@
             
             <input type="text" id="filtro-busca-pagar" oninput="window.renderizarPagar()" class="w-full sm:w-56 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Fornecedor, Desc. ou N°...">
 
-            <!-- A Magia do XML: Um input de ficheiro disfarçado de botão -->
             <label class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Importar XML
@@ -221,69 +220,108 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- MODAL: REVISÃO DE IMPORTAÇÃO XML (NFE)                    -->
+<!-- MODAL: PAINEL DE RAIO-X DO XML (NFE)                      -->
 <!-- ========================================================= -->
 <div id="modal-xml-preview" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[250] hidden items-center justify-center p-4 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col h-[85vh] max-h-[800px] overflow-hidden border border-indigo-500/30 anima-fade">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] max-h-[900px] overflow-hidden border border-indigo-500/30 anima-fade">
         <div class="bg-indigo-600 text-white p-5 flex justify-between items-center shrink-0">
             <div>
-                <h3 class="text-lg font-black tracking-widest uppercase flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Processamento de NFe XML
+                <h3 class="text-xl font-black tracking-widest uppercase flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Painel de Auditoria NFe (XML)
                 </h3>
-                <p class="text-indigo-200 text-xs font-medium mt-1">Revise as duplicatas encontradas no ficheiro.</p>
+                <p class="text-indigo-200 text-xs font-medium mt-1">Valide os dados do emitente e destinatário antes de gravar no cofre.</p>
             </div>
-            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="text-indigo-200 hover:text-white text-3xl leading-none font-light">&times;</button>
+            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="text-indigo-200 hover:text-white text-4xl leading-none font-light">&times;</button>
         </div>
 
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
-            <!-- Dados Base -->
-            <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-indigo-500 mb-1">Fornecedor Encontrado</label>
-                        <input type="text" id="xml-fornecedor" class="w-full bg-transparent font-bold text-gray-800 dark:text-white text-sm outline-none border-b border-indigo-200 dark:border-indigo-800 pb-1" readonly>
+            
+            <!-- Linha 1: Quem Vendeu e Quem Comprou -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Emitente -->
+                <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                    <h4 class="text-[10px] font-black uppercase text-indigo-500 mb-3 tracking-widest border-b border-indigo-200 dark:border-indigo-800 pb-1">🏢 Dados do Emitente (Fornecedor)</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold">Razão Social</span>
+                            <span id="xml-fornecedor-nome" class="font-bold text-gray-800 dark:text-white text-sm">---</span>
+                        </div>
+                        <div>
+                            <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold">CNPJ</span>
+                            <span id="xml-fornecedor-cnpj" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm tracking-wider">---</span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-indigo-500 mb-1">Número da Nota (NFe)</label>
-                        <input type="text" id="xml-nota" class="w-full bg-transparent font-bold text-gray-800 dark:text-white text-sm outline-none border-b border-indigo-200 dark:border-indigo-800 pb-1" readonly>
+                </div>
+
+                <!-- Destinatário -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <h4 class="text-[10px] font-black uppercase text-gray-500 dark:text-gray-400 mb-3 tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1">📍 Dados do Destinatário (A sua Oficina)</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold">Razão Social</span>
+                            <span id="xml-dest-nome" class="font-bold text-gray-800 dark:text-white text-sm">---</span>
+                        </div>
+                        <div>
+                            <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold">CNPJ</span>
+                            <span id="xml-dest-cnpj" class="font-mono font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wider">---</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Configuração em Lote -->
-            <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Definir Pagamento para as parcelas</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Linha 2: Informações da Nota e Configuração Financeira -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Resumo da Nota -->
+                <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-600 dark:text-gray-300 mb-1">Conta Origem Padrão</label>
-                        <select id="xml-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] dark:text-white rounded-lg outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
-                            <option value="Caixa Interno">Caixa Interno</option>
-                            <option value="Banco do Brasil">Banco do Brasil</option>
-                            <option value="Vale">Vale</option>
-                        </select>
+                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Número da NFe</span>
+                        <span id="xml-nota-numero" class="font-mono font-black text-gray-800 dark:text-white text-lg">---</span>
+                        <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold mt-2">Data e Hora da Emissão</span>
+                        <span id="xml-nota-data" class="font-bold text-gray-700 dark:text-gray-300 text-xs">---</span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-600 dark:text-gray-300 mb-1">Meio de Pagamento Padrão</label>
-                        <select id="xml-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] dark:text-white rounded-lg outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
-                            <option value="Boleto Bancário" selected>Boleto Bancário</option>
-                            <option value="PIX">PIX</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Cartão de Crédito">Cartão de Crédito</option>
-                            <option value="Cartão de Débito">Cartão de Débito</option>
-                        </select>
+                    <div class="text-right">
+                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Valor Total da NFe</span>
+                        <span id="xml-nota-total" class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-2xl">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Configuração Padrão -->
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Conta Origem Padrão</label>
+                            <select id="xml-conta" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                                <option value="Caixa Interno">Caixa Interno</option>
+                                <option value="Banco do Brasil">Banco do Brasil</option>
+                                <option value="Vale">Vale</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Meio de Pagamento Padrão</label>
+                            <select id="xml-operacao" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                                <option value="Boleto Bancário" selected>Boleto Bancário</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                <option value="Cartão de Débito">Cartão de Débito</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Lista de Duplicatas -->
+            <!-- Tabela de Duplicatas -->
             <div>
-                <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2">Duplicatas / Faturamento</h4>
+                <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    Faturamento / Parcelas Encontradas
+                </h4>
                 <div class="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
                     <table class="w-full text-left">
                         <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             <tr>
-                                <th class="p-3 w-16 text-center">Nº Parc</th>
+                                <th class="p-3 w-20 text-center">Nº Parc</th>
                                 <th class="p-3 text-center">Vencimento</th>
                                 <th class="p-3 text-right">Valor (R$)</th>
                             </tr>
@@ -297,7 +335,7 @@
         </div>
 
         <div class="shrink-0 bg-gray-50 dark:bg-[#0f172a] p-5 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
-            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors text-xs uppercase">Cancelar</button>
+            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors text-xs uppercase">Cancelar Operação</button>
             <button type="button" onclick="window.salvarXmlLote()" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black tracking-widest uppercase rounded-xl shadow-md transition-colors text-xs flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                 Confirmar Lançamentos
