@@ -52,7 +52,6 @@ window.mascaraCep = function(input) {
     input.value = v;
 };
 
-// Motor Universal de Busca de CEP
 window.consultarCep = async function(input, prefixo = '') {
     if(!input) return;
     let cep = input.value.replace(/\D/g, '');
@@ -97,10 +96,9 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
         if (data.cep) {
             const cepInput = document.getElementById('cli-cep');
             cepInput.value = String(data.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
-            window.consultarCep(cepInput, 'cli-'); // Aciona o gatilho do CEP para preencher o resto!
+            window.consultarCep(cepInput, 'cli-'); 
         }
         
-        // Complemento específico da empresa
         if(data.numero) document.getElementById('cli-numero_end').value = data.numero;
         if(data.complemento) document.getElementById('cli-complemento').value = data.complemento;
 
@@ -442,11 +440,26 @@ window.salvarCliente = async function(event) {
     const getVal = (id) => document.getElementById(id)?.value || '';
     const id = getVal('cli-id');
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
+    const docFormatado = getVal('cli-doc').trim();
+
+    // 🔴 RADAR DE DUPLICIDADE 🔴
+    if (docFormatado) {
+        let query = supabase.from('clientes').select('id').eq('cpf_cnpj', docFormatado);
+        if (id) {
+            query = query.neq('id', id); // Se for edição, ignora a si mesmo
+        }
+        const { data: duplicados, error: errBusca } = await query;
+        if (duplicados && duplicados.length > 0) {
+            if (window.mostrarToast) window.mostrarToast("Erro: Este CPF/CNPJ já está cadastrado!", "erro");
+            document.getElementById('cli-doc').focus();
+            return; // Aborta a operação!
+        }
+    }
 
     const payload = {
         tipo_cliente: isPj ? 'Jurídica' : 'Física',
         nome_razao: getVal('cli-nome').trim().toUpperCase(),
-        cpf_cnpj: getVal('cli-doc').trim(),
+        cpf_cnpj: docFormatado,
         telefone: getVal('cli-telefone').trim(),
         email: getVal('cli-email').trim().toLowerCase(),
         
@@ -460,7 +473,7 @@ window.salvarCliente = async function(event) {
         observacoes: getVal('cli-obs').trim().toUpperCase()
     };
 
-    if (window.mostrarToast) window.mostrarToast("Salvando ficha do cliente...", "sucesso");
+    if (window.mostrarToast) window.mostrarToast("Salvando ficha do cliente...", "info");
 
     try {
         if (id) {
