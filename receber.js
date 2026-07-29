@@ -4,15 +4,38 @@ import { supabase } from './config.js';
 // Variáveis de Memória Tática
 window.dadosReceberGerais = [];
 window.abaReceberAtual = 'Pendente'; 
+window.vigilanciaReceberAtiva = false; // <-- NOVA TRAVA DO RADAR
 
 // =========================================================================
-// 1. CARREGAMENTO DO BANCO DE DADOS
+// 1. CARREGAMENTO DO BANCO DE DADOS E VIGILÂNCIA REALTIME
 // =========================================================================
-window.carregarContasReceber = async function() {
+
+// ---> NOVO MOTOR: RADAR REALTIME <---
+window.ativarVigilanciaReceber = function() {
+    if (window.vigilanciaReceberAtiva) return;
+    window.vigilanciaReceberAtiva = true;
+
+    supabase.channel('vigilancia-receber')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_receber' }, payload => {
+            const tabela = document.getElementById('tabela-dados-receber');
+            if (tabela) {
+                console.log('📡 [Tesouraria] Nova O.S ou Baixa detectada! Atualizando painel...');
+                window.carregarContasReceber(true); // O 'true' faz recarregar sem piscar a tela
+            }
+        })
+        .subscribe();
+};
+
+window.carregarContasReceber = async function(isSilencioso = false) {
     const tbody = document.getElementById('tabela-dados-receber');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td></tr>';
+    // Se não for silencioso (Realtime), mostra o texto de carregamento
+    if (!isSilencioso) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td></tr>';
+    }
+
+    window.ativarVigilanciaReceber(); // LIGA O RADAR AQUI
 
     try {
         const { data, error } = await supabase
@@ -27,7 +50,9 @@ window.carregarContasReceber = async function() {
 
     } catch (err) {
         console.error("ERRO AO CARREGAR FINANCEIRO:", err);
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-red-500 font-bold">Erro ao carregar dados financeiros.</td></tr>';
+        if (!isSilencioso) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-red-500 font-bold">Erro ao carregar dados financeiros.</td></tr>';
+        }
     }
 };
 
@@ -167,7 +192,7 @@ window.darBaixaReceber = async function(id) {
         if (error) throw error;
         
         if (window.mostrarToast) window.mostrarToast("Recebimento confirmado!", "sucesso");
-        window.carregarContasReceber(); // Recarrega os dados e a tabela
+        // Não precisamos mais forçar o carregamento, o Radar Realtime cuida disso instantaneamente!
     } catch (err) {
         console.error("ERRO AO DAR BAIXA:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao confirmar recebimento.", "erro");
@@ -183,7 +208,7 @@ window.estornarReceber = async function(id) {
         if (error) throw error;
         
         if (window.mostrarToast) window.mostrarToast("Estorno realizado com sucesso!", "info");
-        window.carregarContasReceber(); // Recarrega os dados e a tabela
+        // O Radar Realtime também cuida da atualização aqui!
     } catch (err) {
         console.error("ERRO AO ESTORNAR:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao realizar o estorno.", "erro");
