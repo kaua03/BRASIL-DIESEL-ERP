@@ -1,6 +1,5 @@
 <!-- views/nav/ordem.html -->
 <div class="fade-in space-y-6 flex flex-col h-full">
-    <!-- Cabeçalho Dinâmico -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300 shrink-0">
         <div>
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Ordens de Serviço (O.S)</h2>
@@ -9,12 +8,10 @@
         <button onclick="window.abrirModalNovaOs()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 duration-150 flex items-center gap-2 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Abrir Nova O.S.
+            </svg> Abrir Nova O.S.
         </button>
     </div>
 
-    <!-- Tabela de O.S. -->
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -30,35 +27,25 @@
                     </tr>
                 </thead>
                 <tbody id="tabela-ordens-servico" class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-[#1e293b] transition-colors">
-                    <tr>
-                        <td colspan="7" class="text-center p-8 text-gray-500 dark:text-gray-400 font-bold">Aguardando dados...</td>
-                    </tr>
+                    <tr><td colspan="7" class="text-center p-8 text-gray-500 dark:text-gray-400 font-bold">Aguardando dados...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- MODAL DE NOVA / EDITAR O.S.                               -->
-<!-- ========================================================= -->
 <div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
     <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[88vh] max-h-[900px] overflow-hidden transform transition-all duration-300 border border-transparent dark:border-gray-700">
 
-        <!-- Cabeçalho do Modal -->
         <div id="cabecalho-modal-os" class="flex justify-between items-center p-5 border-b border-[#1a428a]/20 bg-[#1a428a] dark:bg-[#081121] text-white shrink-0">
             <h3 id="modal-titulo-os" class="text-xl font-black tracking-tight">Ordem de Serviço — Placa: ---</h3>
             <button type="button" id="btn-fechar-x" onclick="window.fecharModalOsSeguro()" class="text-blue-200 hover:text-white text-4xl leading-none font-light transition-colors">&times;</button>
         </div>
 
-        <!-- Formulário Principal -->
         <form id="form-nova-os" onsubmit="window.salvarOs(event)" class="flex flex-col flex-1 overflow-hidden">
-            
-            <!-- Corpo Rolável -->
             <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 relative text-sm">
                 <input type="hidden" id="os-id-editando">
 
-                <!-- TOPO DE RESUMO RÁPIDO -->
                 <div id="painel-topo-resumo" class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 flex justify-between items-center shadow-sm">
                     <div>
                         <span class="text-[10px] text-blue-500 dark:text-blue-400 uppercase font-bold block mb-0.5 tracking-wider">Cliente</span>
@@ -74,7 +61,6 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 0: INFORMAÇÕES DE CONTROLE -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                         <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Data/Hora Abertura</label>
@@ -94,13 +80,11 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 1: DADOS DO VEÍCULO -->
                 <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150 relative">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide">1. Dados do Veículo</h4>
                         <button type="button" id="btn-os-balcao" onclick="window.preencherVeiculoAvulso()" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors duration-150 border border-gray-200 dark:border-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#facc15]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                            O.S. Balcão
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#facc15]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg> O.S. Balcão
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
@@ -130,19 +114,15 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 2: DADOS DO CLIENTE & ENDEREÇO -->
                 <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">2. Dados do Cliente & Endereço</h4>
                     
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        
-                        <!-- ENGRENAGEM DE CADASTRO RÁPIDO -->
                         <div class="md:col-span-2 relative">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nome / Razão Social</label>
                             <div class="flex gap-2 items-center">
                                 <input type="text" id="cliente" list="lista-clientes" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors duration-150" placeholder="Pesquisar cliente cadastrado...">
                                 <datalist id="lista-clientes"></datalist>
-                                
                                 <button type="button" onclick="window.abrirCadastroRapidoCliente()" id="btn-add-cliente" class="h-[42px] px-3 bg-[#1a428a] hover:bg-blue-800 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors duration-150 flex-shrink-0" title="Cadastrar Novo Cliente Rápido">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                                 </button>
@@ -173,19 +153,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                         <div class="md:col-span-3">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CEP</label>
-                            <input type="text" id="cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="00000-000">
+                            <input type="text" id="cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this, '')" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white font-mono transition-colors duration-150" placeholder="00000-000">
                         </div>
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Endereço</label>
-                            <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
+                            <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                         </div>
                         <div class="md:col-span-3">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bairro</label>
-                            <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
+                            <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                         </div>
                         <div class="md:col-span-5">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cidade / UF</label>
-                            <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
+                            <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nº</label>
@@ -198,7 +178,6 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 3: SITUAÇÃO E RELATOS -->
                 <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">3. Situação e Relatos</h4>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -224,11 +203,9 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 4: ORÇAMENTO FINANCEIRO -->
                 <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150 relative">
                     <h4 class="font-black text-[#1a428a] dark:text-[#3b82f6] tracking-wide mb-4">4. Orçamento de Peças e Serviços</h4>
 
-                    <!-- Painel Inteligente de Adição -->
                     <div id="painel-adicionar-item" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5 bg-gray-50 dark:bg-[#0f172a] p-4 rounded-xl border border-gray-200 dark:border-gray-700 items-end transition-colors duration-150">
                         <div class="md:col-span-2">
                             <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Tipo</label>
@@ -259,7 +236,6 @@
                         </div>
                     </div>
 
-                    <!-- Tabela de Itens -->
                     <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1e293b] shadow-sm mb-5 transition-colors duration-150">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-gray-50 dark:bg-[#0f172a] text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 text-xs font-black uppercase tracking-wider">
@@ -274,17 +250,12 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody-orcamento" class="divide-y divide-gray-100 dark:divide-gray-800 transition-colors duration-150">
-                                <tr>
-                                    <td colspan="7" class="p-8 text-center text-gray-400 font-medium">Nenhum item adicionado ao orçamento.</td>
-                                </tr>
+                                <tr><td colspan="7" class="p-8 text-center text-gray-400 font-medium">Nenhum item adicionado ao orçamento.</td></tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Resumo Financeiro Avançado -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gray-50 dark:bg-[#0f172a] p-5 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-150">
-                        
-                        <!-- Motor de Desconto -->
                         <div class="w-full md:w-1/3 bg-white dark:bg-[#1e293b] p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                             <label class="block text-xs font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">Aplicação de Desconto</label>
                             <div class="space-y-3">
@@ -306,7 +277,6 @@
                             </div>
                         </div>
 
-                        <!-- Totais -->
                         <div class="w-full md:w-1/3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
                             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-1">
                                 <span class="font-bold uppercase text-[10px] tracking-wider">Qtd. Itens:</span>
@@ -321,7 +291,6 @@
                                 <span id="total-servicos" class="font-mono">R$ 0,00</span>
                             </div>
                             
-                            <!-- OUTROS -->
                             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-1">
                                 <div class="flex flex-col">
                                     <span class="font-bold uppercase text-[10px] tracking-wider">Outros (R$):</span>
@@ -331,7 +300,6 @@
                             </div>
                         </div>
 
-                        <!-- Total Master -->
                         <div class="w-full md:w-1/3 bg-[#1a428a] dark:bg-[#081121] text-white p-4 rounded-xl shadow-inner text-right transition-colors duration-150">
                             <span class="block text-xs text-blue-200 font-black uppercase tracking-widest mb-1">Valor Total Líquido</span>
                             <span id="total-geral" class="text-3xl font-black font-mono tracking-tighter">R$ 0,00</span>
@@ -340,17 +308,17 @@
                 </div>
             </div>
 
-            <!-- 3. Rodapé Fixo -->
+            <!-- Rodapé Fixo com BOTÃO CANCELAR INSERIDO -->
             <div class="shrink-0 bg-gray-50 dark:bg-[#0f172a] p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center z-20 transition-colors duration-150">
                 <button type="button" id="btn-fechar-os" onclick="window.abrirModalFechamento()" class="hidden bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-lg font-black shadow-md transition-colors duration-150 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>
-                    FECHAMENTO FINANCEIRO
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg> FECHAMENTO FINANCEIRO
                 </button>
                 <div id="painel-botoes-edicao" class="flex gap-3 ml-auto">
-                    <button type="button" id="btn-cancelar-alteracoes" onclick="window.tentarCancelarOs()" class="hidden px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors duration-150">Descartar Alterações</button>
+                    <!-- BOTÃO CANCELAR ALTERAÇÕES AGORA AQUI -->
+                    <button type="button" id="btn-cancelar-alteracoes" onclick="window.tentarCancelarOs()" class="hidden px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors duration-150">Cancelar Alterações</button>
+                    
                     <button type="submit" id="btn-salvar-os" class="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black tracking-wide rounded-lg shadow-lg transition-colors duration-150 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                        Salvar O.S.
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Salvar O.S.
                     </button>
                 </div>
             </div>
@@ -375,14 +343,9 @@
 
 <div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
     <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
-        
         <div class="shrink-0 bg-amber-500 text-white p-4 sm:p-5 flex justify-between items-center transition-colors duration-150">
             <div>
-                <h3 class="text-xl font-black flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                    Fechamento Financeiro da O.S.
-                </h3>
-                <p class="text-amber-100 text-xs font-medium mt-1">Configuração de parcelamento, garantias e faturamento.</p>
+                <h3 class="text-xl font-black flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg> Fechamento Financeiro da O.S.</h3>
             </div>
             <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="text-amber-200 hover:text-white text-3xl font-light transition-colors duration-150">&times;</button>
         </div>
@@ -439,13 +402,7 @@
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-150">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                            <tr>
-                                <th class="p-2 text-center">Nº</th>
-                                <th class="p-2">Vencimento</th>
-                                <th class="p-2">Operação</th>
-                                <th class="p-2 text-right">Valor Parcela (R$)</th>
-                                <th class="p-2">Nº Auxiliar (Doc/Cartão)</th>
-                            </tr>
+                            <tr><th class="p-2 text-center">Nº</th><th class="p-2">Vencimento</th><th class="p-2">Operação</th><th class="p-2 text-right">Valor Parcela (R$)</th><th class="p-2">Nº Auxiliar (Doc/Cartão)</th></tr>
                         </thead>
                         <tbody id="tbody-preview-parcelas" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[#1e293b] transition-colors duration-150"></tbody>
                     </table>
@@ -459,17 +416,6 @@
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Data de Entrega (Veículo/Peça)</label>
                     <input type="date" id="fechamento-entrega" onchange="window.calcularGarantia()" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-white dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Dias de Garantia</label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="fechamento-garantia-dias" value="90" min="0" oninput="window.calcularGarantia()" class="w-24 px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm text-center bg-white dark:bg-[#0f172a] dark:text-white transition-colors duration-150">
-                        <span class="text-xs font-bold text-blue-700 dark:text-blue-400">Dias</span>
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-1">Vencimento da Garantia</label>
-                    <input type="date" id="fechamento-garantia" class="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded outline-none font-mono text-sm bg-blue-100/50 dark:bg-gray-800 cursor-not-allowed text-blue-900 dark:text-blue-200 font-bold transition-colors duration-150" readonly>
                 </div>
             </div>
         </div>
@@ -488,9 +434,8 @@
 <!-- MODAL DE CADASTRO RÁPIDO DE CLIENTE (DENTRO DA O.S)       -->
 <!-- ========================================================= -->
 <div id="modal-cliente-rapido" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] hidden items-center justify-center p-4 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-md flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade relative">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade relative">
         
-        <!-- Loading Receita Oculto -->
         <div id="loading-receita-rapido" class="absolute inset-0 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-sm z-10 hidden flex-col items-center justify-center rounded-xl">
             <svg class="animate-spin h-8 w-8 text-[#1a428a] mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             <span class="font-black tracking-widest text-[#1a428a] dark:text-blue-400 uppercase text-xs">Consultando Receita...</span>
@@ -498,8 +443,7 @@
 
         <div class="bg-[#1a428a] dark:bg-[#081121] text-white p-4 flex justify-between items-center border-b border-blue-800 dark:border-gray-800">
             <h3 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                Cadastro Rápido de Cliente
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg> Cadastro Rápido de Cliente
             </h3>
             <button type="button" onclick="document.getElementById('modal-cliente-rapido').classList.add('hidden'); document.getElementById('modal-cliente-rapido').classList.remove('flex');" class="text-blue-200 hover:text-white text-2xl leading-none transition-colors">&times;</button>
         </div>
@@ -516,17 +460,18 @@
                 </label>
             </div>
             
-            <div>
-                <label id="lbl-cli-rapido-doc" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">CPF</label>
-                <input type="text" id="cli-rapido-doc" required oninput="window.mascaraCpfCnpjRapido(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono text-sm transition-colors">
-            </div>
-            
-            <div>
-                <label id="lbl-cli-rapido-nome" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nome Completo</label>
-                <input type="text" id="cli-rapido-nome" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs uppercase transition-colors">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                    <label id="lbl-cli-rapido-doc" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">CPF</label>
+                    <input type="text" id="cli-rapido-doc" required oninput="window.mascaraCpfCnpjRapido(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono text-sm transition-colors">
+                </div>
+                <div class="md:col-span-2">
+                    <label id="lbl-cli-rapido-nome" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nome Completo</label>
+                    <input type="text" id="cli-rapido-nome" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs uppercase transition-colors">
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Telefone</label>
                     <input type="text" id="cli-rapido-tel" oninput="window.mascaraCelular(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono text-xs transition-colors">
@@ -537,14 +482,36 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Endereço Completo</label>
-                <input type="text" id="cli-rapido-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs uppercase transition-colors" placeholder="RUA, NÚMERO, BAIRRO, CIDADE">
+            <!-- BLOCO DE ENDEREÇO SEPARADO -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-gray-50 dark:bg-[#0f172a] rounded-xl border border-gray-200 dark:border-gray-700">
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CEP</label>
+                    <input type="text" id="cli-rapido-cep" oninput="window.mascaraCep(this)" onblur="window.consultarCep(this, 'cli-rapido-')" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono transition-colors duration-150" placeholder="00000-000">
+                </div>
+                <div class="md:col-span-7">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Endereço (Rua/Av)</label>
+                    <input type="text" id="cli-rapido-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nº</label>
+                    <input type="text" id="cli-rapido-numero_end" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bairro</label>
+                    <input type="text" id="cli-rapido-bairro" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cidade / UF</label>
+                    <input type="text" id="cli-rapido-cidade" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Complemento</label>
+                    <input type="text" id="cli-rapido-complemento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
             </div>
             
             <button type="submit" class="w-full bg-[#1a428a] hover:bg-blue-900 text-white font-black py-3 mt-2 rounded-xl shadow-md transition-all duration-150 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                Salvar e Usar na O.S.
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Salvar e Usar na O.S.
             </button>
         </form>
     </div>
