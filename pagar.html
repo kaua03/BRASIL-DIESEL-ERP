@@ -1,9 +1,11 @@
+<!-- views/nav/pagar.html -->
 <div class="fade-in space-y-6 flex flex-col h-full text-sm">
     
+    <!-- Cards Superiores (Resumo) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 md:col-span-2 flex flex-col justify-center transition-all duration-150">
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Contas a Pagar</h2>
-            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão de saídas, despesas de fornecedores, autopeças e custos fixos.</p>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão de saídas, fornecedores e automação via XML.</p>
         </div>
         
         <div class="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-200 dark:border-red-800/30 flex flex-col justify-between transition-all duration-150 shadow-sm">
@@ -17,50 +19,67 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col lg:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
+    <!-- Barra de Filtros, Abas e Botões -->
+    <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col xl:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
         
-        <div class="flex bg-gray-100 dark:bg-[#0f172a] p-1 rounded-xl w-full lg:w-auto border border-transparent dark:border-gray-800">
-            <button onclick="window.mudarAbaPagar('Pendente')" id="btn-tab-pagar-pendente" class="flex-1 lg:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">
-                Pendentes
-            </button>
-            <button onclick="window.mudarAbaPagar('Pago')" id="btn-tab-pagar-pago" class="flex-1 lg:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
-                Pagas (Histórico)
+        <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
+            <div class="flex bg-gray-100 dark:bg-[#0f172a] p-1 rounded-xl w-full sm:w-auto border border-transparent dark:border-gray-800">
+                <button onclick="window.mudarAbaPagar('Pendente')" id="btn-tab-pagar-pendente" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">
+                    Pendentes
+                </button>
+                <button onclick="window.mudarAbaPagar('Pago')" id="btn-tab-pagar-pago" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
+                    Pagas (Histórico)
+                </button>
+            </div>
+
+            <button type="button" id="btn-excluir-massa-pagar" onclick="window.excluirContasPagarMassa()" class="hidden px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Excluir (<span id="qtd-selecionadas-pagar">0</span>)
             </button>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-            <select id="filtro-conta-pagar" onchange="window.renderizarPagar()" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none font-bold text-xs transition-all duration-150 cursor-pointer focus:border-[#1a428a]">
+        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
+            <select id="filtro-conta-pagar" onchange="window.renderizarPagar()" class="px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none font-bold text-xs transition-all duration-150 cursor-pointer focus:border-[#1a428a]">
                 <option value="TODAS">Todas as Contas</option>
                 <option value="Caixa Interno">Caixa Interno</option>
                 <option value="Banco do Brasil">Banco do Brasil</option>
                 <option value="Vale">Vale</option>
             </select>
             
-            <input type="text" id="filtro-busca-pagar" oninput="window.renderizarPagar()" class="w-full sm:w-60 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Buscar Fornecedor ou Doc...">
+            <input type="text" id="filtro-busca-pagar" oninput="window.renderizarPagar()" class="w-full sm:w-56 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Fornecedor, Desc. ou N°...">
 
-            <button onclick="window.abrirModalNovoPagar()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md">
+            <!-- A Magia do XML: Um input de ficheiro disfarçado de botão -->
+            <label class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Importar XML
+                <input type="file" id="input-xml-pagar" accept=".xml" class="hidden" onchange="window.processarXmlNfe(event)">
+            </label>
+
+            <button onclick="window.abrirModalNovoPagar()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
                 Nova Despesa
             </button>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-150 flex-1 flex flex-col">
-        <div class="overflow-x-auto flex-1 custom-scrollbar">
-            <table class="w-full text-left border-collapse min-w-max">
-                <thead class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-all duration-150">
+    <!-- Área da Tabela -->
+    <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar pb-8 relative">
+        <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden inline-block min-w-full align-middle h-fit transition-colors duration-150">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     <tr>
+                        <th class="p-4 w-12 text-center border-r border-gray-200 dark:border-gray-700"></th>
                         <th class="p-4 w-[25%]">Fornecedor / Descrição</th>
-                        <th class="p-4 w-[12%] text-center">Nº Documento</th>
-                        <th class="p-4 text-center w-[12%]">Vencimento</th>
-                        <th class="p-4 text-center w-[18%]">Meio / Conta Origem</th>
+                        <th class="p-4 w-[15%] text-center">Nº Documento</th>
+                        <th class="p-4 text-center w-[15%]">Vencimento</th>
+                        <th class="p-4 text-center w-[15%]">Meio / Conta Origem</th>
                         <th class="p-4 text-right w-[15%]">Valor</th>
-                        <th class="p-4 text-center w-[18%]">Ações</th>
+                        <th class="p-4 text-center w-[15%]">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tabela-dados-pagar" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[#1e293b] transition-all duration-150">
+                <tbody id="tabela-dados-pagar" class="transition-colors duration-150">
                     <tr>
-                        <td colspan="6" class="text-center p-8 text-gray-400 font-bold italic">Carregando livro de despesas...</td>
+                        <td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td>
                     </tr>
                 </tbody>
             </table>
@@ -68,40 +87,41 @@
     </div>
 </div>
 
+<!-- ========================================================= -->
+<!-- MODAL: NOVA DESPESA MANUAL                                -->
+<!-- ========================================================= -->
 <div id="modal-pagar" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150">
-        
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade">
         <div class="bg-red-600 text-white p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-lg font-black tracking-wide uppercase">Lançar Nova Despesa</h3>
-            <button type="button" onclick="document.getElementById('modal-pagar').classList.add('hidden')" class="text-red-200 hover:text-white text-3xl leading-none font-light">&times;</button>
+            <h3 class="text-sm font-black tracking-widest uppercase">Lançar Nova Despesa</h3>
+            <button type="button" onclick="document.getElementById('modal-pagar').classList.add('hidden'); document.getElementById('modal-pagar').classList.remove('flex');" class="text-red-200 hover:text-white text-2xl leading-none font-light transition-colors">&times;</button>
         </div>
 
         <form id="form-novo-pagar" onsubmit="window.salvarNovaDespesa(event)" class="p-6 space-y-4">
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Fornecedor / Favorecido</label>
-                <input type="text" id="pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-bold focus:border-red-500 transition-colors uppercase">
+                <input type="text" id="pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
             </div>
-            
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Descrição / Custo</label>
-                <input type="text" id="pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-bold focus:border-red-500 transition-colors uppercase" placeholder="Ex: COMPRA DE FILTROS, ENERGIA ELÉTRICA, ETC.">
+                <input type="text" id="pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase" placeholder="Ex: COMPRA DE FILTROS, ENERGIA, ETC.">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Nº Documento / Nota</label>
-                    <input type="text" id="pagar-documento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-mono font-bold focus:border-red-500 transition-colors uppercase">
+                    <input type="text" id="pagar-documento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-red-500 transition-colors uppercase">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Data de Vencimento</label>
-                    <input type="date" id="pagar-vencimento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-mono font-bold focus:border-red-500 transition-colors">
+                    <input type="date" id="pagar-vencimento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-red-500 transition-colors">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Conta Origem</label>
-                    <select id="pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-bold focus:border-red-500 transition-colors">
+                    <select id="pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors">
                         <option value="Caixa Interno">Caixa Interno</option>
                         <option value="Banco do Brasil">Banco do Brasil</option>
                         <option value="Vale">Vale</option>
@@ -109,7 +129,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Meio de Pagamento</label>
-                    <select id="pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-xs font-bold focus:border-red-500 transition-colors">
+                    <select id="pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors">
                         <option value="PIX">PIX</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Boleto Bancário">Boleto Bancário</option>
@@ -121,13 +141,167 @@
 
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Valor da Despesa (R$)</label>
-                <input type="text" id="pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-black text-red-600 focus:border-red-500 text-right transition-colors" placeholder="0,00">
+                <input type="text" id="pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg outline-none text-lg font-mono font-black text-red-600 dark:text-red-400 focus:border-red-500 text-right transition-colors" placeholder="0,00">
             </div>
 
-            <div class="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
-                <button type="button" onclick="document.getElementById('modal-pagar').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-md transition-colors">Gravar Despesa</button>
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('modal-pagar').classList.add('hidden'); document.getElementById('modal-pagar').classList.remove('flex');" class="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors uppercase">Cancelar</button>
+                <button type="submit" class="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    Gravar Despesa
+                </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL: EDIÇÃO DIRETA NO BANCO DE DADOS                    -->
+<!-- ========================================================= -->
+<div id="modal-editar-pagar" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col anima-fade">
+        <div class="bg-amber-500 dark:bg-amber-600 text-white p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-800">
+            <h3 class="font-black tracking-widest uppercase text-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Editar Despesa
+            </h3>
+            <button onclick="document.getElementById('modal-editar-pagar').classList.add('hidden'); document.getElementById('modal-editar-pagar').classList.remove('flex');" class="text-amber-100 hover:text-white text-2xl leading-none transition-colors">&times;</button>
+        </div>
+        <form onsubmit="window.salvarEdicaoPagar(event)" class="p-5 space-y-4">
+            <input type="hidden" id="edit-pagar-id">
+            
+            <div>
+                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Fornecedor / Descrição</label>
+                <input type="text" id="edit-pagar-fornecedor" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors mb-2">
+                <input type="text" id="edit-pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-bold text-xs uppercase transition-colors">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Documento</label>
+                    <input type="text" id="edit-pagar-doc" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors uppercase">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Vencimento</label>
+                    <input type="date" id="edit-pagar-vencimento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Conta Origem</label>
+                    <select id="edit-pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors">
+                        <option value="Caixa Interno">Caixa Interno</option>
+                        <option value="Banco do Brasil">Banco do Brasil</option>
+                        <option value="Vale">Vale</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Operação</label>
+                    <select id="edit-pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors">
+                        <option value="PIX">PIX</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Boleto Bancário">Boleto Bancário</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Valor (R$)</label>
+                <input type="text" id="edit-pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg outline-none focus:border-amber-500 font-mono font-black text-right transition-colors text-lg">
+            </div>
+            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 mt-2 rounded-xl shadow-md transition-all duration-150 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                Salvar Alterações
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL: REVISÃO DE IMPORTAÇÃO XML (NFE)                    -->
+<!-- ========================================================= -->
+<div id="modal-xml-preview" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[250] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col h-[85vh] max-h-[800px] overflow-hidden border border-indigo-500/30 anima-fade">
+        <div class="bg-indigo-600 text-white p-5 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-lg font-black tracking-widest uppercase flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Processamento de NFe XML
+                </h3>
+                <p class="text-indigo-200 text-xs font-medium mt-1">Revise as duplicatas encontradas no ficheiro.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="text-indigo-200 hover:text-white text-3xl leading-none font-light">&times;</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
+            <!-- Dados Base -->
+            <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-indigo-500 mb-1">Fornecedor Encontrado</label>
+                        <input type="text" id="xml-fornecedor" class="w-full bg-transparent font-bold text-gray-800 dark:text-white text-sm outline-none border-b border-indigo-200 dark:border-indigo-800 pb-1" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-indigo-500 mb-1">Número da Nota (NFe)</label>
+                        <input type="text" id="xml-nota" class="w-full bg-transparent font-bold text-gray-800 dark:text-white text-sm outline-none border-b border-indigo-200 dark:border-indigo-800 pb-1" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuração em Lote -->
+            <div class="bg-gray-50 dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Definir Pagamento para as parcelas</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 dark:text-gray-300 mb-1">Conta Origem Padrão</label>
+                        <select id="xml-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] dark:text-white rounded-lg outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                            <option value="Caixa Interno">Caixa Interno</option>
+                            <option value="Banco do Brasil">Banco do Brasil</option>
+                            <option value="Vale">Vale</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 dark:text-gray-300 mb-1">Meio de Pagamento Padrão</label>
+                        <select id="xml-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] dark:text-white rounded-lg outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                            <option value="Boleto Bancário" selected>Boleto Bancário</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Duplicatas -->
+            <div>
+                <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2">Duplicatas / Faturamento</h4>
+                <div class="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-3 w-16 text-center">Nº Parc</th>
+                                <th class="p-3 text-center">Vencimento</th>
+                                <th class="p-3 text-right">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-xml-parcelas" class="divide-y divide-gray-100 dark:divide-gray-800">
+                            <!-- Injetado pelo JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="shrink-0 bg-gray-50 dark:bg-[#0f172a] p-5 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('modal-xml-preview').classList.add('hidden'); document.getElementById('modal-xml-preview').classList.remove('flex');" class="px-6 py-2.5 font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors text-xs uppercase">Cancelar</button>
+            <button type="button" onclick="window.salvarXmlLote()" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black tracking-widest uppercase rounded-xl shadow-md transition-colors text-xs flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                Confirmar Lançamentos
+            </button>
+        </div>
     </div>
 </div>
