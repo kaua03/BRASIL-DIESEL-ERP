@@ -135,8 +135,9 @@ window.renderizarPagar = function() {
             const doc = removerAcentos(String(conta.numero_documento || ''));
             const op = removerAcentos(String(conta.operacao || ''));
             const orig = removerAcentos(String(conta.conta_origem || ''));
+            const tipoOp = removerAcentos(String(conta.tipo_operacao || ''));
             
-            bateTexto = forn.includes(textoBusca) || desc.includes(textoBusca) || doc.includes(textoBusca) || op.includes(textoBusca) || orig.includes(textoBusca);
+            bateTexto = forn.includes(textoBusca) || desc.includes(textoBusca) || doc.includes(textoBusca) || op.includes(textoBusca) || orig.includes(textoBusca) || tipoOp.includes(textoBusca);
         }
         return bateAba && bateConta && bateTexto;
     });
@@ -155,7 +156,17 @@ window.renderizarPagar = function() {
         const docFmt = String(conta.numero_documento || 'S/N');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         
-        // 🔴 MOTOR VISUAL DE ALERTAS DE VENCIMENTO 🔴
+        // Formatação do Tipo de Operação
+        const tipoOperacaoFmt = String(conta.tipo_operacao || 'FINANCEIRO DESPESAS').toUpperCase();
+        
+        // Formatação da Data e Hora do Lançamento (Auditoria)
+        let dataLancamentoFmt = '---';
+        if (conta.created_at) {
+            const dLanc = new Date(conta.created_at);
+            dataLancamentoFmt = dLanc.toLocaleDateString('pt-BR') + ' às ' + dLanc.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // MOTOR VISUAL DE ALERTAS DE VENCIMENTO
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -186,34 +197,15 @@ window.renderizarPagar = function() {
             }
         }
 
-        // Botoes Táticos Quadrados e Alinhados
         let btnBaixa = '';
         if (conta.status === 'Pendente') {
-            btnBaixa = `
-                <button onclick="window.darBaixaPagar(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded transition-all duration-150" title="Liquidar Despesa">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                </button>
-            `;
+            btnBaixa = `<button onclick="window.darBaixaPagar(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded transition-all duration-150" title="Liquidar Despesa"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></button>`;
         } else {
-            btnBaixa = `
-                <button onclick="window.estornarPagar(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white rounded transition-all duration-150" title="Estornar">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-                </button>
-            `;
+            btnBaixa = `<button onclick="window.estornarPagar(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white rounded transition-all duration-150" title="Estornar"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg></button>`;
         }
 
-        const btnEditarIndiv = `
-            <button onclick="window.abrirModalEditarPagar(${conta.id})" class="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Despesa">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </button>
-        `;
-
-        const btnExcluirIndiv = `
-            <button onclick="window.excluirPagarIndividual(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Despesa">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-        `;
-
+        const btnEditarIndiv = `<button onclick="window.abrirModalEditarPagar(${conta.id})" class="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Despesa"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>`;
+        const btnExcluirIndiv = `<button onclick="window.excluirPagarIndividual(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Despesa"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>`;
         const isChecked = window.pagarIdsSelecionados.has(conta.id) ? 'checked' : '';
 
         return `
@@ -222,16 +214,20 @@ window.renderizarPagar = function() {
                     <input type="checkbox" value="${conta.id}" onchange="window.toggleCheckContaPagar(${conta.id}, this)" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600 cursor-pointer bg-white dark:bg-gray-700" ${isChecked}>
                 </td>
                 <td class="p-4">
+                    <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded text-[9px] font-black tracking-wider uppercase mb-1">${tipoOperacaoFmt}</span>
                     <span class="block text-xs font-black text-gray-800 dark:text-white uppercase truncate max-w-[250px]" title="${fornecedorFmt}">${fornecedorFmt}</span>
                     <span class="block text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 uppercase truncate max-w-[250px]" title="${descFmt}">${descFmt}</span>
                 </td>
-                <td class="p-4 text-center font-mono font-bold text-gray-600 dark:text-gray-400 text-xs">${docFmt}</td>
+                <td class="p-4 text-center font-mono">
+                    <span class="block font-bold text-gray-600 dark:text-gray-400 text-xs">${docFmt}</span>
+                    <span class="block text-[9px] text-gray-400 mt-1 uppercase" title="Data/Hora do Lançamento no Cofre">Lanç.: ${dataLancamentoFmt}</span>
+                </td>
                 <td class="p-4 text-center font-mono">
                     ${statusVencimentoVisual}
                 </td>
                 <td class="p-4 text-center">
                     <span class="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase">${conta.operacao}</span>
-                    <span class="block text-[10px] text-gray-500 mt-0.5">${conta.conta_origem}</span>
+                    <span class="block text-[10px] text-gray-500 mt-0.5 uppercase">${conta.conta_origem}</span>
                 </td>
                 <td class="p-4 text-right font-mono font-black text-red-600 dark:text-red-400 text-sm whitespace-nowrap">R$ ${valorFmt}</td>
                 <td class="p-4 text-center">
@@ -351,6 +347,7 @@ window.salvarNovaDespesa = async function(event) {
     }
 
     const dadosDespesa = {
+        tipo_operacao: getVal('pagar-tipo-operacao'), // O novo campo sendo atirado pro banco
         fornecedor: getVal('pagar-fornecedor').trim().toUpperCase(),
         descricao: getVal('pagar-descricao').trim().toUpperCase(),
         numero_documento: getVal('pagar-documento').trim().toUpperCase(),
@@ -382,6 +379,7 @@ window.abrirModalEditarPagar = function(id) {
     if (!conta) return;
 
     document.getElementById('edit-pagar-id').value = conta.id;
+    document.getElementById('edit-pagar-tipo-operacao').value = conta.tipo_operacao || 'Financeiro Despesas'; // Puxa o dado do banco
     document.getElementById('edit-pagar-fornecedor').value = conta.fornecedor || '';
     document.getElementById('edit-pagar-descricao').value = conta.descricao || '';
     document.getElementById('edit-pagar-doc').value = conta.numero_documento || '';
@@ -402,6 +400,7 @@ window.salvarEdicaoPagar = async function(event) {
     const valNum = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
 
     const payload = {
+        tipo_operacao: document.getElementById('edit-pagar-tipo-operacao').value,
         fornecedor: document.getElementById('edit-pagar-fornecedor').value.toUpperCase(),
         descricao: document.getElementById('edit-pagar-descricao').value.toUpperCase(),
         numero_documento: document.getElementById('edit-pagar-doc').value.toUpperCase(),
@@ -495,7 +494,6 @@ window.processarXmlNfe = async function(event) {
 
     const reader = new FileReader();
     
-    // Transformamos o onload numa função ASSÍNCRONA para podermos ir ao Supabase!
     reader.onload = async function(e) {
         try {
             const xmlString = e.target.result;
@@ -527,26 +525,20 @@ window.processarXmlNfe = async function(event) {
             const totalNode = xmlDoc.getElementsByTagName('total')[0] || xmlDoc.getElementsByTagNameNS("*", 'total')[0];
             const totalNF = getTagFromParent(totalNode, 'vNF') || '0.00';
 
-            // 🔴 A BARREIRA DE ELITE: Verificação de Duplicidade no Cofre 🔴
-            // Antes de mostrar o modal, vamos ao Supabase e procuramos por este Número de Nota
             const { data: notaExistente, error: erroBusca } = await supabase
                 .from('contas_pagar')
                 .select('fornecedor')
                 .eq('numero_documento', numNF);
 
             if (notaExistente && notaExistente.length > 0) {
-                // Existe uma nota com o mesmo número. Mas será do mesmo fornecedor?
-                // Pegamos as primeiras 15 letras do nome para comparar, evitando erros de acentuação/pontuação.
                 const trechoFornecedor = emitNome.substring(0, 15).toUpperCase();
-                
                 const nfDuplicada = notaExistente.find(nota => 
                     nota.fornecedor && nota.fornecedor.toUpperCase().includes(trechoFornecedor)
                 );
 
                 if (nfDuplicada) {
-                    // BLOQUEIO ATIVADO! A nota já existe!
                     if (window.mostrarToast) window.mostrarToast(`Bloqueado: A NFe N° ${numNF} deste fornecedor já foi importada!`, "erro");
-                    return; // Aborta a operação inteira aqui. O modal não vai abrir.
+                    return; 
                 }
             }
 
@@ -626,6 +618,7 @@ window.processarXmlNfe = async function(event) {
 window.salvarXmlLote = async function() {
     const fornecedor = document.getElementById('xml-fornecedor-nome').dataset.raw.toUpperCase();
     const documento = document.getElementById('xml-nota-numero').dataset.raw.toUpperCase();
+    const tipoOp = document.getElementById('xml-tipo-operacao').value; // O Novo Campo do XML
     const conta = document.getElementById('xml-conta').value;
     const operacao = document.getElementById('xml-operacao').value;
 
@@ -643,6 +636,7 @@ window.salvarXmlLote = async function() {
         }
 
         payloadLote.push({
+            tipo_operacao: tipoOp,
             fornecedor: fornecedor,
             descricao: desc,
             numero_documento: documento,
