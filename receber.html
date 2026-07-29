@@ -21,12 +21,21 @@
 
     <!-- Barra de Filtros e Abas -->
     <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 transition-all duration-150">
-        <div class="flex bg-gray-100 dark:bg-[#0f172a] p-1 rounded-xl w-full sm:w-auto border border-transparent dark:border-gray-800">
-            <button onclick="window.mudarAbaReceber('Pendente')" id="btn-tab-pendente" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">
-                Pendentes
-            </button>
-            <button onclick="window.mudarAbaReceber('Recebido')" id="btn-tab-recebido" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
-                Recebidas
+        
+        <div class="flex items-center gap-4 w-full sm:w-auto">
+            <div class="flex bg-gray-100 dark:bg-[#0f172a] p-1 rounded-xl w-full sm:w-auto border border-transparent dark:border-gray-800">
+                <button onclick="window.mudarAbaReceber('Pendente')" id="btn-tab-pendente" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm">
+                    Pendentes
+                </button>
+                <button onclick="window.mudarAbaReceber('Recebido')" id="btn-tab-recebido" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
+                    Recebidas
+                </button>
+            </div>
+
+            <!-- Botão de Exclusão em Massa (Invisível por padrão, aparece quando selecionamos itens) -->
+            <button type="button" id="btn-excluir-massa" onclick="window.excluirContasMassa()" class="hidden px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Excluir Selecionadas (<span id="qtd-selecionadas">0</span>)
             </button>
         </div>
 
@@ -42,24 +51,30 @@
         </div>
     </div>
 
-    <!-- Área da Tabela (O flex-1 e overflow estão aqui, a tabela abraça o conteúdo) -->
-    <div class="flex-1 overflow-y-auto custom-scrollbar pb-8">
-        <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-150 inline-block min-w-full align-middle">
+    <!-- Área da Tabela: O flex-1 fica SÓ AQUI, a tabela não tem height forced -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar pb-8 relative">
+        <!-- O segredo do tamanho dinâmico: h-fit e inline-block. Ela abraça o conteúdo e não se estica! -->
+        <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden inline-block min-w-full align-middle h-fit transition-colors duration-150">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-all duration-150">
+                <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     <tr>
+                        <th class="p-4 w-[5%] text-center border-r border-gray-200 dark:border-gray-700">
+                            <!-- Checkbox Principal -->
+                            <input type="checkbox" id="check-all-receber" onchange="window.toggleCheckAllReceber(this)" class="w-4 h-4 rounded border-gray-300 text-[#1a428a] focus:ring-[#1a428a] cursor-pointer bg-white dark:bg-gray-700">
+                        </th>
                         <th class="p-4 w-[10%] text-center">Ref. O.S</th>
                         <th class="p-4 w-[25%]">Cliente</th>
                         <th class="p-4 text-center w-[10%]">Placa</th>
                         <th class="p-4 text-center w-[15%]">Vencimento</th>
                         <th class="p-4 text-center w-[15%]">Operação / Conta</th>
-                        <th class="p-4 text-right w-[12%]">Valor</th>
-                        <th class="p-4 text-center w-[13%]">Ação</th>
+                        <th class="p-4 text-right w-[10%]">Valor</th>
+                        <th class="p-4 text-center w-[10%]">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tabela-dados-receber" class="bg-white dark:bg-[#1e293b] transition-all duration-150">
+                <!-- SEM divide-y. Vamos desenhar as bordas à força no JavaScript -->
+                <tbody id="tabela-dados-receber" class="bg-white dark:bg-[#1e293b] transition-colors duration-150">
                     <tr>
-                        <td colspan="7" class="text-center p-8 text-gray-400 font-bold italic">Carregando tesouraria...</td>
+                        <td colspan="8" class="text-center p-8 text-gray-400 font-bold italic">Sincronizando com o cofre...</td>
                     </tr>
                 </tbody>
             </table>
