@@ -5,7 +5,7 @@ window.dadosReceberGerais = [];
 window.abaReceberAtual = 'Pendente'; 
 window.vigilanciaReceberAtiva = false; 
 
-// Sistema de Memória para Múltiplas Exclusões
+// Sistema de Memória para Seleção
 window.receberIdsSelecionados = new Set();
 window.receberIdsFiltradosTela = []; 
 
@@ -21,7 +21,7 @@ window.ativarVigilanciaReceber = function() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_receber' }, payload => {
             const tbody = document.getElementById('tabela-dados-receber');
             if (tbody) {
-                console.log('📡 [Tesouraria] Atualização detectada! Atualizando painel...');
+                console.log('📡 [Tesouraria] Sincronizando modificação no cofre...');
                 window.carregarContasReceber(true); 
             }
         })
@@ -39,7 +39,6 @@ window.carregarContasReceber = async function(isSilencioso = false) {
     window.ativarVigilanciaReceber(); 
 
     try {
-        // Puxa também a tabela de ordens_servico para mostrar o N° correto da O.S.
         const { data, error } = await supabase
             .from('contas_receber')
             .select('*, ordens_servico(numero_os)')
@@ -52,9 +51,7 @@ window.carregarContasReceber = async function(isSilencioso = false) {
 
     } catch (err) {
         console.error("ERRO AO CARREGAR FINANCEIRO:", err);
-        if (!isSilencioso) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-red-500 font-bold">Erro ao carregar dados financeiros. Verifique a conexão.</td></tr>';
-        }
+        if (!isSilencioso) tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-red-500 font-bold">Erro de conexão ao banco financeiro.</td></tr>';
     }
 };
 
@@ -64,7 +61,7 @@ window.carregarContasReceber = async function(isSilencioso = false) {
 
 window.mudarAbaReceber = function(status) {
     window.abaReceberAtual = status;
-    window.receberIdsSelecionados.clear(); // Limpa as caixas de seleção ao mudar de aba
+    window.receberIdsSelecionados.clear(); 
     
     const btnPendente = document.getElementById('btn-tab-pendente');
     const btnRecebido = document.getElementById('btn-tab-recebido');
@@ -90,7 +87,6 @@ window.renderizarReceber = function() {
     let totalPendente = 0;
     let totalRecebido = 0;
 
-    // Totais Gerais dos Cartões (Ignoram a busca de texto)
     window.dadosReceberGerais.forEach(conta => {
         if (contaFiltro === 'TODAS' || conta.conta_destino === contaFiltro) {
             if (conta.status === 'Pendente') totalPendente += Number(conta.valor);
@@ -103,7 +99,6 @@ window.renderizarReceber = function() {
     if(elPendente) elPendente.innerText = `R$ ${totalPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     if(elRecebido) elRecebido.innerText = `R$ ${totalRecebido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
-    // Filtragem para a Tabela
     let dadosFiltrados = window.dadosReceberGerais.filter(conta => {
         const bateAba = conta.status === window.abaReceberAtual;
         const bateConta = (contaFiltro === 'TODAS' || conta.conta_destino === contaFiltro);
@@ -117,11 +112,9 @@ window.renderizarReceber = function() {
             
             bateTexto = cliente.includes(textoBusca) || placa.includes(textoBusca) || osIdStr.includes(textoBusca);
         }
-
         return bateAba && bateConta && bateTexto;
     });
 
-    // Atualiza a memória de seleção para o checkbox "Selecionar Todos"
     window.receberIdsFiltradosTela = dadosFiltrados.map(c => c.id);
     window.atualizarInterfaceExclusaoMassa();
 
@@ -130,16 +123,13 @@ window.renderizarReceber = function() {
         return;
     }
 
-    // Desenha as Linhas
     tbody.innerHTML = dadosFiltrados.map(conta => {
-        
         const numeroRealOs = conta.ordens_servico?.numero_os || conta.os_id || '---';
         const numOs = String(numeroRealOs).padStart(4, '0');
         const placaFmt = String(conta.placa || '---');
         const clienteFmt = String(conta.cliente || 'CLIENTE AVULSO');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         
-        // 🔴 MOTOR VISUAL DE ALERTAS DE VENCIMENTO 🔴
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -157,11 +147,11 @@ window.renderizarReceber = function() {
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 if (diffDays < 0) {
-                    statusVencimentoVisual = `<span class="text-red-600 dark:text-red-400 font-black animate-pulse flex items-center justify-center gap-1">🚨 ${dataFormatada}</span><span class="text-[9px] text-red-500 block uppercase">Atrasado</span>`;
+                    statusVencimentoVisual = `<span class="text-red-600 dark:text-red-400 font-black animate-pulse flex items-center justify-center gap-1">🚨 ${dataFormatada}</span><span class="text-[9px] text-red-500 block uppercase mt-0.5">Atrasado</span>`;
                 } else if (diffDays === 0) {
-                    statusVencimentoVisual = `<span class="text-orange-600 dark:text-orange-500 font-black flex items-center justify-center gap-1">⚠️ ${dataFormatada}</span><span class="text-[9px] text-orange-500 block uppercase">Vence Hoje</span>`;
+                    statusVencimentoVisual = `<span class="text-orange-600 dark:text-orange-500 font-black flex items-center justify-center gap-1">⚠️ ${dataFormatada}</span><span class="text-[9px] text-orange-500 block uppercase mt-0.5">Vence Hoje</span>`;
                 } else if (diffDays <= 3) {
-                    statusVencimentoVisual = `<span class="text-amber-500 dark:text-amber-400 font-bold flex items-center justify-center gap-1">⚠️ ${dataFormatada}</span><span class="text-[9px] text-amber-500 block uppercase">Vence em ${diffDays} d</span>`;
+                    statusVencimentoVisual = `<span class="text-amber-500 dark:text-amber-400 font-bold flex items-center justify-center gap-1">⚠️ ${dataFormatada}</span><span class="text-[9px] text-amber-500 block uppercase mt-0.5">Vence em ${diffDays} d</span>`;
                 } else {
                     statusVencimentoVisual = `<span class="text-gray-700 dark:text-gray-300 font-bold">${dataFormatada}</span>`;
                 }
@@ -170,23 +160,30 @@ window.renderizarReceber = function() {
             }
         }
 
-        // Botoes Táticos (Baixa e Exclusão)
+        // Botoes Táticos (Baixa e Estorno)
         let btnBaixa = '';
         if (conta.status === 'Pendente') {
-            btnBaixa = `<button onclick="window.darBaixaReceber(${conta.id}, '${numOs}', this)" class="px-3 py-1.5 bg-[#00b87c] hover:bg-emerald-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150">Dar Baixa</button>`;
+            btnBaixa = `<button onclick="window.darBaixaReceber(${conta.id}, '${numOs}', this)" class="px-3 py-1.5 bg-[#00b87c] hover:bg-emerald-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150 w-[80px]">Dar Baixa</button>`;
         } else {
-            btnBaixa = `<button onclick="window.estornarReceber(${conta.id}, this)" class="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150">Estornar</button>`;
+            btnBaixa = `<button onclick="window.estornarReceber(${conta.id}, this)" class="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150 w-[80px]">Estornar</button>`;
         }
 
+        // Novo Botão de Edição Direta
+        const btnEditarIndiv = `
+            <button onclick="window.abrirModalEditarReceber(${conta.id})" class="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Parcela">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
+        `;
+
+        // Botão de Exclusão Inteligente (Aciona a verificação de OS Múltipla)
         const btnExcluirIndiv = `
-            <button onclick="window.excluirContaReceberIndividual(${conta.id}, '${numOs}', this)" class="px-2 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Parcela">
+            <button onclick="window.iniciarExclusaoReceber(${conta.id}, '${numOs}', ${conta.os_id || 'null'}, this)" class="px-2 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Parcela">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
         `;
 
         const isChecked = window.receberIdsSelecionados.has(conta.id) ? 'checked' : '';
 
-        // border-b garante a linha separadora
         return `
             <tr class="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-all duration-150">
                 <td class="p-4 text-center border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f172a]/50">
@@ -207,10 +204,11 @@ window.renderizarReceber = function() {
                     <span class="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase">${conta.operacao}</span>
                     <span class="block text-[10px] text-gray-500 mt-0.5">${conta.conta_destino}</span>
                 </td>
-                <td class="p-4 text-right font-mono font-black text-[#00b87c] text-sm">R$ ${valorFmt}</td>
+                <td class="p-4 text-right font-mono font-black text-[#00b87c] text-sm whitespace-nowrap">R$ ${valorFmt}</td>
                 <td class="p-4 text-center">
-                    <div class="flex items-center justify-center gap-2">
+                    <div class="flex items-center justify-center gap-1">
                         ${btnBaixa}
+                        ${btnEditarIndiv}
                         ${btnExcluirIndiv}
                     </div>
                 </td>
@@ -220,7 +218,7 @@ window.renderizarReceber = function() {
 };
 
 // =========================================================================
-// 3. SISTEMA DE SELEÇÃO E EXCLUSÃO (NOVO)
+// 3. SISTEMA DE SELEÇÃO E EXCLUSÃO INTELIGENTE
 // =========================================================================
 
 window.toggleCheckContaReceber = function(id, el) {
@@ -229,26 +227,10 @@ window.toggleCheckContaReceber = function(id, el) {
     window.atualizarInterfaceExclusaoMassa();
 };
 
-window.toggleCheckAllReceber = function(el) {
-    if (el.checked) {
-        window.receberIdsFiltradosTela.forEach(id => window.receberIdsSelecionados.add(id));
-    } else {
-        window.receberIdsSelecionados.clear();
-    }
-    window.renderizarReceber(); 
-};
-
 window.atualizarInterfaceExclusaoMassa = function() {
-    const checkAll = document.getElementById('check-all-receber');
     const btnMassa = document.getElementById('btn-excluir-massa');
     const spanQtd = document.getElementById('qtd-selecionadas');
-
     const totalSelecionado = window.receberIdsSelecionados.size;
-
-    if (checkAll) {
-        checkAll.checked = window.receberIdsFiltradosTela.length > 0 && 
-                           window.receberIdsFiltradosTela.every(id => window.receberIdsSelecionados.has(id));
-    }
 
     if (btnMassa && spanQtd) {
         spanQtd.innerText = totalSelecionado;
@@ -257,35 +239,11 @@ window.atualizarInterfaceExclusaoMassa = function() {
     }
 };
 
-window.excluirContaReceberIndividual = async function(id, numOs, btnElement) {
-    const confirmou = await window.abrirConfirmacao("Excluir Parcela", `Deseja apagar definitivamente a parcela da O.S #${numOs}? Ação irreversível.`, "perigo");
-    if (!confirmou) return;
-
-    if (btnElement) {
-        btnElement.innerHTML = `<svg class="animate-spin h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
-        const tr = btnElement.closest('tr');
-        if (tr) tr.classList.add('bg-red-50', 'dark:bg-red-900/20', 'opacity-50');
-    }
-
-    try {
-        const { error } = await supabase.from('contas_receber').delete().eq('id', id);
-        if (error) throw error;
-        
-        window.receberIdsSelecionados.delete(id);
-        if (window.mostrarToast) window.mostrarToast("Parcela eliminada!", "sucesso");
-        setTimeout(() => window.carregarContasReceber(true), 600);
-    } catch (err) {
-        console.error("ERRO AO EXCLUIR:", err);
-        if (window.mostrarToast) window.mostrarToast("Erro ao excluir parcela.", "erro");
-        window.carregarContasReceber(true); 
-    }
-};
-
 window.excluirContasMassa = async function() {
     const total = window.receberIdsSelecionados.size;
     if (total === 0) return;
 
-    const confirmou = await window.abrirConfirmacao("Exclusão em Massa", `Deseja apagar DEFINITIVAMENTE as ${total} parcelas selecionadas?`, "perigo");
+    const confirmou = await window.abrirConfirmacao("Exclusão em Massa", `Deseja apagar DEFINITIVAMENTE as ${total} parcelas marcadas?`, "perigo");
     if (!confirmou) return;
 
     const btnMassa = document.getElementById('btn-excluir-massa');
@@ -302,7 +260,7 @@ window.excluirContasMassa = async function() {
         
         window.receberIdsSelecionados.clear();
         if (window.mostrarToast) window.mostrarToast(`${total} parcelas eliminadas!`, "sucesso");
-        setTimeout(() => window.carregarContasReceber(true), 800);
+        // Deixa o Radar atualizar sozinho...
     } catch (err) {
         console.error("ERRO NA EXCLUSÃO EM MASSA:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao excluir parcelas.", "erro");
@@ -310,8 +268,128 @@ window.excluirContasMassa = async function() {
     }
 };
 
+// 🔴 O MOTOR DE EXCLUSÃO INTELIGENTE 🔴
+window.iniciarExclusaoReceber = function(id, numOs, osId, btnElement) {
+    if (!osId) {
+        // Se a parcela não for de uma O.S específica, exclui direto.
+        window.excluirContaReceberDireto([id]);
+        return;
+    }
+
+    // Procura quantas parcelas no banco de memória têm a mesma OS
+    const parcelasDaOs = window.dadosReceberGerais.filter(c => c.os_id === osId);
+    
+    if (parcelasDaOs.length > 1) {
+        // Ativa o Radar de Múltiplas Parcelas
+        window.exclusaoInteligenteTemp = { id, numOs, osId };
+        document.getElementById('texto-exclusao-inteligente').innerHTML = `Esta parcela faz parte da <b>O.S #${numOs}</b> que possui um total de <b>${parcelasDaOs.length} parcelas</b>.<br><br>Deseja limpar todo o financeiro desta O.S de uma só vez?`;
+        
+        document.getElementById('modal-exclusao-inteligente').classList.remove('hidden');
+        document.getElementById('modal-exclusao-inteligente').classList.add('flex');
+    } else {
+        // Se for a última ou única parcela da OS, exclui direto.
+        window.excluirContaReceberDireto([id]);
+    }
+};
+
+window.escolherExclusaoInteligente = function(tipo) {
+    document.getElementById('modal-exclusao-inteligente').classList.add('hidden');
+    document.getElementById('modal-exclusao-inteligente').classList.remove('flex');
+    
+    const { id, osId } = window.exclusaoInteligenteTemp;
+    
+    if (tipo === 'unica') {
+        window.excluirContaReceberDireto([id]);
+    } else if (tipo === 'todas') {
+        // Mapeia TODOS os IDs das parcelas vinculadas a esta O.S
+        const idsParaExcluir = window.dadosReceberGerais.filter(c => c.os_id === osId).map(c => c.id);
+        window.excluirContaReceberDireto(idsParaExcluir);
+    }
+};
+
+window.excluirContaReceberDireto = async function(idsArray) {
+    const total = idsArray.length;
+    let msgConfirm = total > 1 ? `Apagar DEFINITIVAMENTE as ${total} parcelas vinculadas a esta O.S?` : `Apagar definitivamente esta parcela isolada?`;
+    
+    const confirmou = await window.abrirConfirmacao("Atenção Total", msgConfirm, "perigo");
+    if (!confirmou) return;
+
+    if (window.mostrarToast) window.mostrarToast("Processando exclusão no cofre...", "aviso");
+
+    try {
+        const { error } = await supabase.from('contas_receber').delete().in('id', idsArray);
+        if (error) throw error;
+        
+        idsArray.forEach(id => window.receberIdsSelecionados.delete(id));
+        window.atualizarInterfaceExclusaoMassa();
+        
+        if (window.mostrarToast) window.mostrarToast("Exclusão concluída com sucesso!", "sucesso");
+        // Realtime recarrega...
+    } catch (err) {
+        console.error("ERRO AO EXCLUIR:", err);
+        if (window.mostrarToast) window.mostrarToast("Falha técnica ao excluir.", "erro");
+        window.carregarContasReceber(true);
+    }
+};
+
+
 // =========================================================================
-// 4. AÇÕES DE TESOURARIA COM FEEDBACK VISUAL (CONGELAMENTO)
+// 4. EDIÇÃO DIRETA DE PARCELA (BANCO DE DADOS)
+// =========================================================================
+
+window.abrirModalEditarReceber = function(id) {
+    const conta = window.dadosReceberGerais.find(c => c.id === id);
+    if (!conta) return;
+
+    document.getElementById('edit-receber-id').value = conta.id;
+    document.getElementById('edit-receber-vencimento').value = conta.vencimento;
+    document.getElementById('edit-receber-valor').value = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+    document.getElementById('edit-receber-conta').value = conta.conta_destino;
+    document.getElementById('edit-receber-operacao').value = conta.operacao;
+    document.getElementById('edit-receber-nsu').value = conta.nsu_doc || '';
+    
+    document.getElementById('modal-editar-receber').classList.remove('hidden');
+    document.getElementById('modal-editar-receber').classList.add('flex');
+};
+
+window.salvarEdicaoReceber = async function(event) {
+    if (event) event.preventDefault();
+    
+    const id = document.getElementById('edit-receber-id').value;
+    const venc = document.getElementById('edit-receber-vencimento').value;
+    const valStr = document.getElementById('edit-receber-valor').value;
+    const valNum = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
+    const contaDest = document.getElementById('edit-receber-conta').value;
+    const op = document.getElementById('edit-receber-operacao').value;
+    const nsu = document.getElementById('edit-receber-nsu').value;
+
+    if (window.mostrarToast) window.mostrarToast("Injetando edição no banco de dados...", "info");
+
+    try {
+        const { error } = await supabase.from('contas_receber').update({
+            vencimento: venc,
+            valor: valNum,
+            conta_destino: contaDest,
+            operacao: op,
+            nsu_doc: nsu
+        }).eq('id', id);
+
+        if (error) throw error;
+        
+        if (window.mostrarToast) window.mostrarToast("Parcela atualizada no cofre!", "sucesso");
+        
+        document.getElementById('modal-editar-receber').classList.add('hidden');
+        document.getElementById('modal-editar-receber').classList.remove('flex');
+        
+        // Deixa o Radar Realtime piscar e renderizar a tela...
+    } catch (e) {
+        console.error("FALHA AO EDITAR:", e);
+        if (window.mostrarToast) window.mostrarToast("Erro crítico ao salvar edição.", "erro");
+    }
+};
+
+// =========================================================================
+// 5. AÇÕES DE TESOURARIA COM FEEDBACK VISUAL (CONGELAMENTO)
 // =========================================================================
 
 window.darBaixaReceber = async function(id, numOs, btnElement) {
@@ -331,6 +409,7 @@ window.darBaixaReceber = async function(id, numOs, btnElement) {
         if (error) throw error;
         
         if (window.mostrarToast) window.mostrarToast("Recebimento confirmado!", "sucesso");
+        // Oculta a linha instantaneamente para UX
         setTimeout(() => window.carregarContasReceber(true), 800);
     } catch (err) {
         console.error("ERRO AO DAR BAIXA:", err);
