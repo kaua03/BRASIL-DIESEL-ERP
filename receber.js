@@ -11,7 +11,15 @@ window.receberIdsFiltradosTela = [];
 
 // Normalizador para buscas (Remove acentos e minúsculas)
 const removerAcentos = (str) => {
+    if(!str) return '';
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+// Transforma Data/Hora ISO para o formato do input HTML datetime-local (YYYY-MM-DDTHH:mm)
+const formatarDataHoraInput = (isoString) => {
+    const data = isoString ? new Date(isoString) : new Date();
+    data.setMinutes(data.getMinutes() - data.getTimezoneOffset());
+    return data.toISOString().slice(0, 16); 
 };
 
 // =========================================================================
@@ -115,6 +123,7 @@ window.renderizarReceber = function() {
             const placa = removerAcentos(String(conta.placa || ''));
             const operacao = removerAcentos(String(conta.operacao || ''));
             const contaDestino = removerAcentos(String(conta.conta_destino || ''));
+            const tipoOp = removerAcentos(String(conta.tipo_operacao || ''));
             const osReal = conta.ordens_servico?.numero_os || conta.os_id || '';
             const osIdStr = removerAcentos(String(osReal).padStart(4, '0'));
             
@@ -122,6 +131,7 @@ window.renderizarReceber = function() {
                         placa.includes(textoBusca) || 
                         operacao.includes(textoBusca) || 
                         contaDestino.includes(textoBusca) || 
+                        tipoOp.includes(textoBusca) ||
                         osIdStr.includes(textoBusca);
         }
         return bateAba && bateConta && bateTexto;
@@ -142,6 +152,20 @@ window.renderizarReceber = function() {
         const clienteFmt = String(conta.cliente || 'CLIENTE AVULSO');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         
+        const tipoOperacaoFmt = String(conta.tipo_operacao || (conta.os_id ? 'FATURAMENTO DE O.S.' : 'VENDA AVULSA')).toUpperCase();
+
+        // 🔴 Formatação da Data e Hora do Lançamento (Auditoria) 🔴
+        // Procura pela data_lancamento (se você criar ela depois) ou usa a created_at que o banco já gravou
+        const valorDataReal = conta.data_lancamento || conta.created_at;
+        
+        let dataLancData = '---';
+        let dataLancHora = '---';
+        if (valorDataReal) {
+            const dLanc = new Date(valorDataReal);
+            dataLancData = dLanc.toLocaleDateString('pt-BR');
+            dataLancHora = dLanc.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -207,22 +231,34 @@ window.renderizarReceber = function() {
                 <td class="p-4 text-center border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f172a]/50">
                     <input type="checkbox" value="${conta.id}" onchange="window.toggleCheckContaReceber(${conta.id}, this)" class="w-4 h-4 rounded border-gray-300 text-[#1a428a] focus:ring-[#1a428a] cursor-pointer bg-white dark:bg-gray-700" ${isChecked}>
                 </td>
-                <td class="p-4 text-center">
-                    <span class="text-sm font-black text-gray-500 dark:text-gray-400">#${numOs}</span>
-                    <span class="block text-[9px] font-bold text-gray-400 uppercase mt-0.5">Parc: ${conta.numero_parcela}</span>
+                
+                <td class="p-4 text-center font-mono">
+                    <span class="block font-bold text-gray-800 dark:text-white text-xs">${dataLancData}</span>
+                    <span class="block text-[10px] text-gray-500 mt-1 uppercase">${dataLancHora}</span>
                 </td>
+
                 <td class="p-4">
-                    <span class="font-bold text-gray-800 dark:text-white text-xs uppercase block truncate max-w-[200px]" title="${clienteFmt}">${clienteFmt}</span>
+                    <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded text-[9px] font-black tracking-wider uppercase mb-1">${tipoOperacaoFmt}</span>
+                    <span class="block font-bold text-gray-800 dark:text-white text-xs uppercase truncate max-w-[200px]" title="${clienteFmt}">${clienteFmt}</span>
                 </td>
-                <td class="p-4 text-center font-black text-[#1a428a] dark:text-blue-400 text-sm tracking-widest">${placaFmt}</td>
+
+                <td class="p-4 text-center font-mono">
+                    <span class="text-sm font-black text-gray-500 dark:text-gray-400">#${numOs}</span>
+                    <span class="block text-[10px] font-black text-[#1a428a] dark:text-blue-400 tracking-widest mt-1">${placaFmt}</span>
+                    <span class="block text-[9px] font-bold text-gray-400 uppercase mt-0.5">Parc: ${conta.numero_parcela || '1/1'}</span>
+                </td>
+                
                 <td class="p-4 text-center font-mono">
                     ${statusVencimentoVisual}
                 </td>
+                
                 <td class="p-4 text-center">
                     <span class="block text-xs font-black text-gray-700 dark:text-gray-300 uppercase">${conta.operacao}</span>
                     <span class="block text-[10px] text-gray-500 mt-0.5">${conta.conta_destino}</span>
                 </td>
+                
                 <td class="p-4 text-right font-mono font-black text-[#00b87c] text-sm whitespace-nowrap">R$ ${valorFmt}</td>
+                
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
                         ${btnBaixa}
@@ -279,7 +315,6 @@ window.excluirContasMassa = async function() {
         window.receberIdsSelecionados.clear();
         if (window.mostrarToast) window.mostrarToast(`${total} parcelas eliminadas!`, "sucesso");
         
-        // 🔴 Recarregamento Expresso
         setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (err) {
         console.error("ERRO NA EXCLUSÃO EM MASSA:", err);
@@ -339,7 +374,6 @@ window.excluirContaReceberDireto = async function(idsArray) {
         
         if (window.mostrarToast) window.mostrarToast("Exclusão concluída com sucesso!", "sucesso");
         
-        // 🔴 Recarregamento Expresso
         setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (err) {
         console.error("ERRO AO EXCLUIR:", err);
@@ -356,7 +390,12 @@ window.abrirModalEditarReceber = function(id) {
     const conta = window.dadosReceberGerais.find(c => c.id === id);
     if (!conta) return;
 
+    // Tenta puxar a data de lançamento editável, senão cai pro created_at
+    const dataRealInput = conta.data_lancamento || conta.created_at;
+
     document.getElementById('edit-receber-id').value = conta.id;
+    document.getElementById('edit-receber-data-lancamento').value = formatarDataHoraInput(dataRealInput);
+    document.getElementById('edit-receber-tipo-operacao').value = conta.tipo_operacao || (conta.os_id ? 'Faturamento de O.S.' : 'Venda Avulsa');
     document.getElementById('edit-receber-vencimento').value = conta.vencimento;
     document.getElementById('edit-receber-valor').value = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
     document.getElementById('edit-receber-conta').value = conta.conta_destino;
@@ -377,11 +416,18 @@ window.salvarEdicaoReceber = async function(event) {
     const contaDest = document.getElementById('edit-receber-conta').value;
     const op = document.getElementById('edit-receber-operacao').value;
     const nsu = document.getElementById('edit-receber-nsu').value;
+    const tipoOp = document.getElementById('edit-receber-tipo-operacao').value;
+    
+    // Captura e formata a Data de Lançamento
+    const dataLancRaw = document.getElementById('edit-receber-data-lancamento').value;
+    const dataLancIso = new Date(dataLancRaw).toISOString();
 
     if (window.mostrarToast) window.mostrarToast("Injetando edição no banco de dados...", "info");
 
     try {
         const { error } = await supabase.from('contas_receber').update({
+            data_lancamento: dataLancIso,
+            tipo_operacao: tipoOp,
             vencimento: venc,
             valor: valNum,
             conta_destino: contaDest,
@@ -396,7 +442,6 @@ window.salvarEdicaoReceber = async function(event) {
         document.getElementById('modal-editar-receber').classList.add('hidden');
         document.getElementById('modal-editar-receber').classList.remove('flex');
         
-        // 🔴 Recarregamento Expresso
         setTimeout(() => window.carregarContasReceber(true), 600);
     } catch (e) {
         console.error("FALHA AO EDITAR:", e);
