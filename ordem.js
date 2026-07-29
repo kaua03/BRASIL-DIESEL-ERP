@@ -8,6 +8,7 @@ window.formAlterado = false;
 window.modoLeitura = false;
 window.itemEmEdicaoId = null;
 window.listaVeiculosBdd = []; 
+window.listaClientesBdd = []; // <--- NOVO CÉREBRO DE CLIENTES
 
 // =========================================================================
 // 1. MÁSCARAS E FUNÇÕES GLOBAIS DE VISUALIZAÇÃO
@@ -41,12 +42,25 @@ window.validarPlacaBrasil = function(placa) {
     return true; 
 };
 
+// 🔴 NOVA MÁSCARA CPF/CNPJ COM GATILHO DA BRASILAPI 🔴
 window.mascaraCpfCnpj = function(input) {
     if(!input) return;
     let v = input.value.replace(/\D/g, "");
-    if (v.length <= 11) v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    else v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
-    input.value = v;
+    
+    // Auto-detecta CPF ou CNPJ pelo tamanho enquanto digita
+    if (v.length <= 11) {
+        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        input.value = v;
+    } else {
+        v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        input.value = v;
+        
+        // Se bateu 14 digitos puros, ativa o gatilho!
+        const limpo = v.replace(/\D/g, "");
+        if (limpo.length === 14) {
+            window.consultarCnpj(limpo);
+        }
+    }
 };
 
 window.mascaraCelular = function(input) {
@@ -70,32 +84,30 @@ window.mascaraValorItem = function(input) {
     input.value = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-window.consultarCnpj = async function(input) {
-    if(!input) return;
-    let doc = input.value.replace(/\D/g, '');
-    if (doc.length === 14) {
-        if (window.mostrarToast) window.mostrarToast("Consultando CNPJ...", "aviso");
-        try {
-            let res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`);
-            if (res.ok) {
-                let dados = await res.json();
-                const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-                
-                setVal('cliente', String(dados.razao_social || dados.nome_fantasia || '').trim());
-                if (dados.ddd_telefone_1) {
-                    setVal('celular', dados.ddd_telefone_1);
-                    window.mascaraCelular(document.getElementById('celular'));
-                }
-                if (dados.email && dados.email.trim() !== "") setVal('cliente_email', String(dados.email).toLowerCase().trim());
-                if (dados.numero) setVal('numero_end', String(dados.numero).trim());
-                if (dados.cep) {
-                    setVal('cep', String(dados.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2"));
-                    window.consultarCep(document.getElementById('cep'));
-                }
-                if (window.mostrarToast) window.mostrarToast("Dados do CNPJ preenchidos!", "sucesso");
+// 🔴 INTEGRAÇÃO BRASILAPI 🔴
+window.consultarCnpj = async function(cnpjLimpo) {
+    if(!cnpjLimpo) return;
+    if (window.mostrarToast) window.mostrarToast("Consultando CNPJ...", "aviso");
+    try {
+        let res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+        if (res.ok) {
+            let dados = await res.json();
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+            
+            setVal('cliente', String(dados.razao_social || dados.nome_fantasia || '').trim().toUpperCase());
+            if (dados.ddd_telefone_1) {
+                setVal('celular', dados.ddd_telefone_1);
+                window.mascaraCelular(document.getElementById('celular'));
             }
-        } catch (e) { console.error(e); }
-    }
+            if (dados.email && dados.email.trim() !== "") setVal('cliente_email', String(dados.email).toLowerCase().trim());
+            if (dados.numero) setVal('numero_end', String(dados.numero).trim());
+            if (dados.cep) {
+                setVal('cep', String(dados.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2"));
+                window.consultarCep(document.getElementById('cep'));
+            }
+            if (window.mostrarToast) window.mostrarToast("Dados preenchidos pela Receita!", "sucesso");
+        }
+    } catch (e) { console.error(e); }
 };
 
 window.consultarCep = async function(input) {
@@ -108,9 +120,9 @@ window.consultarCep = async function(input) {
                 let dados = await res.json();
                 if (!dados.erro) {
                     const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-                    setVal('endereco', String(dados.logradouro || '').trim());
-                    setVal('bairro', String(dados.bairro || '').trim());
-                    setVal('cidade', `${String(dados.localidade || '').trim()} / ${String(dados.uf || '').trim()}`);
+                    setVal('endereco', String(dados.logradouro || '').trim().toUpperCase());
+                    setVal('bairro', String(dados.bairro || '').trim().toUpperCase());
+                    setVal('cidade', `${String(dados.localidade || '').trim().toUpperCase()} / ${String(dados.uf || '').trim().toUpperCase()}`);
                     document.getElementById('numero_end')?.focus();
                 }
             }
@@ -119,14 +131,18 @@ window.consultarCep = async function(input) {
 };
 
 // =========================================================================
-// 2. CONEXÃO COM BDD E GATILHOS
+// 2. CONEXÃO COM BDD, DATALISTS E AUTOFILL
 // =========================================================================
 window.carregarDatalists = async function() {
     try {
-        const { data: clientes } = await supabase.from('clientes').select('nome, documento').order('nome');
+        // Puxa toda a tabela de clientes para o cérebro da O.S.[cite: 5]
+        const { data: clientes } = await supabase.from('clientes').select('*').order('nome_razao');
         if (clientes) {
+            window.listaClientesBdd = clientes;
             const dlClientes = document.getElementById('lista-clientes');
-            if (dlClientes) dlClientes.innerHTML = clientes.map(c => `<option value="${c.nome}">${c.documento || ''}</option>`).join('');
+            if (dlClientes) {
+                dlClientes.innerHTML = clientes.map(c => `<option value="${c.nome_razao}">${c.cpf_cnpj || ''}</option>`).join('');
+            }
         }
 
         const { data: veiculos } = await supabase.from('veiculos').select('modelo, marca').order('modelo');
@@ -139,7 +155,34 @@ window.carregarDatalists = async function() {
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
 
+// 🔴 O CÉREBRO DE AUTOFILL DE CLIENTES 🔴
+window.preencherDadosClienteSelecionado = function(nomeDigitado) {
+    if (!nomeDigitado) return;
+    const nomeUpper = nomeDigitado.trim().toUpperCase();
+    
+    // Procura no cérebro se o cliente existe
+    const clienteEncontrado = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === nomeUpper);
+    
+    if (clienteEncontrado) {
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+        
+        setVal('cpf_cnpj', clienteEncontrado.cpf_cnpj || '');
+        setVal('celular', clienteEncontrado.telefone || '');
+        setVal('cliente_email', clienteEncontrado.email || '');
+        
+        // Se o cliente tem endereço registado, injeta
+        if(clienteEncontrado.endereco) {
+            // Como no cliente o endereço é um stringão, colocamos no campo endereço da OS
+            setVal('endereco', clienteEncontrado.endereco);
+        }
+        
+        if (window.mostrarToast) window.mostrarToast("Dados do cliente carregados!", "sucesso");
+    }
+};
+
+// Gatilhos de escuta nos inputs
 document.addEventListener('input', function(e) {
+    // Para Veículos
     if (e.target && e.target.id === 'modelo') {
         const mod = e.target.value.trim().toUpperCase();
         if (window.listaVeiculosBdd && mod.length > 2) {
@@ -150,7 +193,126 @@ document.addEventListener('input', function(e) {
             }
         }
     }
+    
+    // Para Clientes (Escuta enquanto digita/seleciona)
+    if (e.target && e.target.id === 'cliente') {
+        window.preencherDadosClienteSelecionado(e.target.value);
+    }
 });
+
+// =========================================================================
+// 2.1 MÓDULO DE CADASTRO RÁPIDO DE CLIENTE (DENTRO DA O.S)
+// =========================================================================
+window.trocarTipoRapidoUI = function() {
+    const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
+    const lblNome = document.getElementById('lbl-cli-rapido-nome');
+    const lblDoc = document.getElementById('lbl-cli-rapido-doc');
+    const inNome = document.getElementById('cli-rapido-nome');
+    const inDoc = document.getElementById('cli-rapido-doc');
+
+    if (isPj) {
+        lblNome.innerText = "Razão Social / Nome Fantasia";
+        lblDoc.innerText = "CNPJ";
+        inNome.placeholder = "EMPRESA LTDA";
+        inDoc.placeholder = "00.000.000/0000-00";
+    } else {
+        lblNome.innerText = "Nome Completo";
+        lblDoc.innerText = "CPF";
+        inNome.placeholder = "NOME DO CLIENTE";
+        inDoc.placeholder = "000.000.000-00";
+    }
+    inDoc.value = '';
+};
+
+window.mascaraCpfCnpjRapido = function(input) {
+    let v = input.value.replace(/\D/g, ""); 
+    const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
+
+    if (!isPj) { 
+        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        input.value = v.substring(0, 14);
+    } else { 
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        input.value = v.substring(0, 18);
+
+        const limpo = input.value.replace(/\D/g, "");
+        if (limpo.length === 14) {
+            window.buscarCnpjRapido(limpo);
+        }
+    }
+};
+
+window.buscarCnpjRapido = async function(cnpjLimpo) {
+    const loading = document.getElementById('loading-receita-rapido');
+    if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
+
+    try {
+        const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+        if (!response.ok) throw new Error("CNPJ não encontrado");
+        const data = await response.json();
+        
+        document.getElementById('cli-rapido-nome').value = data.razao_social || data.nome_fantasia || '';
+        if (data.ddd_telefone_1) {
+            const telInput = document.getElementById('cli-rapido-tel');
+            telInput.value = data.ddd_telefone_1;
+            window.mascaraCelular(telInput);
+        }
+        if(window.mostrarToast) window.mostrarToast("Dados da Receita preenchidos!", "sucesso");
+    } catch (error) {
+        console.error(error);
+    } finally {
+        if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
+    }
+};
+
+window.abrirCadastroRapidoCliente = function() {
+    const form = document.querySelector('#modal-cliente-rapido form');
+    if(form) form.reset();
+    document.querySelector('input[name="cli-rapido-tipo"][value="Física"]').checked = true;
+    window.trocarTipoRapidoUI();
+
+    document.getElementById('modal-cliente-rapido').classList.remove('hidden');
+    document.getElementById('modal-cliente-rapido').classList.add('flex');
+};
+
+window.salvarClienteRapido = async function(e) {
+    e.preventDefault();
+    
+    const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
+    const nome = document.getElementById('cli-rapido-nome').value.trim().toUpperCase();
+    const doc = document.getElementById('cli-rapido-doc').value.trim();
+    const tel = document.getElementById('cli-rapido-tel').value.trim();
+    
+    if(window.mostrarToast) window.mostrarToast("Salvando cliente no cofre...", "aviso");
+
+    try {
+        const { data, error } = await supabase.from('clientes').insert([{
+            nome_razao: nome,
+            cpf_cnpj: doc,
+            telefone: tel,
+            tipo_cliente: isPj ? 'Jurídica' : 'Física'
+        }]).select().single();
+
+        if (error) throw error;
+
+        if(window.mostrarToast) window.mostrarToast("Cliente salvo e vinculado!", "sucesso");
+        
+        // Atualiza a memória de clientes para o Datalist
+        await window.carregarDatalists();
+        
+        // Injeta os dados na O.S. imediatamente
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+        setVal('cliente', nome);
+        setVal('cpf_cnpj', doc);
+        setVal('celular', tel);
+
+        document.getElementById('modal-cliente-rapido').classList.add('hidden');
+        document.getElementById('modal-cliente-rapido').classList.remove('flex');
+    } catch (err) {
+        console.error(err);
+        if(window.mostrarToast) window.mostrarToast("Erro ao cadastrar cliente.", "erro");
+    }
+};
 
 // =========================================================================
 // 3. MODO LEITURA E CORES DE STATUS
@@ -170,12 +332,14 @@ window.alternarModoLeitura = function(ativo) {
     const painelEdicao = document.getElementById('painel-botoes-edicao');
     const cabecalho = document.getElementById('cabecalho-modal-os');
     const painelTopoResumo = document.getElementById('painel-topo-resumo');
+    const btnAddCliente = document.getElementById('btn-add-cliente'); // Botão novo de cliente
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
         if (btnBalcao) btnBalcao.classList.add('hidden'); 
         if (painelAdicionar) painelAdicionar.classList.add('hidden');
         if (painelEdicao) painelEdicao.classList.add('hidden');
+        if (btnAddCliente) btnAddCliente.classList.add('hidden');
         if (painelTopoResumo) painelTopoResumo.classList.remove('hidden');
         if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
@@ -183,6 +347,7 @@ window.alternarModoLeitura = function(ativo) {
         if (btnBalcao) btnBalcao.classList.remove('hidden'); 
         if (painelAdicionar) painelAdicionar.classList.remove('hidden');
         if (painelEdicao) painelEdicao.classList.remove('hidden');
+        if (btnAddCliente) btnAddCliente.classList.remove('hidden');
         if (painelTopoResumo) painelTopoResumo.classList.add('hidden');
         if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
