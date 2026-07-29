@@ -10,30 +10,22 @@ const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
-// =========================================================================
-// 0. A MÁGICA DA RECEITA FEDERAL E MÁSCARAS INTELIGENTES SEPARADAS
-// =========================================================================
-
-// Função unificada de máscara com limites específicos para CPF e CNPJ
 window.mascaraDoc = function(input, fromUserInput = true) {
     let v = input.value.replace(/\D/g, ""); 
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
 
     if (!isPj) { 
-        // Lógica CPF (Limite de 14 caracteres)
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
         v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         input.value = v.substring(0, 14);
     } else { 
-        // Lógica CNPJ (Limite de 18 caracteres)
         v = v.replace(/^(\d{2})(\d)/, "$1.$2");
         v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
         v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
         v = v.replace(/(\d{4})(\d)/, "$1-$2");
         input.value = v.substring(0, 18);
 
-        // O GATILHO DA BRASILAPI (SÓ DISPARA SE FOR O USUÁRIO DIGITANDO)
         const limpo = input.value.replace(/\D/g, "");
         if (fromUserInput && limpo.length === 14) {
             window.buscarCnpjNaReceita(limpo);
@@ -53,13 +45,37 @@ window.mascaraTelefone = function(input) {
     input.value = v.substring(0, 15);
 };
 
-// MOTOR DE BUSCA DE CNPJ (BRASILAPI)
+window.mascaraCep = function(input) {
+    if(!input) return;
+    let v = input.value.replace(/\D/g, "").substring(0, 8);
+    v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+    input.value = v;
+};
+
+// Motor Universal de Busca de CEP
+window.consultarCep = async function(input, prefixo = '') {
+    if(!input) return;
+    let cep = input.value.replace(/\D/g, '');
+    if (cep.length === 8) {
+        try {
+            let res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            if (res.ok) {
+                let dados = await res.json();
+                if (!dados.erro) {
+                    const setVal = (id, val) => { const el = document.getElementById(prefixo + id); if(el) el.value = val; };
+                    setVal('endereco', String(dados.logradouro || '').trim().toUpperCase());
+                    setVal('bairro', String(dados.bairro || '').trim().toUpperCase());
+                    setVal('cidade', `${String(dados.localidade || '').trim().toUpperCase()} / ${String(dados.uf || '').trim().toUpperCase()}`);
+                    document.getElementById(prefixo + 'numero_end')?.focus();
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+};
+
 window.buscarCnpjNaReceita = async function(cnpjLimpo) {
     const loading = document.getElementById('loading-receita');
-    if(loading) {
-        loading.classList.remove('hidden');
-        loading.classList.add('flex');
-    }
+    if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
 
     if(window.mostrarToast) window.mostrarToast("Consultando Receita Federal...", "sucesso");
 
@@ -78,8 +94,15 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
             window.mascaraTelefone(telInput);
         }
 
-        const enderecoCompleto = `${data.logradouro || ''}, ${data.numero || 'S/N'}, ${data.bairro || ''}, ${data.municipio || ''} - ${data.uf || ''}`;
-        document.getElementById('cli-endereco').value = enderecoCompleto.replace(/^, | , | ,$/g, '').trim().toUpperCase();
+        if (data.cep) {
+            const cepInput = document.getElementById('cli-cep');
+            cepInput.value = String(data.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
+            window.consultarCep(cepInput, 'cli-'); // Aciona o gatilho do CEP para preencher o resto!
+        }
+        
+        // Complemento específico da empresa
+        if(data.numero) document.getElementById('cli-numero_end').value = data.numero;
+        if(data.complemento) document.getElementById('cli-complemento').value = data.complemento;
 
         if(window.mostrarToast) window.mostrarToast("Ficha preenchida pela Receita!", "sucesso");
 
@@ -87,16 +110,9 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
         console.error("ERRO BRASILAPI:", error);
         if(window.mostrarToast) window.mostrarToast("CNPJ não encontrado ou offline.", "aviso");
     } finally {
-        if(loading) {
-            loading.classList.add('hidden');
-            loading.classList.remove('flex');
-        }
+        if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
     }
 };
-
-// =========================================================================
-// 1. CARREGAMENTO E VIGILÂNCIA REALTIME
-// =========================================================================
 
 window.ativarVigilanciaCliente = function() {
     if (window.vigilanciaClienteAtiva) return;
@@ -140,17 +156,11 @@ window.carregarClientes = async function(isSilencioso = false) {
     }
 };
 
-// =========================================================================
-// 2. NAVEGAÇÃO E MOTOR DE RENDERIZAÇÃO
-// =========================================================================
-
 window.mudarFiltroCliente = function(status) {
     window.filtroClienteAtual = status;
-    
     const btnTodos = document.getElementById('btn-tab-cli-todos');
     const btnPf = document.getElementById('btn-tab-cli-pf');
     const btnPj = document.getElementById('btn-tab-cli-pj');
-
     const classeAtiva = "flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 bg-[#1a428a] text-white shadow-sm";
     const classeInativa = "flex-1 sm:flex-initial px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-150 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-transparent";
 
@@ -257,9 +267,6 @@ window.renderizarClientes = function() {
     }).join('');
 };
 
-// =========================================================================
-// 3. O RAIO-X DO CLIENTE (MÓDULO CRM E LTV)
-// =========================================================================
 window.abrirPerfilCrmCliente = async function(id) {
     const cli = window.dadosClientesGerais.find(c => c.id === id);
     if (!cli) return;
@@ -353,10 +360,6 @@ window.abrirPerfilCrmCliente = async function(id) {
     }
 };
 
-// =========================================================================
-// 4. LÓGICA DO FORMULÁRIO (NOVO E EDIÇÃO)
-// =========================================================================
-
 window.trocarTipoClienteUI = function() {
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
     const lblNome = document.getElementById('lbl-cli-nome');
@@ -369,16 +372,16 @@ window.trocarTipoClienteUI = function() {
         lblDoc.innerText = "CNPJ";
         inNome.placeholder = "EMPRESA LTDA";
         inDoc.placeholder = "00.000.000/0000-00";
-        inDoc.maxLength = 18; // Limite tático do CNPJ
+        inDoc.maxLength = 18; 
     } else {
         lblNome.innerText = "Nome Completo";
         lblDoc.innerText = "CPF";
         inNome.placeholder = "NOME DO CLIENTE";
         inDoc.placeholder = "000.000.000-00";
-        inDoc.maxLength = 14; // Limite tático do CPF
+        inDoc.maxLength = 14; 
     }
     
-    inDoc.value = ''; // Limpa o campo para evitar máscaras partidas
+    inDoc.value = ''; 
 };
 
 window.abrirModalCliente = function() {
@@ -404,20 +407,25 @@ window.abrirModalEditarCliente = function(id) {
 
     document.getElementById('cli-id').value = cli.id;
     
-    // Seleciona e limpa a máscara inicial
     document.querySelector(`input[name="cli-tipo"][value="${cli.tipo_cliente}"]`).checked = true;
     window.trocarTipoClienteUI();
 
-    // Injeta os dados limpos e aplica a máscara EM MODO INVISÍVEL (sem disparar API)
     document.getElementById('cli-nome').value = cli.nome_razao || '';
     document.getElementById('cli-telefone').value = cli.telefone || '';
     document.getElementById('cli-email').value = cli.email || '';
+    
+    document.getElementById('cli-cep').value = cli.cep || '';
     document.getElementById('cli-endereco').value = cli.endereco || '';
+    document.getElementById('cli-numero_end').value = cli.numero_end || '';
+    document.getElementById('cli-bairro').value = cli.bairro || '';
+    document.getElementById('cli-cidade').value = cli.cidade || '';
+    document.getElementById('cli-complemento').value = cli.complemento || '';
+    
     document.getElementById('cli-obs').value = cli.observacoes || '';
     
     const docInput = document.getElementById('cli-doc');
     docInput.value = cli.cpf_cnpj || '';
-    window.mascaraDoc(docInput, false); // O "false" é o silenciador da BrasilAPI
+    window.mascaraDoc(docInput, false); 
 
     document.getElementById('titulo-modal-cliente').innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -441,7 +449,14 @@ window.salvarCliente = async function(event) {
         cpf_cnpj: getVal('cli-doc').trim(),
         telefone: getVal('cli-telefone').trim(),
         email: getVal('cli-email').trim().toLowerCase(),
+        
+        cep: getVal('cli-cep').trim(),
         endereco: getVal('cli-endereco').trim().toUpperCase(),
+        numero_end: getVal('cli-numero_end').trim(),
+        bairro: getVal('cli-bairro').trim().toUpperCase(),
+        cidade: getVal('cli-cidade').trim().toUpperCase(),
+        complemento: getVal('cli-complemento').trim().toUpperCase(),
+        
         observacoes: getVal('cli-obs').trim().toUpperCase()
     };
 
