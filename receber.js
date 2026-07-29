@@ -9,6 +9,11 @@ window.vigilanciaReceberAtiva = false;
 window.receberIdsSelecionados = new Set();
 window.receberIdsFiltradosTela = []; 
 
+// Função auxiliar para remover acentos e normalizar a busca (Ex: "crédito" = "credito")
+const removerAcentos = (str) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 // =========================================================================
 // 1. CARREGAMENTO E VIGILÂNCIA REALTIME
 // =========================================================================
@@ -81,7 +86,8 @@ window.renderizarReceber = function() {
     const tbody = document.getElementById('tabela-dados-receber');
     if (!tbody) return;
 
-    const textoBusca = (document.getElementById('filtro-busca-receber')?.value || '').toLowerCase().trim();
+    const textoBuscaBruto = (document.getElementById('filtro-busca-receber')?.value || '').trim();
+    const textoBusca = removerAcentos(textoBuscaBruto);
     const contaFiltro = document.getElementById('filtro-conta-receber')?.value || 'TODAS';
 
     let totalPendente = 0;
@@ -105,12 +111,18 @@ window.renderizarReceber = function() {
         
         let bateTexto = true;
         if (textoBusca) {
-            const cliente = String(conta.cliente || '').toLowerCase();
-            const placa = String(conta.placa || '').toLowerCase();
+            const cliente = removerAcentos(String(conta.cliente || ''));
+            const placa = removerAcentos(String(conta.placa || ''));
+            const operacao = removerAcentos(String(conta.operacao || ''));
+            const contaDestino = removerAcentos(String(conta.conta_destino || ''));
             const osReal = conta.ordens_servico?.numero_os || conta.os_id || '';
-            const osIdStr = String(osReal).padStart(4, '0').toLowerCase();
+            const osIdStr = removerAcentos(String(osReal).padStart(4, '0'));
             
-            bateTexto = cliente.includes(textoBusca) || placa.includes(textoBusca) || osIdStr.includes(textoBusca);
+            bateTexto = cliente.includes(textoBusca) || 
+                        placa.includes(textoBusca) || 
+                        operacao.includes(textoBusca) || 
+                        contaDestino.includes(textoBusca) || 
+                        osIdStr.includes(textoBusca);
         }
         return bateAba && bateConta && bateTexto;
     });
@@ -160,22 +172,30 @@ window.renderizarReceber = function() {
             }
         }
 
-        // Botoes Táticos (Baixa e Estorno)
+        // Botoes Táticos (Baixa e Estorno) - Agora em formato quadrado igual Editar/Excluir
         let btnBaixa = '';
         if (conta.status === 'Pendente') {
-            btnBaixa = `<button onclick="window.darBaixaReceber(${conta.id}, '${numOs}', this)" class="px-3 py-1.5 bg-[#00b87c] hover:bg-emerald-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150 w-[80px]">Dar Baixa</button>`;
+            btnBaixa = `
+                <button onclick="window.darBaixaReceber(${conta.id}, '${numOs}', this)" class="w-8 h-8 flex items-center justify-center bg-[#00b87c] hover:bg-emerald-600 text-white rounded transition-all duration-150" title="Dar Baixa">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </button>
+            `;
         } else {
-            btnBaixa = `<button onclick="window.estornarReceber(${conta.id}, this)" class="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150 w-[80px]">Estornar</button>`;
+            btnBaixa = `
+                <button onclick="window.estornarReceber(${conta.id}, this)" class="w-8 h-8 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white rounded transition-all duration-150" title="Estornar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                </button>
+            `;
         }
 
         const btnEditarIndiv = `
-            <button onclick="window.abrirModalEditarReceber(${conta.id})" class="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Parcela">
+            <button onclick="window.abrirModalEditarReceber(${conta.id})" class="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Parcela">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
         `;
 
         const btnExcluirIndiv = `
-            <button onclick="window.iniciarExclusaoReceber(${conta.id}, '${numOs}', ${conta.os_id || 'null'}, this)" class="px-2 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Parcela">
+            <button onclick="window.iniciarExclusaoReceber(${conta.id}, '${numOs}', ${conta.os_id || 'null'}, this)" class="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Parcela">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
         `;
@@ -204,7 +224,7 @@ window.renderizarReceber = function() {
                 </td>
                 <td class="p-4 text-right font-mono font-black text-[#00b87c] text-sm whitespace-nowrap">R$ ${valorFmt}</td>
                 <td class="p-4 text-center">
-                    <div class="flex items-center justify-center gap-1">
+                    <div class="flex items-center justify-center gap-1.5">
                         ${btnBaixa}
                         ${btnEditarIndiv}
                         ${btnExcluirIndiv}
@@ -384,7 +404,7 @@ window.darBaixaReceber = async function(id, numOs, btnElement) {
     if (!confirmou) return;
 
     if (btnElement) {
-        btnElement.innerHTML = `<svg class="animate-spin h-3 w-3 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> AGUARDE`;
+        btnElement.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
         btnElement.classList.add('opacity-70', 'cursor-not-allowed');
         btnElement.disabled = true;
         const tr = btnElement.closest('tr');
@@ -409,7 +429,7 @@ window.estornarReceber = async function(id, btnElement) {
     if (!confirmou) return;
 
     if (btnElement) {
-        btnElement.innerHTML = `<svg class="animate-spin h-3 w-3 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> AGUARDE`;
+        btnElement.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
         btnElement.classList.add('opacity-70', 'cursor-not-allowed');
         btnElement.disabled = true;
         const tr = btnElement.closest('tr');
