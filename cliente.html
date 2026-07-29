@@ -4,8 +4,8 @@
     <!-- Cards Superiores (Resumo) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 md:col-span-2 flex flex-col justify-center transition-all duration-150">
-            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Central de Clientes</h2>
-            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão de carteira, frota terceirizada e contatos.</p>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Central de Clientes & CRM</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão de carteira, análise de frotas e Lifetime Value (LTV).</p>
         </div>
         
         <div class="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-200 dark:border-blue-800/30 flex flex-col justify-between transition-all duration-150 shadow-sm">
@@ -55,7 +55,7 @@
                         <th class="p-4 text-center w-[15%]">Documento</th>
                         <th class="p-4 text-center w-[20%]">Contato</th>
                         <th class="p-4 text-center w-[10%]">Tipo</th>
-                        <th class="p-4 text-center w-[10%]">Ações</th>
+                        <th class="p-4 text-center w-[15%]">Painel / Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-dados-clientes" class="transition-colors duration-150">
@@ -69,7 +69,7 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- MODAL: CLIENTE (NOVO E EDIÇÃO UNIFICADOS)                 -->
+<!-- MODAL: CLIENTE (NOVO E EDIÇÃO) COM AUTOMAÇÃO DA RECEITA   -->
 <!-- ========================================================= -->
 <div id="modal-cliente" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 transition-opacity duration-150">
     <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade">
@@ -81,7 +81,14 @@
             <button type="button" onclick="document.getElementById('modal-cliente').classList.add('hidden'); document.getElementById('modal-cliente').classList.remove('flex');" class="text-blue-200 hover:text-white text-2xl leading-none font-light transition-colors">&times;</button>
         </div>
 
-        <form id="form-cliente" onsubmit="window.salvarCliente(event)" class="p-6 space-y-4">
+        <form id="form-cliente" onsubmit="window.salvarCliente(event)" class="p-6 space-y-4 relative">
+            
+            <!-- Carregando Receita Federal Invisível -->
+            <div id="loading-receita" class="absolute inset-0 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-sm z-10 hidden flex-col items-center justify-center rounded-xl">
+                <svg class="animate-spin h-8 w-8 text-[#1a428a] mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span class="font-black tracking-widest text-[#1a428a] dark:text-blue-400 uppercase text-xs">Consultando Receita Federal...</span>
+            </div>
+
             <input type="hidden" id="cli-id">
             
             <div class="flex gap-6 pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -96,13 +103,13 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2">
-                    <label id="lbl-cli-nome" class="block text-xs font-bold uppercase text-gray-500 mb-1">Nome Completo</label>
-                    <input type="text" id="cli-nome" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] transition-colors uppercase" placeholder="NOME DO CLIENTE">
-                </div>
                 <div class="md:col-span-1">
                     <label id="lbl-cli-doc" class="block text-xs font-bold uppercase text-gray-500 mb-1">CPF</label>
                     <input type="text" id="cli-doc" oninput="window.mascaraCpfCnpj(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-[#1a428a] transition-colors" placeholder="000.000.000-00">
+                </div>
+                <div class="md:col-span-2">
+                    <label id="lbl-cli-nome" class="block text-xs font-bold uppercase text-gray-500 mb-1">Nome Completo</label>
+                    <input type="text" id="cli-nome" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] transition-colors uppercase" placeholder="NOME DO CLIENTE">
                 </div>
             </div>
 
@@ -119,7 +126,7 @@
 
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Endereço Completo</label>
-                <input type="text" id="cli-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] transition-colors uppercase" placeholder="RUA, NÚMERO, BAIRRO, CIDADE">
+                <input type="text" id="cli-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] transition-colors uppercase" placeholder="RUA, NÚMERO, BAIRRO, CIDADE - UF">
             </div>
             
             <div>
@@ -135,5 +142,85 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL CRM: RAIO-X DO CLIENTE (VISÃO 360)                  -->
+<!-- ========================================================= -->
+<div id="modal-perfil-cliente" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[250] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh] max-h-[850px] overflow-hidden border border-gray-300 dark:border-gray-700 anima-fade">
+        
+        <!-- HEADER CRM -->
+        <div class="bg-gradient-to-r from-[#1a428a] to-blue-600 text-white p-6 shrink-0 relative">
+            <button type="button" onclick="document.getElementById('modal-perfil-cliente').classList.add('hidden'); document.getElementById('modal-perfil-cliente').classList.remove('flex');" class="absolute top-4 right-4 text-blue-200 hover:text-white text-3xl leading-none font-light">&times;</button>
+            
+            <div class="flex items-center gap-4">
+                <div class="h-16 w-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border-2 border-white/30 text-2xl shadow-inner">
+                    👤
+                </div>
+                <div>
+                    <h2 id="crm-nome" class="text-2xl font-black uppercase tracking-wide truncate max-w-2xl">CARREGANDO...</h2>
+                    <div class="flex items-center gap-3 mt-1 text-blue-100 text-xs font-mono font-bold">
+                        <span id="crm-doc">---</span>
+                        <span class="px-1.5 py-0.5 bg-blue-900/50 rounded" id="crm-tipo">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+            
+            <!-- METRICS GRID (LTV) -->
+            <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 dark:border-gray-800 pb-1">Inteligência Comercial (LTV)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Total Gasto (LTV)</span>
+                    <span id="crm-ltv" class="block text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1">R$ 0,00</span>
+                </div>
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Ordens de Serviço</span>
+                    <span id="crm-total-os" class="block text-xl font-black font-mono text-[#1a428a] dark:text-blue-400 mt-1">0</span>
+                </div>
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Ticket Médio</span>
+                    <span id="crm-ticket" class="block text-xl font-black font-mono text-amber-600 dark:text-amber-500 mt-1">R$ 0,00</span>
+                </div>
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <span class="block text-[10px] font-bold text-gray-500 uppercase">Última Passagem</span>
+                    <span id="crm-ultima-visita" class="block text-lg font-black text-gray-700 dark:text-gray-300 mt-1">Nenhum Registro</span>
+                </div>
+            </div>
+
+            <!-- TABS & LISTS -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- FROTA -->
+                <div>
+                    <h4 class="text-xs font-black text-[#1a428a] dark:text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                        Frota / Veículos Vinculados
+                    </h4>
+                    <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                        <ul id="crm-lista-veiculos" class="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto custom-scrollbar">
+                            <li class="p-4 text-center text-xs font-bold text-gray-400">Buscando veículos...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- HISTÓRICO OS -->
+                <div>
+                    <h4 class="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Histórico de O.S. (Últimas 10)
+                    </h4>
+                    <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                        <ul id="crm-lista-os" class="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto custom-scrollbar">
+                            <li class="p-4 text-center text-xs font-bold text-gray-400">Buscando histórico...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
