@@ -140,7 +140,7 @@
                         <div class="md:col-span-2 relative">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nome / Razão Social</label>
                             <div class="flex gap-2 items-center">
-                                <input type="text" id="cliente" list="lista-clientes" required autocomplete="off" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors duration-150" placeholder="Pesquisar cliente cadastrado...">
+                                <input type="text" id="cliente" list="lista-clientes" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase transition-colors duration-150" placeholder="Pesquisar cliente cadastrado...">
                                 <datalist id="lista-clientes"></datalist>
                                 
                                 <button type="button" onclick="window.abrirCadastroRapidoCliente()" id="btn-add-cliente" class="h-[42px] px-3 bg-[#1a428a] hover:bg-blue-800 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors duration-150 flex-shrink-0" title="Cadastrar Novo Cliente Rápido">
@@ -177,15 +177,15 @@
                         </div>
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Endereço</label>
-                            <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
+                            <input type="text" id="endereco" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
                         </div>
                         <div class="md:col-span-3">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bairro</label>
-                            <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
+                            <input type="text" id="bairro" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
                         </div>
                         <div class="md:col-span-5">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Cidade / UF</label>
-                            <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150" readonly>
+                            <input type="text" id="cidade" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 uppercase transition-colors duration-150">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Nº</label>
@@ -526,9 +526,20 @@
                 <input type="text" id="cli-rapido-nome" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs uppercase transition-colors">
             </div>
 
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Telefone</label>
+                    <input type="text" id="cli-rapido-tel" oninput="window.mascaraCelular(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono text-xs transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">E-mail</label>
+                    <input type="email" id="cli-rapido-email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs transition-colors">
+                </div>
+            </div>
+
             <div>
-                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Telefone / WhatsApp</label>
-                <input type="text" id="cli-rapido-tel" oninput="window.mascaraCelular(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-mono text-sm transition-colors">
+                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Endereço Completo</label>
+                <input type="text" id="cli-rapido-endereco" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] font-bold text-xs uppercase transition-colors" placeholder="RUA, NÚMERO, BAIRRO, CIDADE">
             </div>
             
             <button type="submit" class="w-full bg-[#1a428a] hover:bg-blue-900 text-white font-black py-3 mt-2 rounded-xl shadow-md transition-all duration-150 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
