@@ -41,10 +41,9 @@
 <!-- ========================================================= -->
 <!-- MODAL DE NOVA / EDITAR O.S. (ARQUITETURA BLINDADA)        -->
 <!-- ========================================================= -->
-<!-- p-4 sm:p-8 nas bordas e justify-center garantem as margens de proteção -->
-<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 sm:p-8 transition-opacity duration-150">
-    <!-- max-h-full obriga o modal a respeitar a margem de proteção do ecrã! -->
-    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col max-h-full border border-transparent dark:border-gray-700 overflow-hidden">
+<div id="modal-os" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 sm:p-6 transition-opacity duration-150">
+    <!-- Caixa Principal: h-[95vh] GARANTE 95% DO ECRÃ DE ALTURA -->
+    <div class="bg-gray-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[95vh] border border-transparent dark:border-gray-700 overflow-hidden">
 
         <!-- 1. Cabeçalho Fixo -->
         <div id="cabecalho-modal-os" class="shrink-0 flex justify-between items-center p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-[#1a428a] dark:bg-[#081121] text-white transition-colors duration-150">
@@ -59,7 +58,7 @@
             <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6 relative text-sm">
                 <input type="hidden" id="os-id-editando">
 
-                <!-- TOPO DE RESUMO RÁPIDO (Visível em Modo Leitura) -->
+                <!-- TOPO DE RESUMO RÁPIDO -->
                 <div id="painel-topo-resumo" class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 flex justify-between items-center shadow-sm">
                     <div>
                         <span class="text-[10px] text-blue-500 dark:text-blue-400 uppercase font-bold block mb-0.5 tracking-wider">Cliente</span>
@@ -251,7 +250,7 @@
                         </div>
                     </div>
 
-                    <!-- Tabela de Itens -->
+                    <!-- Tabela de Itens (AQUI ESTÁ A TABELA DE ORÇAMENTO QUE VOCÊ MENCIONOU) -->
                     <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#1e293b] shadow-sm mb-5 transition-colors duration-150">
                         <table class="w-full text-left text-sm min-w-[700px]">
                             <thead class="bg-gray-50 dark:bg-[#0f172a] text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 text-xs font-black uppercase tracking-wider">
@@ -366,8 +365,8 @@
 </div>
 
 <div id="modal-fechamento-os" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 sm:p-8 transition-opacity duration-150">
-    <!-- max-h-full obriga o modal a respeitar a margem de proteção do ecrã -->
-    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-full border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
+    <!-- max-h-[90vh] para garantir que ocupe muito espaço e não amasse -->
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
         
         <div class="shrink-0 bg-amber-500 text-white p-4 sm:p-5 flex justify-between items-center transition-colors duration-150">
             <div>
