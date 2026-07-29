@@ -46,7 +46,7 @@
                 <option value="Vale">Vale</option>
             </select>
             
-            <input type="text" id="filtro-busca-pagar" oninput="window.renderizarPagar()" class="w-full sm:w-56 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Fornecedor, Desc. ou N°...">
+            <input type="text" id="filtro-busca-pagar" oninput="window.renderizarPagar()" class="w-full sm:w-56 px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl outline-none text-xs font-bold transition-all duration-150 focus:border-[#1a428a]" placeholder="Fornecedor, Desc, N° ou Op...">
 
             <label class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 shadow-md cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -68,8 +68,8 @@
                 <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     <tr>
                         <th class="p-4 w-12 text-center border-r border-gray-200 dark:border-gray-700"></th>
-                        <th class="p-4 w-[25%]">Fornecedor / Descrição</th>
-                        <th class="p-4 w-[15%] text-center">Nº Documento</th>
+                        <th class="p-4 w-[25%]">Operação / Fornecedor / Descrição</th>
+                        <th class="p-4 w-[15%] text-center">Nº Documento / Lançamento</th>
                         <th class="p-4 text-center w-[15%]">Vencimento</th>
                         <th class="p-4 text-center w-[15%]">Meio / Conta Origem</th>
                         <th class="p-4 text-right w-[15%]">Valor</th>
@@ -106,21 +106,27 @@
                 <input type="text" id="pagar-descricao" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase" placeholder="Ex: COMPRA DE FILTROS, ENERGIA, ETC.">
             </div>
 
+            <!-- Novo Grid Reorganizado -->
             <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Tipo de Operação</label>
+                    <select id="pagar-tipo-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
+                        <option value="Financeiro Despesas">Financeiro Despesas</option>
+                        <option value="Inventario Entrada">Inventario Entrada</option>
+                        <option value="NFE de Compra">NFE de Compra</option>
+                        <option value="NFE de Devolução">NFE de Devolução</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Nº Documento / Nota</label>
                     <input type="text" id="pagar-documento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-red-500 transition-colors uppercase">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Data de Vencimento</label>
-                    <input type="date" id="pagar-vencimento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-red-500 transition-colors">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Conta Origem</label>
-                    <select id="pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors">
+                    <select id="pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
                         <option value="Caixa Interno">Caixa Interno</option>
                         <option value="Banco do Brasil">Banco do Brasil</option>
                         <option value="Vale">Vale</option>
@@ -128,7 +134,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Meio de Pagamento</label>
-                    <select id="pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors">
+                    <select id="pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-red-500 transition-colors uppercase">
                         <option value="PIX">PIX</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Boleto Bancário">Boleto Bancário</option>
@@ -138,9 +144,15 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Valor da Despesa (R$)</label>
-                <input type="text" id="pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg outline-none text-lg font-mono font-black text-red-600 dark:text-red-400 focus:border-red-500 text-right transition-colors" placeholder="0,00">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Data de Vencimento</label>
+                    <input type="date" id="pagar-vencimento" required class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-red-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Valor da Despesa (R$)</label>
+                    <input type="text" id="pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg outline-none text-lg font-mono font-black text-red-600 dark:text-red-400 focus:border-red-500 text-right transition-colors" placeholder="0,00">
+                </div>
             </div>
 
             <div class="pt-4 flex justify-end gap-3">
@@ -177,19 +189,24 @@
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Documento</label>
-                    <input type="text" id="edit-pagar-doc" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors uppercase">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Tipo de Operação</label>
+                    <select id="edit-pagar-tipo-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-xs font-bold uppercase transition-colors">
+                        <option value="Financeiro Despesas">Financeiro Despesas</option>
+                        <option value="Inventario Entrada">Inventario Entrada</option>
+                        <option value="NFE de Compra">NFE de Compra</option>
+                        <option value="NFE de Devolução">NFE de Devolução</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Vencimento</label>
-                    <input type="date" id="edit-pagar-vencimento" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Documento</label>
+                    <input type="text" id="edit-pagar-doc" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors uppercase">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Conta Origem</label>
-                    <select id="edit-pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors">
+                    <select id="edit-pagar-conta" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors uppercase">
                         <option value="Caixa Interno">Caixa Interno</option>
                         <option value="Banco do Brasil">Banco do Brasil</option>
                         <option value="Vale">Vale</option>
@@ -197,7 +214,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Operação</label>
-                    <select id="edit-pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors">
+                    <select id="edit-pagar-operacao" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 text-sm transition-colors uppercase">
                         <option value="PIX">PIX</option>
                         <option value="Dinheiro">Dinheiro</option>
                         <option value="Cartão de Crédito">Cartão de Crédito</option>
@@ -207,10 +224,17 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Valor (R$)</label>
-                <input type="text" id="edit-pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg outline-none focus:border-amber-500 font-mono font-black text-right transition-colors text-lg">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Vencimento</label>
+                    <input type="date" id="edit-pagar-vencimento" required class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-amber-500 font-mono text-sm transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Valor (R$)</label>
+                    <input type="text" id="edit-pagar-valor" required oninput="window.mascaraValorItem(this)" class="w-full px-3 py-2.5 border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg outline-none focus:border-amber-500 font-mono font-black text-right transition-colors text-lg">
+                </div>
             </div>
+
             <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 mt-2 rounded-xl shadow-md transition-all duration-150 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                 Salvar Alterações
@@ -239,7 +263,6 @@
             
             <!-- Linha 1: Quem Vendeu e Quem Comprou -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Emitente -->
                 <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <h4 class="text-[10px] font-black uppercase text-indigo-500 mb-3 tracking-widest border-b border-indigo-200 dark:border-indigo-800 pb-1">🏢 Dados do Emitente (Fornecedor)</h4>
                     <div class="space-y-3">
@@ -254,7 +277,6 @@
                     </div>
                 </div>
 
-                <!-- Destinatário -->
                 <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                     <h4 class="text-[10px] font-black uppercase text-gray-500 dark:text-gray-400 mb-3 tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1">📍 Dados do Destinatário (A sua Oficina)</h4>
                     <div class="space-y-3">
@@ -270,36 +292,45 @@
                 </div>
             </div>
 
-            <!-- Linha 2: Informações da Nota e Configuração Financeira -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Linha 2: Informações da Nota e Configuração Financeira (Com o novo grid de 3 colunas) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Resumo da Nota -->
-                <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center">
+                <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center lg:col-span-1">
                     <div>
-                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Número da NFe</span>
+                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Nº da NFe</span>
                         <span id="xml-nota-numero" class="font-mono font-black text-gray-800 dark:text-white text-lg">---</span>
-                        <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold mt-2">Data e Hora da Emissão</span>
-                        <span id="xml-nota-data" class="font-bold text-gray-700 dark:text-gray-300 text-xs">---</span>
+                        <span class="block text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold mt-2">Emissão</span>
+                        <span id="xml-nota-data" class="font-bold text-gray-700 dark:text-gray-300 text-[10px]">---</span>
                     </div>
                     <div class="text-right">
-                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Valor Total da NFe</span>
-                        <span id="xml-nota-total" class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-2xl">R$ 0,00</span>
+                        <span class="block text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 mb-1">Total NFe</span>
+                        <span id="xml-nota-total" class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xl">R$ 0,00</span>
                     </div>
                 </div>
 
                 <!-- Configuração Padrão -->
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
-                    <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center lg:col-span-2">
+                    <div class="grid grid-cols-3 gap-3">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Conta Origem Padrão</label>
-                            <select id="xml-conta" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                            <label class="block text-[9px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Tipo de Operação</label>
+                            <select id="xml-tipo-operacao" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-[10px] uppercase focus:border-indigo-500 transition-colors">
+                                <option value="NFE de Compra" selected>NFE de Compra</option>
+                                <option value="Financeiro Despesas">Financeiro Despesas</option>
+                                <option value="Inventario Entrada">Inventario Entrada</option>
+                                <option value="NFE de Devolução">NFE de Devolução</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Conta Origem Padrão</label>
+                            <select id="xml-conta" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-[10px] uppercase focus:border-indigo-500 transition-colors">
                                 <option value="Caixa Interno">Caixa Interno</option>
                                 <option value="Banco do Brasil">Banco do Brasil</option>
                                 <option value="Vale">Vale</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Meio de Pagamento Padrão</label>
-                            <select id="xml-operacao" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-xs focus:border-indigo-500 transition-colors">
+                            <label class="block text-[9px] font-black uppercase text-gray-600 dark:text-gray-300 mb-1">Meio Pagto Padrão</label>
+                            <select id="xml-operacao" class="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded outline-none font-bold text-[10px] uppercase focus:border-indigo-500 transition-colors">
                                 <option value="Boleto Bancário" selected>Boleto Bancário</option>
                                 <option value="PIX">PIX</option>
                                 <option value="Dinheiro">Dinheiro</option>
