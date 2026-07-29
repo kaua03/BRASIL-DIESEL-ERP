@@ -15,9 +15,9 @@
     </div>
 
     <!-- Tabela de Listagem -->
-    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-150 flex-1 flex flex-col">
-        <div class="overflow-x-auto flex-1 custom-scrollbar">
-            <table class="w-full text-left border-collapse min-w-max">
+    <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-150 mb-6">
+    <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse min-w-max">
                 <thead class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors">
                     <tr>
                         <th class="p-4 w-[8%]">Nº O.S</th>
@@ -29,7 +29,7 @@
                         <th class="p-4 text-center w-[15%]">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tabela-ordens-servico" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[#1e293b] transition-colors">
+                <tbody id="tabela-ordens-servico" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-[] transition-colors">
                     <tr>
                         <td colspan="7" class="text-center p-8 text-gray-400 font-bold">A carregar base de dados...</td>
                     </tr>
@@ -73,7 +73,7 @@
 
             <!-- BLOCO 0: INFORMAÇÕES DE CONTROLE -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
+                <div class="bg-white dark:bg-[] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-150">
                     <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Data/Hora Abertura</label>
                     <input type="datetime-local" id="data_hora" step="60" required class="w-full bg-transparent outline-none font-mono font-bold text-gray-800 dark:text-white transition-colors duration-150">
                 </div>
