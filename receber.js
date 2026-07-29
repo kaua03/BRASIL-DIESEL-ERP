@@ -168,14 +168,12 @@ window.renderizarReceber = function() {
             btnBaixa = `<button onclick="window.estornarReceber(${conta.id}, this)" class="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-[10px] font-black uppercase rounded shadow-sm transition-all duration-150 w-[80px]">Estornar</button>`;
         }
 
-        // Novo Botão de Edição Direta
         const btnEditarIndiv = `
             <button onclick="window.abrirModalEditarReceber(${conta.id})" class="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-800/50 text-amber-600 dark:text-amber-400 rounded transition-all duration-150" title="Editar Parcela">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
         `;
 
-        // Botão de Exclusão Inteligente (Aciona a verificação de OS Múltipla)
         const btnExcluirIndiv = `
             <button onclick="window.iniciarExclusaoReceber(${conta.id}, '${numOs}', ${conta.os_id || 'null'}, this)" class="px-2 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded transition-all duration-150" title="Apagar Parcela">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -260,7 +258,6 @@ window.excluirContasMassa = async function() {
         
         window.receberIdsSelecionados.clear();
         if (window.mostrarToast) window.mostrarToast(`${total} parcelas eliminadas!`, "sucesso");
-        // Deixa o Radar atualizar sozinho...
     } catch (err) {
         console.error("ERRO NA EXCLUSÃO EM MASSA:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao excluir parcelas.", "erro");
@@ -268,26 +265,21 @@ window.excluirContasMassa = async function() {
     }
 };
 
-// 🔴 O MOTOR DE EXCLUSÃO INTELIGENTE 🔴
 window.iniciarExclusaoReceber = function(id, numOs, osId, btnElement) {
     if (!osId) {
-        // Se a parcela não for de uma O.S específica, exclui direto.
         window.excluirContaReceberDireto([id]);
         return;
     }
 
-    // Procura quantas parcelas no banco de memória têm a mesma OS
     const parcelasDaOs = window.dadosReceberGerais.filter(c => c.os_id === osId);
     
     if (parcelasDaOs.length > 1) {
-        // Ativa o Radar de Múltiplas Parcelas
         window.exclusaoInteligenteTemp = { id, numOs, osId };
         document.getElementById('texto-exclusao-inteligente').innerHTML = `Esta parcela faz parte da <b>O.S #${numOs}</b> que possui um total de <b>${parcelasDaOs.length} parcelas</b>.<br><br>Deseja limpar todo o financeiro desta O.S de uma só vez?`;
         
         document.getElementById('modal-exclusao-inteligente').classList.remove('hidden');
         document.getElementById('modal-exclusao-inteligente').classList.add('flex');
     } else {
-        // Se for a última ou única parcela da OS, exclui direto.
         window.excluirContaReceberDireto([id]);
     }
 };
@@ -301,7 +293,6 @@ window.escolherExclusaoInteligente = function(tipo) {
     if (tipo === 'unica') {
         window.excluirContaReceberDireto([id]);
     } else if (tipo === 'todas') {
-        // Mapeia TODOS os IDs das parcelas vinculadas a esta O.S
         const idsParaExcluir = window.dadosReceberGerais.filter(c => c.os_id === osId).map(c => c.id);
         window.excluirContaReceberDireto(idsParaExcluir);
     }
@@ -324,14 +315,12 @@ window.excluirContaReceberDireto = async function(idsArray) {
         window.atualizarInterfaceExclusaoMassa();
         
         if (window.mostrarToast) window.mostrarToast("Exclusão concluída com sucesso!", "sucesso");
-        // Realtime recarrega...
     } catch (err) {
         console.error("ERRO AO EXCLUIR:", err);
         if (window.mostrarToast) window.mostrarToast("Falha técnica ao excluir.", "erro");
         window.carregarContasReceber(true);
     }
 };
-
 
 // =========================================================================
 // 4. EDIÇÃO DIRETA DE PARCELA (BANCO DE DADOS)
@@ -380,8 +369,6 @@ window.salvarEdicaoReceber = async function(event) {
         
         document.getElementById('modal-editar-receber').classList.add('hidden');
         document.getElementById('modal-editar-receber').classList.remove('flex');
-        
-        // Deixa o Radar Realtime piscar e renderizar a tela...
     } catch (e) {
         console.error("FALHA AO EDITAR:", e);
         if (window.mostrarToast) window.mostrarToast("Erro crítico ao salvar edição.", "erro");
@@ -409,7 +396,6 @@ window.darBaixaReceber = async function(id, numOs, btnElement) {
         if (error) throw error;
         
         if (window.mostrarToast) window.mostrarToast("Recebimento confirmado!", "sucesso");
-        // Oculta a linha instantaneamente para UX
         setTimeout(() => window.carregarContasReceber(true), 800);
     } catch (err) {
         console.error("ERRO AO DAR BAIXA:", err);
