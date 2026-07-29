@@ -102,10 +102,11 @@
                 </label>
             </div>
 
+            <!-- INVERSÃO DE LAYOUT: Documento Primeiro (Esquerda), Nome/Razão à Direita -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-1">
                     <label id="lbl-cli-doc" class="block text-xs font-bold uppercase text-gray-500 mb-1">CPF</label>
-                    <input type="text" id="cli-doc" oninput="window.mascaraCpfCnpj(this)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-[#1a428a] transition-colors" placeholder="000.000.000-00">
+                    <input type="text" id="cli-doc" maxlength="14" oninput="window.mascaraDoc(this, true)" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-[#1a428a] transition-colors" placeholder="000.000.000-00">
                 </div>
                 <div class="md:col-span-2">
                     <label id="lbl-cli-nome" class="block text-xs font-bold uppercase text-gray-500 mb-1">Nome Completo</label>
