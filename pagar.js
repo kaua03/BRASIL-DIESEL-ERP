@@ -17,6 +17,22 @@ const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
+// Formatadores para a Auditoria XML
+const formatarCnpj = (cnpj) => {
+    if (!cnpj) return '---';
+    return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+};
+
+const formatarDataIso = (isoStr) => {
+    if (!isoStr) return '---';
+    try {
+        const data = new Date(isoStr);
+        return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    } catch {
+        return isoStr;
+    }
+};
+
 // =========================================================================
 // 1. CARREGAMENTO E VIGILÂNCIA REALTIME
 // =========================================================================
@@ -139,7 +155,6 @@ window.renderizarPagar = function() {
         const docFmt = String(conta.numero_documento || 'S/N');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         
-        // 🔴 MOTOR VISUAL DE ALERTAS DE VENCIMENTO 🔴
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -306,8 +321,60 @@ window.excluirPagarIndividual = async function(id, btnElement) {
 };
 
 // =========================================================================
-// 4. EDIÇÃO DIRETA NO BANCO DE DADOS
+// 4. EDIÇÃO E INSERÇÃO DIRETA NO BANCO DE DADOS
 // =========================================================================
+
+window.abrirModalNovoPagar = function() {
+    const form = document.getElementById('form-novo-pagar');
+    if (form) form.reset();
+    
+    const hoje = new Date();
+    hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
+    const inputVenc = document.getElementById('pagar-vencimento');
+    if(inputVenc) inputVenc.value = hoje.toISOString().split('T')[0];
+
+    document.getElementById('modal-pagar').classList.remove('hidden');
+    document.getElementById('modal-pagar').classList.add('flex');
+};
+
+window.salvarNovaDespesa = async function(event) {
+    event.preventDefault();
+
+    const getVal = (id) => document.getElementById(id)?.value || '';
+    const valorRaw = getVal('pagar-valor');
+    const valorNum = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.')) || 0;
+
+    if (valorNum <= 0) {
+        if (window.mostrarToast) window.mostrarToast("O valor da despesa tem de ser maior que zero.", "aviso");
+        return;
+    }
+
+    const dadosDespesa = {
+        fornecedor: getVal('pagar-fornecedor').trim().toUpperCase(),
+        descricao: getVal('pagar-descricao').trim().toUpperCase(),
+        numero_documento: getVal('pagar-documento').trim().toUpperCase(),
+        vencimento: getVal('pagar-vencimento'),
+        conta_origem: getVal('pagar-conta'),
+        operacao: getVal('pagar-operacao'),
+        valor: valorNum,
+        status: 'Pendente'
+    };
+
+    try {
+        const { error } = await supabase.from('contas_pagar').insert([dadosDespesa]);
+        if (error) throw error;
+
+        if (window.mostrarToast) window.mostrarToast("Despesa registada com sucesso!", "sucesso");
+        
+        document.getElementById('modal-pagar').classList.add('hidden');
+        document.getElementById('modal-pagar').classList.remove('flex');
+        
+        setTimeout(() => window.carregarContasPagar(true), 600);
+    } catch (err) {
+        console.error("FALHA AO INSERIR DESPESA:", err);
+        if (window.mostrarToast) window.mostrarToast("Erro ao gravar despesa.", "erro");
+    }
+};
 
 window.abrirModalEditarPagar = function(id) {
     const conta = window.dadosPagarGerais.find(c => c.id === id);
@@ -416,61 +483,6 @@ window.estornarPagar = async function(id, btnElement) {
 };
 
 // =========================================================================
-// 6. GESTÃO DO MODAL DE NOVA DESPESA MANUAL
-// =========================================================================
-window.abrirModalNovoPagar = function() {
-    const form = document.getElementById('form-novo-pagar');
-    if (form) form.reset();
-    
-    const hoje = new Date();
-    hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
-    const inputVenc = document.getElementById('pagar-vencimento');
-    if(inputVenc) inputVenc.value = hoje.toISOString().split('T')[0];
-
-    document.getElementById('modal-pagar').classList.remove('hidden');
-    document.getElementById('modal-pagar').classList.add('flex');
-};
-
-window.salvarNovaDespesa = async function(event) {
-    event.preventDefault();
-
-    const getVal = (id) => document.getElementById(id)?.value || '';
-    const valorRaw = getVal('pagar-valor');
-    const valorNum = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.')) || 0;
-
-    if (valorNum <= 0) {
-        if (window.mostrarToast) window.mostrarToast("O valor da despesa tem de ser maior que zero.", "aviso");
-        return;
-    }
-
-    const dadosDespesa = {
-        fornecedor: getVal('pagar-fornecedor').trim().toUpperCase(),
-        descricao: getVal('pagar-descricao').trim().toUpperCase(),
-        numero_documento: getVal('pagar-documento').trim().toUpperCase(),
-        vencimento: getVal('pagar-vencimento'),
-        conta_origem: getVal('pagar-conta'),
-        operacao: getVal('pagar-operacao'),
-        valor: valorNum,
-        status: 'Pendente'
-    };
-
-    try {
-        const { error } = await supabase.from('contas_pagar').insert([dadosDespesa]);
-        if (error) throw error;
-
-        if (window.mostrarToast) window.mostrarToast("Despesa registada com sucesso!", "sucesso");
-        
-        document.getElementById('modal-pagar').classList.add('hidden');
-        document.getElementById('modal-pagar').classList.remove('flex');
-        
-        setTimeout(() => window.carregarContasPagar(true), 600);
-    } catch (err) {
-        console.error("FALHA AO INSERIR DESPESA:", err);
-        if (window.mostrarToast) window.mostrarToast("Erro ao gravar despesa.", "erro");
-    }
-};
-
-// =========================================================================
 // 7. A MAGIA DO XML: LEITURA E PROCESSAMENTO DE NFE
 // =========================================================================
 
@@ -478,7 +490,7 @@ window.processarXmlNfe = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (window.mostrarToast) window.mostrarToast("Lendo ficheiro XML...", "info");
+    if (window.mostrarToast) window.mostrarToast("Analisando Raio-X da Nota Fiscal...", "info");
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -487,57 +499,80 @@ window.processarXmlNfe = function(event) {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
-            // Helper para procurar tags (ignora namespaces chatos do XML da NFe)
-            const getTag = (tagName, node = xmlDoc) => {
-                const els = node.getElementsByTagName(tagName);
+            // Função helper blindada para extrair dados lidando com os namespaces chatos do XML
+            const getTagFromParent = (parent, tag) => {
+                if (!parent) return '';
+                const els = parent.getElementsByTagName(tag);
                 if (els.length > 0) return els[0].textContent;
-                // Tenta com namespace explícito
-                const elsNS = node.getElementsByTagNameNS("*", tagName);
+                const elsNS = parent.getElementsByTagNameNS("*", tag);
                 return elsNS.length > 0 ? elsNS[0].textContent : '';
             };
 
-            const fornecedor = getTag('xNome');
-            const numNF = getTag('nNF');
-            const totalNF = getTag('vNF');
-            const dataEmissaoStr = getTag('dhEmi') || getTag('dEmi');
+            // Navegação tática no XML
+            const emitNode = xmlDoc.getElementsByTagName('emit')[0] || xmlDoc.getElementsByTagNameNS("*", 'emit')[0];
+            const destNode = xmlDoc.getElementsByTagName('dest')[0] || xmlDoc.getElementsByTagNameNS("*", 'dest')[0];
+            const ideNode = xmlDoc.getElementsByTagName('ide')[0] || xmlDoc.getElementsByTagNameNS("*", 'ide')[0];
 
-            if (!fornecedor) throw new Error("Ficheiro inválido: Não parece ser um XML de NFe brasileira.");
+            if (!emitNode) throw new Error("Ficheiro inválido: Não parece ser um XML de NFe válida.");
 
-            // Tenta fatiar a cobrança pelas duplicatas (<dup>)
-            const dups = xmlDoc.getElementsByTagName('dup');
-            if (dups.length === 0 && xmlDoc.getElementsByTagNameNS) {
-                // Fallback para namespace
-                const dupsNS = xmlDoc.getElementsByTagNameNS("*", 'dup');
-                for(let i=0; i<dupsNS.length; i++) dups.push(dupsNS[i]);
-            }
+            // Extração de Dados
+            const emitNome = getTagFromParent(emitNode, 'xNome') || 'NÃO IDENTIFICADO';
+            const emitCnpj = getTagFromParent(emitNode, 'CNPJ');
+            const destNome = getTagFromParent(destNode, 'xNome') || 'NÃO IDENTIFICADO';
+            const destCnpj = getTagFromParent(destNode, 'CNPJ');
+            
+            const numNF = getTagFromParent(ideNode, 'nNF');
+            const dataEmissaoStr = getTagFromParent(ideNode, 'dhEmi') || getTagFromParent(ideNode, 'dEmi');
+            
+            // Valor Total da Nota -> tag <vNF> fica dentro de <total><ICMSTot>
+            const totalNode = xmlDoc.getElementsByTagName('total')[0] || xmlDoc.getElementsByTagNameNS("*", 'total')[0];
+            const totalNF = getTagFromParent(totalNode, 'vNF') || '0.00';
 
             window.parcelasXmlTemporarias = [];
 
-            if (dups && dups.length > 0) {
-                // Se a nota foi parcelada/boleto
-                for (let i = 0; i < dups.length; i++) {
-                    const d = dups[i];
+            // Captura das Duplicatas
+            const dups = xmlDoc.getElementsByTagName('dup');
+            const dupsLista = [];
+            if (dups.length > 0) {
+                for(let i=0; i<dups.length; i++) dupsLista.push(dups[i]);
+            } else if (xmlDoc.getElementsByTagNameNS) {
+                const dupsNS = xmlDoc.getElementsByTagNameNS("*", 'dup');
+                for(let i=0; i<dupsNS.length; i++) dupsLista.push(dupsNS[i]);
+            }
+
+            if (dupsLista.length > 0) {
+                for (let i = 0; i < dupsLista.length; i++) {
+                    const d = dupsLista[i];
                     window.parcelasXmlTemporarias.push({
-                        parcelaInfo: getTag('nDup', d) || `${i+1}/${dups.length}`,
-                        vencimento: getTag('dVenc', d),
-                        valor: getTag('vDup', d)
+                        parcelaInfo: getTagFromParent(d, 'nDup') || `${i+1}/${dupsLista.length}`,
+                        vencimento: getTagFromParent(d, 'dVenc'),
+                        valor: getTagFromParent(d, 'vDup')
                     });
                 }
             } else {
-                // Se não tem <dup>, é à vista. Usa o total da nota.
+                // Pagamento à vista
                 let dataVencFallback = new Date().toISOString().split('T')[0];
-                if (dataEmissaoStr) dataVencFallback = dataEmissaoStr.substring(0, 10); // Pega só YYYY-MM-DD
+                if (dataEmissaoStr) dataVencFallback = dataEmissaoStr.substring(0, 10);
                 
                 window.parcelasXmlTemporarias.push({
                     parcelaInfo: 'A Vista / Única',
                     vencimento: dataVencFallback,
-                    valor: totalNF || '0.00'
+                    valor: totalNF
                 });
             }
 
-            // Injeta dados na interface do Modal de Revisão
-            document.getElementById('xml-fornecedor').value = fornecedor;
-            document.getElementById('xml-nota').value = numNF;
+            // Injeção de Dados no Modal
+            document.getElementById('xml-fornecedor-nome').innerText = emitNome;
+            document.getElementById('xml-fornecedor-cnpj').innerText = formatarCnpj(emitCnpj);
+            document.getElementById('xml-dest-nome').innerText = destNome;
+            document.getElementById('xml-dest-cnpj').innerText = formatarCnpj(destCnpj);
+            document.getElementById('xml-nota-numero').innerText = numNF;
+            document.getElementById('xml-nota-data').innerText = formatarDataIso(dataEmissaoStr);
+            document.getElementById('xml-nota-total').innerText = 'R$ ' + (parseFloat(totalNF)||0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            
+            // Injeção invisível para usar no salvar
+            document.getElementById('xml-fornecedor-nome').dataset.raw = emitNome;
+            document.getElementById('xml-nota-numero').dataset.raw = numNF;
             
             const tbodyXml = document.getElementById('tabela-xml-parcelas');
             tbodyXml.innerHTML = window.parcelasXmlTemporarias.map((p, index) => {
@@ -545,49 +580,47 @@ window.processarXmlNfe = function(event) {
                 const valorExibicao = valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2});
                 
                 return `
-                    <tr>
-                        <td class="p-3 text-center text-xs font-bold text-gray-500">${p.parcelaInfo}</td>
-                        <td class="p-3">
-                            <input type="date" id="xml-venc-${index}" value="${p.vencimento}" class="w-full bg-transparent text-center font-mono font-bold text-xs text-gray-800 dark:text-white outline-none border border-gray-200 dark:border-gray-700 rounded p-1">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="p-3 text-center text-xs font-bold text-gray-500 border-r border-gray-100 dark:border-gray-800">${p.parcelaInfo}</td>
+                        <td class="p-3 border-r border-gray-100 dark:border-gray-800">
+                            <input type="date" id="xml-venc-${index}" value="${p.vencimento}" class="w-full bg-transparent text-center font-mono font-bold text-xs text-gray-800 dark:text-white outline-none">
                         </td>
                         <td class="p-3">
-                            <input type="text" id="xml-val-${index}" value="${valorExibicao}" oninput="window.mascaraValorItem(this)" class="w-full bg-transparent text-right font-mono font-black text-indigo-600 dark:text-indigo-400 text-xs outline-none border border-gray-200 dark:border-gray-700 rounded p-1">
+                            <input type="text" id="xml-val-${index}" value="${valorExibicao}" oninput="window.mascaraValorItem(this)" class="w-full bg-transparent text-right font-mono font-black text-indigo-600 dark:text-indigo-400 text-sm outline-none">
                         </td>
                     </tr>
                 `;
             }).join('');
 
-            // Abre o Modal de Revisão
             document.getElementById('modal-xml-preview').classList.remove('hidden');
             document.getElementById('modal-xml-preview').classList.add('flex');
 
         } catch (erroXml) {
             console.error(erroXml);
-            if (window.mostrarToast) window.mostrarToast("Erro ao processar o arquivo XML da NFe.", "erro");
+            if (window.mostrarToast) window.mostrarToast("Erro: O arquivo não é um XML de NFe válido.", "erro");
         }
     };
     
     reader.readAsText(file);
-    event.target.value = ''; // Reseta o input de arquivo
+    event.target.value = ''; 
 };
 
 window.salvarXmlLote = async function() {
-    const fornecedor = document.getElementById('xml-fornecedor').value.toUpperCase();
-    const documento = document.getElementById('xml-nota').value.toUpperCase();
+    // Pega os dados ocultos no dataset
+    const fornecedor = document.getElementById('xml-fornecedor-nome').dataset.raw.toUpperCase();
+    const documento = document.getElementById('xml-nota-numero').dataset.raw.toUpperCase();
     const conta = document.getElementById('xml-conta').value;
     const operacao = document.getElementById('xml-operacao').value;
 
     let payloadLote = [];
 
-    // Monta o payload buscando os valores que o usuário pode ter corrigido nos inputs
     for (let i = 0; i < window.parcelasXmlTemporarias.length; i++) {
         const parc = window.parcelasXmlTemporarias[i];
         const vVenc = document.getElementById(`xml-venc-${i}`).value;
         const vValStr = document.getElementById(`xml-val-${i}`).value;
         const vValNum = parseFloat(vValStr.replace(/\./g, '').replace(',', '.')) || 0;
 
-        // Cria a string da descrição
-        let desc = `REFERENTE NFE ${documento}`;
+        let desc = `REF. NFE ${documento}`;
         if (window.parcelasXmlTemporarias.length > 1) {
             desc += ` - PARC ${parc.parcelaInfo}`;
         }
@@ -610,7 +643,7 @@ window.salvarXmlLote = async function() {
         const { error } = await supabase.from('contas_pagar').insert(payloadLote);
         if (error) throw error;
 
-        if (window.mostrarToast) window.mostrarToast(`XML Processado! ${payloadLote.length} despesa(s) gerada(s).`, "sucesso");
+        if (window.mostrarToast) window.mostrarToast(`Sucesso! ${payloadLote.length} despesa(s) gerada(s).`, "sucesso");
         
         document.getElementById('modal-xml-preview').classList.add('hidden');
         document.getElementById('modal-xml-preview').classList.remove('flex');
@@ -618,7 +651,7 @@ window.salvarXmlLote = async function() {
         setTimeout(() => window.carregarContasPagar(true), 600);
     } catch (err) {
         console.error("ERRO AO SALVAR XML EM LOTE:", err);
-        if (window.mostrarToast) window.mostrarToast("Erro crítico ao gravar despesas do XML.", "erro");
+        if (window.mostrarToast) window.mostrarToast("Erro crítico. Verifique as permissões (RLS) no Supabase.", "erro");
     }
 };
 
