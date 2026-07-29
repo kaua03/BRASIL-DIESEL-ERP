@@ -155,6 +155,7 @@ window.renderizarPagar = function() {
         const docFmt = String(conta.numero_documento || 'S/N');
         const valorFmt = Number(conta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         
+        // 🔴 MOTOR VISUAL DE ALERTAS DE VENCIMENTO 🔴
         let dataFormatada = '---';
         let statusVencimentoVisual = '<span class="text-gray-600 dark:text-gray-400">---</span>';
 
@@ -483,23 +484,24 @@ window.estornarPagar = async function(id, btnElement) {
 };
 
 // =========================================================================
-// 7. A MAGIA DO XML: LEITURA E PROCESSAMENTO DE NFE
+// 7. A MAGIA DO XML: LEITURA, AUDITORIA E PROTEÇÃO CONTRA DUPLICIDADE
 // =========================================================================
 
-window.processarXmlNfe = function(event) {
+window.processarXmlNfe = async function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     if (window.mostrarToast) window.mostrarToast("Analisando Raio-X da Nota Fiscal...", "info");
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    
+    // Transformamos o onload numa função ASSÍNCRONA para podermos ir ao Supabase!
+    reader.onload = async function(e) {
         try {
             const xmlString = e.target.result;
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
-            // Função helper blindada para extrair dados lidando com os namespaces chatos do XML
             const getTagFromParent = (parent, tag) => {
                 if (!parent) return '';
                 const els = parent.getElementsByTagName(tag);
@@ -508,14 +510,12 @@ window.processarXmlNfe = function(event) {
                 return elsNS.length > 0 ? elsNS[0].textContent : '';
             };
 
-            // Navegação tática no XML
             const emitNode = xmlDoc.getElementsByTagName('emit')[0] || xmlDoc.getElementsByTagNameNS("*", 'emit')[0];
             const destNode = xmlDoc.getElementsByTagName('dest')[0] || xmlDoc.getElementsByTagNameNS("*", 'dest')[0];
             const ideNode = xmlDoc.getElementsByTagName('ide')[0] || xmlDoc.getElementsByTagNameNS("*", 'ide')[0];
 
             if (!emitNode) throw new Error("Ficheiro inválido: Não parece ser um XML de NFe válida.");
 
-            // Extração de Dados
             const emitNome = getTagFromParent(emitNode, 'xNome') || 'NÃO IDENTIFICADO';
             const emitCnpj = getTagFromParent(emitNode, 'CNPJ');
             const destNome = getTagFromParent(destNode, 'xNome') || 'NÃO IDENTIFICADO';
@@ -524,13 +524,34 @@ window.processarXmlNfe = function(event) {
             const numNF = getTagFromParent(ideNode, 'nNF');
             const dataEmissaoStr = getTagFromParent(ideNode, 'dhEmi') || getTagFromParent(ideNode, 'dEmi');
             
-            // Valor Total da Nota -> tag <vNF> fica dentro de <total><ICMSTot>
             const totalNode = xmlDoc.getElementsByTagName('total')[0] || xmlDoc.getElementsByTagNameNS("*", 'total')[0];
             const totalNF = getTagFromParent(totalNode, 'vNF') || '0.00';
 
+            // 🔴 A BARREIRA DE ELITE: Verificação de Duplicidade no Cofre 🔴
+            // Antes de mostrar o modal, vamos ao Supabase e procuramos por este Número de Nota
+            const { data: notaExistente, error: erroBusca } = await supabase
+                .from('contas_pagar')
+                .select('fornecedor')
+                .eq('numero_documento', numNF);
+
+            if (notaExistente && notaExistente.length > 0) {
+                // Existe uma nota com o mesmo número. Mas será do mesmo fornecedor?
+                // Pegamos as primeiras 15 letras do nome para comparar, evitando erros de acentuação/pontuação.
+                const trechoFornecedor = emitNome.substring(0, 15).toUpperCase();
+                
+                const nfDuplicada = notaExistente.find(nota => 
+                    nota.fornecedor && nota.fornecedor.toUpperCase().includes(trechoFornecedor)
+                );
+
+                if (nfDuplicada) {
+                    // BLOQUEIO ATIVADO! A nota já existe!
+                    if (window.mostrarToast) window.mostrarToast(`Bloqueado: A NFe N° ${numNF} deste fornecedor já foi importada!`, "erro");
+                    return; // Aborta a operação inteira aqui. O modal não vai abrir.
+                }
+            }
+
             window.parcelasXmlTemporarias = [];
 
-            // Captura das Duplicatas
             const dups = xmlDoc.getElementsByTagName('dup');
             const dupsLista = [];
             if (dups.length > 0) {
@@ -550,7 +571,6 @@ window.processarXmlNfe = function(event) {
                     });
                 }
             } else {
-                // Pagamento à vista
                 let dataVencFallback = new Date().toISOString().split('T')[0];
                 if (dataEmissaoStr) dataVencFallback = dataEmissaoStr.substring(0, 10);
                 
@@ -561,7 +581,6 @@ window.processarXmlNfe = function(event) {
                 });
             }
 
-            // Injeção de Dados no Modal
             document.getElementById('xml-fornecedor-nome').innerText = emitNome;
             document.getElementById('xml-fornecedor-cnpj').innerText = formatarCnpj(emitCnpj);
             document.getElementById('xml-dest-nome').innerText = destNome;
@@ -570,7 +589,6 @@ window.processarXmlNfe = function(event) {
             document.getElementById('xml-nota-data').innerText = formatarDataIso(dataEmissaoStr);
             document.getElementById('xml-nota-total').innerText = 'R$ ' + (parseFloat(totalNF)||0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
             
-            // Injeção invisível para usar no salvar
             document.getElementById('xml-fornecedor-nome').dataset.raw = emitNome;
             document.getElementById('xml-nota-numero').dataset.raw = numNF;
             
@@ -606,7 +624,6 @@ window.processarXmlNfe = function(event) {
 };
 
 window.salvarXmlLote = async function() {
-    // Pega os dados ocultos no dataset
     const fornecedor = document.getElementById('xml-fornecedor-nome').dataset.raw.toUpperCase();
     const documento = document.getElementById('xml-nota-numero').dataset.raw.toUpperCase();
     const conta = document.getElementById('xml-conta').value;
