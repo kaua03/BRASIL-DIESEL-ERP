@@ -30,7 +30,6 @@ window.formatarPlaca = function(placa) {
     return p;
 };
 
-// Máscara auxiliar apenas para o modal rápido
 window.mascaraPlacaVeiculoFormat = function(input) {
     let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
     if (p.length === 7 && /^[A-Z]{3}[0-9]{4}$/.test(p)) {
@@ -46,10 +45,9 @@ window.mascaraPlaca = function(input, fromUserInput = true) {
         if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
             input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
         } else {
-            input.value = p; // Mercosul
+            input.value = p; 
         }
         
-        // O GATILHO INTELIGENTE: Puxa o carro e o dono!
         if (fromUserInput) {
             window.buscarDadosVeiculoNaOs(p);
         }
@@ -59,27 +57,44 @@ window.mascaraPlaca = function(input, fromUserInput = true) {
     if (typeof window.atualizarTituloModalOs === 'function') window.atualizarTituloModalOs(window.osNumeroAtual, input.value);
 };
 
-window.buscarDadosVeiculoNaOs = function(placaLimpa) {
-    if (!window.listaVeiculosBdd) return;
-    
-    // Procura o veículo ignorando hífens e formatações na base de dados
+// GATILHO INTELIGENTE SNIPER (Busca Local + Busca no Banco Direto)
+window.buscarDadosVeiculoNaOs = async function(placaLimpa) {
     const placaBusca = placaLimpa.replace(/[^A-Z0-9]/g, '');
-    const veiculoEncontrado = window.listaVeiculosBdd.find(v => String(v.placa).replace(/[^A-Z0-9]/g, '').toUpperCase() === placaBusca);
-    
+    if (placaBusca.length < 7) return;
+
+    // 1. Tenta achar na memória do navegador primeiro
+    let veiculoEncontrado = window.listaVeiculosBdd ? window.listaVeiculosBdd.find(v => String(v.placa).replace(/[^A-Z0-9]/g, '').toUpperCase() === placaBusca) : null;
+
+    // 2. Se não achar na memória, vai direto ao Banco de Dados (Supabase) garantir!
+    if (!veiculoEncontrado) {
+        try {
+            const { data, error } = await supabase.from('veiculos').select('*, clientes(nome_razao)').ilike('placa', `%${placaBusca}%`).single();
+            if (!error && data) {
+                veiculoEncontrado = data;
+                if(window.listaVeiculosBdd) window.listaVeiculosBdd.push(data);
+            }
+        } catch(e) { console.warn("Veículo não encontrado no BD."); }
+    }
+
     if (veiculoEncontrado) {
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
         
-        // 1. Preenche o carro
         setVal('modelo', veiculoEncontrado.modelo || '');
         setVal('marca', veiculoEncontrado.marca || '');
         setVal('ano', veiculoEncontrado.ano || '');
         setVal('uf_veiculo', veiculoEncontrado.uf || '');
         
-        // 2. A MÁGICA: Preenche o cliente automaticamente
+        // Puxa o Cliente dono do carro
         if (veiculoEncontrado.clientes && veiculoEncontrado.clientes.nome_razao) {
             setVal('cliente', veiculoEncontrado.clientes.nome_razao);
-            // Chama a função que já existe para preencher o endereço do cliente
             window.preencherDadosClienteSelecionado(veiculoEncontrado.clientes.nome_razao);
+        } else if (veiculoEncontrado.cliente_id) {
+             // Fallback caso a junção inicial tenha falhado, busca o cliente direto
+             const { data: cli } = await supabase.from('clientes').select('*').eq('id', veiculoEncontrado.cliente_id).single();
+             if(cli) {
+                 setVal('cliente', cli.nome_razao);
+                 window.preencherDadosClienteSelecionado(cli.nome_razao);
+             }
         }
         
         if (window.mostrarToast) window.mostrarToast("Veículo e Cliente vinculados!", "sucesso");
@@ -175,12 +190,22 @@ window.carregarDatalists = async function() {
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
 
-window.preencherDadosClienteSelecionado = function(nomeDigitado) {
+// GATILHO INTELIGENTE SNIPER DO CLIENTE
+window.preencherDadosClienteSelecionado = async function(nomeDigitado) {
     if (!nomeDigitado) return;
     const nomeUpper = nomeDigitado.trim().toUpperCase();
     
-    const clienteEncontrado = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === nomeUpper);
+    // Tenta achar na memória
+    let clienteEncontrado = window.listaClientesBdd ? window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === nomeUpper) : null;
     
+    // Se não achar, vai ao Banco de Dados garantir
+    if (!clienteEncontrado) {
+         try {
+             const { data } = await supabase.from('clientes').select('*').ilike('nome_razao', nomeUpper).single();
+             if(data) clienteEncontrado = data;
+         } catch(e) {}
+    }
+
     if (clienteEncontrado) {
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
         
@@ -201,7 +226,7 @@ document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'modelo') {
         const val = e.target.value.trim().toUpperCase();
         
-        // Se o utilizador clicar na sugestão "MODELO - PLACA", nós isolamos a placa
+        // Se o utilizador clicar na sugestão "MODELO - PLACA", isolamos a placa
         if (val.includes(' - ')) {
             const partes = val.split(' - ');
             const placaExtraida = partes[partes.length - 1].trim(); 
@@ -210,12 +235,12 @@ document.addEventListener('input', function(e) {
                 const elPlaca = document.getElementById('placa');
                 if(elPlaca) {
                     elPlaca.value = placaExtraida;
-                    // Ao aplicar a máscara e forçar true, ele dispara o gatilho automático de busca de dados!
+                    // Ao forçar o true, dispara o gatilho automático!
                     window.mascaraPlaca(elPlaca, true);
                 }
             }
         } else {
-            // Lógica antiga caso ele digite só o modelo sem placa (opcional de suporte)
+            // Lógica antiga (se digitar só o modelo)
             if (window.listaVeiculosBdd && val.length > 2) {
                 const achou = window.listaVeiculosBdd.find(v => v.modelo && String(v.modelo).toUpperCase() === val);
                 if (achou && achou.marca) {
@@ -228,8 +253,7 @@ document.addEventListener('input', function(e) {
     
     if (e.target && e.target.id === 'cliente') {
         const val = e.target.value.trim().toUpperCase();
-        const achou = window.listaClientesBdd.find(c => String(c.nome_razao).toUpperCase() === val);
-        if(achou) window.preencherDadosClienteSelecionado(val);
+        window.preencherDadosClienteSelecionado(val);
     }
 });
 
@@ -479,7 +503,9 @@ window.alternarModoLeitura = function(ativo) {
     const cabecalho = document.getElementById('cabecalho-modal-os');
     const painelTopoResumo = document.getElementById('painel-topo-resumo');
     const btnAddCliente = document.getElementById('btn-add-cliente'); 
-    const btnAddVeiculo = document.getElementById('btn-add-veiculo'); // Mapeado para ocultação
+    
+    // AÇÃO TÁTICA: Ocultar o botão de veículo pela raiz (style.display)
+    const btnAddVeiculo = document.getElementById('btn-add-veiculo'); 
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
@@ -487,7 +513,7 @@ window.alternarModoLeitura = function(ativo) {
         if (painelAdicionar) painelAdicionar.classList.add('hidden');
         if (painelEdicao) painelEdicao.classList.add('hidden');
         if (btnAddCliente) btnAddCliente.classList.add('hidden');
-        if (btnAddVeiculo) btnAddVeiculo.classList.add('hidden');
+        if (btnAddVeiculo) btnAddVeiculo.style.display = 'none'; // Esconder à força
         if (painelTopoResumo) painelTopoResumo.classList.remove('hidden');
         if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
@@ -496,7 +522,7 @@ window.alternarModoLeitura = function(ativo) {
         if (painelAdicionar) painelAdicionar.classList.remove('hidden');
         if (painelEdicao) painelEdicao.classList.remove('hidden');
         if (btnAddCliente) btnAddCliente.classList.remove('hidden');
-        if (btnAddVeiculo) btnAddVeiculo.classList.remove('hidden');
+        if (btnAddVeiculo) btnAddVeiculo.style.display = 'flex'; // Restaurar flex
         if (painelTopoResumo) painelTopoResumo.classList.add('hidden');
         if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
