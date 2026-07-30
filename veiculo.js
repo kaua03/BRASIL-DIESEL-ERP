@@ -10,19 +10,59 @@ const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
-window.mascaraPlacaVeiculo = function(input) {
+window.mascaraPlacaVeiculo = function(input, fromUserInput = true) {
     let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
+    
+    // Formata visualmente se bater o padrão antigo
     if (p.length === 7) {
         if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
-            p = p.substring(0, 3) + '-' + p.substring(3, 7);
+            input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
+        } else {
+            input.value = p; // Formato Mercosul
         }
+        
+        if (fromUserInput) {
+            window.buscarPlacaNaApiPython(p);
+        }
+    } else {
+        input.value = p;
     }
-    input.value = p;
 };
 
-window.formatarPlacaParaBusca = function(placa) {
-    if (!placa) return '';
-    return String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
+window.buscarPlacaNaApiPython = async function(placaLimpa) {
+    const loading = document.getElementById('loading-placa');
+    if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
+
+    if(window.mostrarToast) window.mostrarToast("Consultando dados no PlacaFipe...", "info");
+
+    try {
+        const apiUrl = `http://127.0.0.1:8000/consulta/${placaLimpa}`; 
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error("A API Python não respondeu.");
+        
+        const data = await response.json();
+        if (data.erro) throw new Error(data.erro);
+
+        // Preenchimento Mágico (Idêntico ao da Receita Federal)
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+        
+        if(data.marca) setVal('vei-marca', data.marca);
+        if(data.modelo) setVal('vei-modelo', data.modelo);
+        if(data.ano) setVal('vei-ano', data.ano);
+        if(data.cor) setVal('vei-cor', data.cor);
+        if(data.uf) setVal('vei-uf', data.uf);
+
+        if(window.mostrarToast) window.mostrarToast("Dados do veículo auto-preenchidos!", "sucesso");
+
+    } catch (error) {
+        console.error("FALHA NA BUSCA DE PLACA:", error);
+        // O FALLBACK MANUAL: Se der erro, só avisa e libera a tela para digitação manual!
+        if(window.mostrarToast) window.mostrarToast("Placa não encontrada. Preencha manualmente.", "aviso");
+    } finally {
+        // Desliga o loading para liberar os campos
+        if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
+    }
 };
 
 window.carregarDropdownClientesParaVeiculos = async function() {
