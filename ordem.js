@@ -25,16 +25,63 @@ window.atualizarTopHeaderVisualizacao = function(os) {
 
 window.formatarPlaca = function(placa) {
     if (!placa) return '';
-    let p = String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    let p = String(placa).toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (/^[A-Z]{3}[0-9]{4}$/.test(p)) return p.substring(0, 3) + '-' + p.substring(3, 7);
     return p;
 };
 
-window.mascaraPlaca = function(input) {
+// Máscara auxiliar apenas para o modal rápido
+window.mascaraPlacaVeiculoFormat = function(input) {
+    let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
+    if (p.length === 7 && /^[A-Z]{3}[0-9]{4}$/.test(p)) {
+        input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
+    } else { input.value = p; }
+};
+
+window.mascaraPlaca = function(input, fromUserInput = true) {
     if(!input) return;
-    let p = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-    input.value = p;
+    let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
+    
+    if (p.length === 7) {
+        if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
+            input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
+        } else {
+            input.value = p; // Mercosul
+        }
+        
+        // O GATILHO INTELIGENTE: Puxa o carro e o dono!
+        if (fromUserInput) {
+            window.buscarDadosVeiculoNaOs(p);
+        }
+    } else {
+        input.value = p;
+    }
     if (typeof window.atualizarTituloModalOs === 'function') window.atualizarTituloModalOs(window.osNumeroAtual, input.value);
+};
+
+window.buscarDadosVeiculoNaOs = function(placaLimpa) {
+    if (!window.listaVeiculosBdd) return;
+    
+    // Procura o veículo na lista carregada do banco
+    const veiculoEncontrado = window.listaVeiculosBdd.find(v => v.placa === placaLimpa);
+    
+    if (veiculoEncontrado) {
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+        
+        // 1. Preenche o carro
+        setVal('modelo', veiculoEncontrado.modelo || '');
+        setVal('marca', veiculoEncontrado.marca || '');
+        setVal('ano', veiculoEncontrado.ano || '');
+        
+        // 2. A MÁGICA: Preenche o cliente automaticamente
+        if (veiculoEncontrado.clientes && veiculoEncontrado.clientes.nome_razao) {
+            setVal('cliente', veiculoEncontrado.clientes.nome_razao);
+            // Chama a função que já existe para preencher o endereço do cliente
+            window.preencherDadosClienteSelecionado(veiculoEncontrado.clientes.nome_razao);
+        }
+        
+        if (window.mostrarToast) window.mostrarToast("Veículo e Cliente vinculados!", "sucesso");
+    }
 };
 
 window.validarPlacaBrasil = function(placa) {
@@ -58,32 +105,6 @@ window.mascaraCpfCnpj = function(input) {
         else if (v.length > 5) input.value = v.replace(/(\d{2})(\d{3})(\d{1,3})/, "$1.$2.$3");
         else if (v.length > 2) input.value = v.replace(/(\d{2})(\d{1,3})/, "$1.$2");
         else input.value = v;
-    }
-};
-
-window.mascaraCpfCnpjRapido = function(input) {
-    if(!input) return;
-    let v = input.value.replace(/\D/g, ""); 
-    const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
-
-    if (!isPj) { 
-        v = v.substring(0, 11);
-        if (v.length > 9) input.value = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
-        else if (v.length > 6) input.value = v.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
-        else if (v.length > 3) input.value = v.replace(/(\d{3})(\d{1,3})/, "$1.$2");
-        else input.value = v;
-    } else { 
-        v = v.substring(0, 14);
-        if (v.length > 12) input.value = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5");
-        else if (v.length > 8) input.value = v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, "$1.$2.$3/$4");
-        else if (v.length > 5) input.value = v.replace(/(\d{2})(\d{3})(\d{1,3})/, "$1.$2.$3");
-        else if (v.length > 2) input.value = v.replace(/(\d{2})(\d{1,3})/, "$1.$2");
-        else input.value = v;
-
-        // Gatilho da Receita Federal
-        if (v.length === 14) {
-            window.buscarCnpjRapido(v);
-        }
     }
 };
 
@@ -130,12 +151,15 @@ window.carregarDatalists = async function() {
         if (clientes) {
             window.listaClientesBdd = clientes;
             const dlClientes = document.getElementById('lista-clientes');
-            if (dlClientes) {
-                dlClientes.innerHTML = clientes.map(c => `<option value="${c.nome_razao}">${c.cpf_cnpj || ''}</option>`).join('');
-            }
+            const dlClientesRapido = document.getElementById('lista-clientes-rapido-vei'); // Para o modal
+            
+            const opcoesHTML = clientes.map(c => `<option value="${c.nome_razao}">${c.cpf_cnpj || ''}</option>`).join('');
+            if (dlClientes) dlClientes.innerHTML = opcoesHTML;
+            if (dlClientesRapido) dlClientesRapido.innerHTML = opcoesHTML;
         }
 
-        const { data: veiculos } = await supabase.from('veiculos').select('modelo, marca').order('modelo');
+        // AGORA PUXAMOS O VEÍCULO E O CLIENTE DELE JUNTOS (Inner Join)
+        const { data: veiculos } = await supabase.from('veiculos').select('*, clientes(nome_razao)').order('modelo');
         if (veiculos) {
             window.listaVeiculosBdd = veiculos;
             const modelosUnicos = [...new Set(veiculos.map(v => v.modelo))];
@@ -335,6 +359,89 @@ window.salvarClienteRapido = async function(e) {
         if(window.mostrarToast) window.mostrarToast("Erro ao cadastrar cliente.", "erro");
     }
 };
+
+// =========================================================================
+// 2.2 MÓDULO DE CADASTRO RÁPIDO DE VEÍCULO (DENTRO DA O.S)
+// =========================================================================
+window.abrirCadastroRapidoVeiculo = function() {
+    const form = document.querySelector('#modal-veiculo-rapido form');
+    if(form) form.reset();
+    
+    // Puxar a placa que o usuário já estava a tentar digitar
+    const placaDigitada = document.getElementById('placa').value;
+    if(placaDigitada) {
+        document.getElementById('vei-rapido-placa').value = placaDigitada;
+    }
+
+    // Se ele já tiver escolhido um cliente na O.S, sugere o vínculo
+    const clienteOS = document.getElementById('cliente').value;
+    if(clienteOS) {
+        document.getElementById('vei-rapido-cliente').value = clienteOS;
+    }
+
+    document.getElementById('modal-veiculo-rapido').classList.remove('hidden');
+    document.getElementById('modal-veiculo-rapido').classList.add('flex');
+};
+
+window.salvarVeiculoRapido = async function(e) {
+    e.preventDefault();
+    const getVal = (id) => document.getElementById(id)?.value || '';
+    
+    const placaLimpa = getVal('vei-rapido-placa').replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+    if (placaLimpa.length < 7) {
+        if(window.mostrarToast) window.mostrarToast("Placa inválida!", "erro");
+        document.getElementById('vei-rapido-placa').focus(); return;
+    }
+
+    // Verificar se a placa já existe
+    const { data: duplicados } = await supabase.from('veiculos').select('id').eq('placa', placaLimpa);
+    if (duplicados && duplicados.length > 0) {
+        if (window.mostrarToast) window.mostrarToast("Erro: Placa já cadastrada no sistema!", "erro");
+        document.getElementById('vei-rapido-placa').focus(); return; 
+    }
+
+    const clienteDigitado = getVal('vei-rapido-cliente').trim().toUpperCase();
+    let clienteIdEncontrado = null;
+    if (clienteDigitado && window.listaClientesBdd) {
+        const achou = window.listaClientesBdd.find(c => c.nome_razao === clienteDigitado);
+        if (achou) clienteIdEncontrado = achou.id;
+    }
+
+    const payload = {
+        placa: placaLimpa,
+        uf: getVal('vei-rapido-uf').trim().toUpperCase(),
+        marca: getVal('vei-rapido-marca').trim().toUpperCase(),
+        modelo: getVal('vei-rapido-modelo').trim().toUpperCase(),
+        ano: getVal('vei-rapido-ano').trim(),
+        cliente_id: clienteIdEncontrado
+    };
+
+    if(window.mostrarToast) window.mostrarToast("Salvando veículo na garagem...", "info");
+
+    try {
+        const { error } = await supabase.from('veiculos').insert([payload]);
+        if (error) throw error;
+
+        if(window.mostrarToast) window.mostrarToast("Veículo cadastrado!", "sucesso");
+        
+        await window.carregarDatalists();
+        
+        // Auto-preencher na O.S
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+        setVal('placa', payload.placa);
+        window.mascaraPlaca(document.getElementById('placa'), false); // formata o visual
+        setVal('marca', payload.marca);
+        setVal('modelo', payload.modelo);
+        setVal('ano', payload.ano);
+        
+        document.getElementById('modal-veiculo-rapido').classList.add('hidden');
+        document.getElementById('modal-veiculo-rapido').classList.remove('flex');
+    } catch (err) {
+        console.error(err);
+        if(window.mostrarToast) window.mostrarToast("Erro ao cadastrar veículo.", "erro");
+    }
+};
+
 
 // =========================================================================
 // 3. MODO LEITURA E CORES DE STATUS
