@@ -172,6 +172,7 @@ window.abrirModalEditarVeiculo = function(id) {
 
     document.getElementById('vei-id').value = v.id;
     document.getElementById('vei-placa').value = v.placa || '';
+    document.getElementById('vei-uf').value = v.uf || '';
     document.getElementById('vei-marca').value = v.marca || '';
     document.getElementById('vei-modelo').value = v.modelo || '';
     document.getElementById('vei-ano').value = v.ano || '';
@@ -233,6 +234,7 @@ window.salvarVeiculo = async function(event) {
 
     const payload = {
         placa: placaLimpa,
+        uf: getVal('vei-uf').trim().toUpperCase(),
         marca: getVal('vei-marca').trim().toUpperCase(),
         modelo: getVal('vei-modelo').trim().toUpperCase(),
         ano: getVal('vei-ano').trim(),
