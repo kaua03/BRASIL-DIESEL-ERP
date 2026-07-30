@@ -190,9 +190,17 @@ window.carregarDatalists = async function() {
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
 
-// GATILHO INTELIGENTE SNIPER DO CLIENTE
 window.preencherDadosClienteSelecionado = async function(nomeDigitado) {
-    if (!nomeDigitado) return;
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
+
+    // 1. Se o campo for apagado, varremos todos os dados antigos imediatamente
+    if (!nomeDigitado || nomeDigitado.trim() === '') {
+        setVal('cpf_cnpj', ''); setVal('celular', ''); setVal('cliente_email', '');
+        setVal('cep', ''); setVal('endereco', ''); setVal('numero_end', '');
+        setVal('complemento', ''); setVal('bairro', ''); setVal('cidade', '');
+        return;
+    }
+
     const nomeUpper = nomeDigitado.trim().toUpperCase();
     
     // Tenta achar na memória
@@ -206,19 +214,22 @@ window.preencherDadosClienteSelecionado = async function(nomeDigitado) {
          } catch(e) {}
     }
 
+    // 2. Se achar, injeta os dados (se o dado for nulo, injeta vazio '' para apagar o resquício do anterior)
     if (clienteEncontrado) {
-        const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
-        
         setVal('cpf_cnpj', clienteEncontrado.cpf_cnpj || '');
         setVal('celular', clienteEncontrado.telefone || '');
         setVal('cliente_email', clienteEncontrado.email || '');
-        
-        if(clienteEncontrado.cep) setVal('cep', clienteEncontrado.cep);
-        if(clienteEncontrado.endereco) setVal('endereco', clienteEncontrado.endereco);
-        if(clienteEncontrado.numero_end) setVal('numero_end', clienteEncontrado.numero_end);
-        if(clienteEncontrado.complemento) setVal('complemento', clienteEncontrado.complemento);
-        if(clienteEncontrado.bairro) setVal('bairro', clienteEncontrado.bairro);
-        if(clienteEncontrado.cidade) setVal('cidade', clienteEncontrado.cidade);
+        setVal('cep', clienteEncontrado.cep || '');
+        setVal('endereco', clienteEncontrado.endereco || '');
+        setVal('numero_end', clienteEncontrado.numero_end || '');
+        setVal('complemento', clienteEncontrado.complemento || '');
+        setVal('bairro', clienteEncontrado.bairro || '');
+        setVal('cidade', clienteEncontrado.cidade || '');
+    } else {
+        // 3. Se digitou um cliente que não existe, limpa tudo para não misturar com o antigo
+        setVal('cpf_cnpj', ''); setVal('celular', ''); setVal('cliente_email', '');
+        setVal('cep', ''); setVal('endereco', ''); setVal('numero_end', '');
+        setVal('complemento', ''); setVal('bairro', ''); setVal('cidade', '');
     }
 };
 
