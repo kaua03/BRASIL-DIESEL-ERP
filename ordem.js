@@ -75,7 +75,6 @@ window.mascaraValorItem = function(input) {
     input.value = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-// Modificado para servir tanto para a O.S quanto para o Cadastro Rápido
 window.consultarCep = async function(input, prefixo = '') {
     if(!input) return;
     let cep = input.value.replace(/\D/g, '');
@@ -133,7 +132,6 @@ window.preencherDadosClienteSelecionado = function(nomeDigitado) {
         setVal('celular', clienteEncontrado.telefone || '');
         setVal('cliente_email', clienteEncontrado.email || '');
         
-        // Puxa o endereço fragmentado da base para a O.S
         if(clienteEncontrado.cep) setVal('cep', clienteEncontrado.cep);
         if(clienteEncontrado.endereco) setVal('endereco', clienteEncontrado.endereco);
         if(clienteEncontrado.numero_end) setVal('numero_end', clienteEncontrado.numero_end);
@@ -254,13 +252,24 @@ window.salvarClienteRapido = async function(e) {
     e.preventDefault();
     
     const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
-    
     const getVal = (id) => document.getElementById(id)?.value || '';
+    
+    const docFormatado = getVal('cli-rapido-doc').trim();
+
+    // 🔴 RADAR DE DUPLICIDADE (CADASTRO RÁPIDO) 🔴
+    if (docFormatado) {
+        const { data: duplicados } = await supabase.from('clientes').select('id').eq('cpf_cnpj', docFormatado);
+        if (duplicados && duplicados.length > 0) {
+            if (window.mostrarToast) window.mostrarToast("Erro: Este CPF/CNPJ já existe na base!", "erro");
+            document.getElementById('cli-rapido-doc').focus();
+            return; // Bloqueia a inserção!
+        }
+    }
 
     const payload = {
         tipo_cliente: isPj ? 'Jurídica' : 'Física',
         nome_razao: getVal('cli-rapido-nome').trim().toUpperCase(),
-        cpf_cnpj: getVal('cli-rapido-doc').trim(),
+        cpf_cnpj: docFormatado,
         telefone: getVal('cli-rapido-tel').trim(),
         email: getVal('cli-rapido-email').trim().toLowerCase(),
         cep: getVal('cli-rapido-cep').trim(),
@@ -271,7 +280,7 @@ window.salvarClienteRapido = async function(e) {
         complemento: getVal('cli-rapido-complemento').trim().toUpperCase(),
     };
     
-    if(window.mostrarToast) window.mostrarToast("Salvando cliente no cofre...", "aviso");
+    if(window.mostrarToast) window.mostrarToast("Salvando cliente no cofre...", "info");
 
     try {
         const { data, error } = await supabase.from('clientes').insert([payload]).select().single();
@@ -282,7 +291,6 @@ window.salvarClienteRapido = async function(e) {
         
         await window.carregarDatalists();
         
-        // Injeta os dados na O.S. imediatamente
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
         setVal('cliente', payload.nome_razao);
         setVal('cpf_cnpj', payload.cpf_cnpj);
@@ -1109,7 +1117,7 @@ window.marcarComoAlterado = function() {
 window.atualizarVisibilidadeBotoesFechamento = function() {
     const btnX = document.getElementById('btn-fechar-x');
     const btnFecharOs = document.getElementById('btn-fechar-os');
-    const btnCancelar = document.getElementById('btn-cancelar-alteracoes'); // O novo botão de fuga
+    const btnCancelar = document.getElementById('btn-cancelar-alteracoes'); 
     
     if (window.modoLeitura) {
         if(btnX) btnX.classList.remove('hidden');
@@ -1118,7 +1126,6 @@ window.atualizarVisibilidadeBotoesFechamento = function() {
         return;
     }
     
-    // Se o formulário foi alterado, o X some e o Cancelar aparece!
     if (window.formAlterado) {
         if(btnX) btnX.classList.add('hidden');
         if(btnCancelar) btnCancelar.classList.remove('hidden');
@@ -1128,7 +1135,6 @@ window.atualizarVisibilidadeBotoesFechamento = function() {
     }
 };
 
-// A Função de Fuga Tática
 window.tentarCancelarOs = async function() {
     const confirmar = await window.abrirConfirmacao("Descartar Alterações", "Tem certeza que deseja sair sem salvar as modificações feitas nesta O.S?", "aviso");
     if (confirmar) window.fecharModalOsDireto();
