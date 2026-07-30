@@ -15,54 +15,20 @@ window.formatarPlacaParaBusca = function(placa) {
     return String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
 };
 
-window.mascaraPlacaVeiculo = function(input, fromUserInput = true) {
+// 🔴 MÁSCARA LIMPA E MANUAL: Apenas formata o visual perfeitamente, sem chamar APIs externas.
+window.mascaraPlacaVeiculo = function(input) {
     let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
     
     if (p.length === 7) {
+        // Se for o padrão antigo (3 letras, 4 números), coloca o hífen
         if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
             input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
         } else {
+            // Se for padrão Mercosul (ex: ABC1D23), deixa sem hífen
             input.value = p; 
-        }
-
-        if (fromUserInput) {
-            window.buscarPlacaNaApiPython(p);
         }
     } else {
         input.value = p;
-    }
-};
-
-window.buscarPlacaNaApiPython = async function(placaLimpa) {
-    const loading = document.getElementById('loading-placa');
-    if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
-
-    if(window.mostrarToast) window.mostrarToast("Consultando dados no PlacaFipe...", "info");
-
-    try {
-        const apiUrl = `https://brasil-diesel-erp.onrender.com/consulta/${placaLimpa}`; 
-        
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error("A API Python não respondeu.");
-        
-        const data = await response.json();
-        if (data.erro) throw new Error(data.erro);
-
-        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-        
-        if(data.marca) setVal('vei-marca', data.marca);
-        if(data.modelo) setVal('vei-modelo', data.modelo);
-        if(data.ano) setVal('vei-ano', data.ano);
-        if(data.cor) setVal('vei-cor', data.cor);
-        if(data.uf) setVal('vei-uf', data.uf);
-
-        if(window.mostrarToast) window.mostrarToast("Dados do veículo auto-preenchidos!", "sucesso");
-
-    } catch (error) {
-        console.error("FALHA NA BUSCA DE PLACA:", error);
-        if(window.mostrarToast) window.mostrarToast("Placa não encontrada. Preencha manualmente.", "aviso");
-    } finally {
-        if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
     }
 };
 
@@ -214,7 +180,7 @@ window.abrirModalEditarVeiculo = function(id) {
     
     const inputP = document.getElementById('vei-placa');
     inputP.value = v.placa || '';
-    window.mascaraPlacaVeiculo(inputP, false); 
+    window.mascaraPlacaVeiculo(inputP); // Apenas aplica a máscara visual
     
     document.getElementById('vei-uf').value = v.uf || ''; 
     document.getElementById('vei-marca').value = v.marca || '';
