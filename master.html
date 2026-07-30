@@ -1,0 +1,64 @@
+<div class="space-y-6 max-w-7xl mx-auto w-full fade-in">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-red-600 mb-1">Painel Master</h2>
+            <p class="text-sm text-gray-500 font-medium">Gestão de Dados, Acessos e Auditoria de Segurança</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+            <button onclick="window.mudarSubAbaMaster('auditoria')" id="aba-auditoria" class="flex-1 lg:flex-none px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow transition-colors text-sm">Caixa Preta</button>
+            <button onclick="window.mudarSubAbaMaster('analiticos')" id="aba-analiticos" class="flex-1 lg:flex-none px-5 py-2.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded-xl transition-colors text-sm">Analíticos (BI)</button>
+            <button onclick="window.mudarSubAbaMaster('usuarios')" id="aba-usuarios" class="flex-1 lg:flex-none px-5 py-2.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded-xl transition-colors text-sm">Acessos</button>
+        </div>
+    </div>
+
+    <div id="sub-tela-auditoria" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 block">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span class="text-xl">🕵️‍♂️</span> Rastro de Operações</h3>
+        <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-inner">
+            <table class="w-full text-left text-sm min-w-[800px]">
+                <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                    <tr>
+                        <th class="p-4 font-bold w-44">Data / Hora</th>
+                        <th class="p-4 font-bold w-48">Usuário</th>
+                        <th class="p-4 font-bold w-32 text-center">Módulo</th>
+                        <th class="p-4 font-bold w-48">Ação Realizada</th>
+                        <th class="p-4 font-bold">Detalhes / Dados</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-auditoria" class="divide-y divide-gray-100 bg-white">
+                    <tr><td colspan="5" class="p-6 text-center text-gray-400 font-medium">Aguardando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="sub-tela-analiticos" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hidden">
+        <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><span class="text-xl">📊</span> Visão Estratégica (Business Intelligence)</h3>
+        <div class="mt-6 p-12 border-2 border-dashed border-gray-300 bg-gray-50 rounded-xl text-center">
+            <p class="text-gray-500 font-bold text-lg">Módulo de Gráficos (Chart.js)</p>
+        </div>
+    </div>
+
+    <div id="sub-tela-usuarios" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hidden">
+        <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><span class="text-xl">🛡️</span> Equipe e Credenciais</h3>
+            <button onclick="alert('O formulário será montado aqui!')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl shadow-sm text-sm">+ Usuário</button>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-gray-200 mt-4">
+            <table class="w-full text-left text-sm min-w-[600px]">
+                <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                    <tr>
+                        <th class="p-4 font-bold w-16 text-center">ID</th>
+                        <th class="p-4 font-bold">Nome</th>
+                        <th class="p-4 font-bold">Acesso</th>
+                        <th class="p-4 font-bold text-center">Nível</th>
+                        <th class="p-4 font-bold text-center w-28">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-usuarios" class="divide-y divide-gray-100 bg-white">
+                    <tr><td colspan="5" class="p-6 text-center text-gray-400 font-medium">Buscando equipe...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
