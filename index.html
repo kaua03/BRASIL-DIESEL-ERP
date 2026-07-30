@@ -5,17 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Brasil Diesel - ERP</title>
-    <!-- FAVICON EXCLUSIVO -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%231a428a'/><text x='50%' y='54%' font-size='65' font-weight='900' font-family='Arial, sans-serif' fill='%23facc15' text-anchor='middle' dominant-baseline='middle'>B</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- MOTOR DO MODO NOTURNO DO TAILWIND -->
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-      }
-    </script>
+    <script> tailwind.config = { darkMode: 'class', } </script>
 
     <style>
         .fade-in { animation: fadeIn 0.15s ease-in-out forwards !important; }
@@ -41,28 +34,31 @@
 
 <body class="bg-gray-100 h-screen overflow-hidden text-gray-800 dark:bg-[#0f172a] dark:text-gray-200 transition-colors duration-300">
 
+    <!-- TELA DE LOGIN (ATUALIZADA PARA NOME DE USUÁRIO) -->
     <div id="tela-login" class="flex items-center justify-center h-full bg-[#0f2757] dark:bg-[#081121] transition-colors duration-500">
         <div class="bg-white dark:bg-[#1e293b] p-8 rounded-xl shadow-lg w-full max-w-sm text-center border border-transparent dark:border-gray-700 transition-colors duration-300">
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] mb-6">BRASIL <span class="text-[#facc15]">DIESEL</span></h2>
 
             <form id="form-login" class="space-y-4 text-left">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">E-mail</label>
-                    <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Usuário de Acesso</label>
+                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors lowercase font-mono" placeholder="ex: joao.silva" required>
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Senha</label>
-                    <input type="password" id="senha" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors" required>
+                    <input type="password" id="senha" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] bg-white dark:bg-[#0f172a] dark:text-white transition-colors tracking-widest font-mono" required>
                 </div>
-                <button type="submit" id="btn-login" class="w-full bg-[#1a428a] dark:bg-[#2563eb] text-white font-bold py-2 rounded-lg hover:bg-blue-900 dark:hover:bg-blue-700 transition-colors shadow-md">Entrar</button>
+                <button type="submit" id="btn-login" class="w-full bg-[#1a428a] dark:bg-[#2563eb] text-white font-bold py-2 rounded-lg hover:bg-blue-900 dark:hover:bg-blue-700 transition-colors shadow-md">Entrar no Sistema</button>
             </form>
             <div id="resultado" class="mt-4 text-sm font-bold dark:text-red-400"></div>
         </div>
     </div>
 
+    <!-- PAINEL DO SISTEMA -->
     <div id="tela-erp" class="hidden h-full flex-col anima-fade">
 
-        <header class="bg-[#1a428a] dark:bg-[#0b1b3b] text-white px-6 py-3 shadow-md flex justify-between items-center z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
+        <!-- CABEÇALHO COM ID PARA O MODO TELA -->
+        <header id="header-principal" class="bg-[#1a428a] dark:bg-[#0b1b3b] text-white px-6 py-3 shadow-md flex justify-between items-center z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-[#0f2757] border border-blue-400/20 rounded-xl flex items-center justify-center shadow-inner shrink-0">
                     <span class="text-[#facc15] font-black text-lg italic leading-none pt-0.5">B</span>
@@ -138,12 +134,11 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Veículos</span>
                     </button>
                     
-                    <!-- BOTÃO FUNCIONÁRIOS (COM TRAVA DE SEGURANÇA ONCLICK ADICIONADA) -->
-                    <button onclick="if(window.carregarFuncionarios) setTimeout(window.carregarFuncionarios, 200);" class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="funcionario" data-gatilho="carregarFuncionarios" title="Funcionários">
+                    <button onclick="if(window.carregarFuncionarios) setTimeout(window.carregarFuncionarios, 200);" class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="funcionario" data-gatilho="carregarFuncionarios" title="Equipe">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
                         </div>
-                        <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Funcionários</span>
+                        <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Equipe</span>
                     </button>
 
                     <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div>
@@ -164,14 +159,14 @@
 
                     <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div>
 
-                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-="dashboard" data-gatilho="carregarDashboard" title="Dashboard">
+                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="dashboard" data-gatilho="carregarDashboard" title="Dashboard">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Dashboard</span>
                     </button>
                     
-                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-="PainelMaster" title="Painel MASTER">
+                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="PainelMaster" title="Painel MASTER">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
@@ -252,6 +247,13 @@
 
     <script>
         window.alternarModoNoturno = function() {
+            // Se for Tela de TV, ignora
+            const userStr = sessionStorage.getItem('bdp_user');
+            if(userStr) {
+                const cargo = JSON.parse(userStr).cargo;
+                if(cargo === 'Tela') return;
+            }
+
             const html = document.documentElement;
             html.classList.toggle('dark');
             if (html.classList.contains('dark')) {
