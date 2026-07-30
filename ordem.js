@@ -821,7 +821,7 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
             const bgStatus = window.obterCoresStatus(os.situacao);
 
             return `
-                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 ${os.situacao === 'Fechado' ? 'opacity-70 grayscale-[30%]' : ''}">
                     <td class="p-4 font-mono font-bold text-gray-500 dark:text-gray-400">#${numeroFormatado}</td>
                     
                     <td class="p-4 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-nowrap">${dataFormatada}</td>
