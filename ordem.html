@@ -88,7 +88,7 @@
                         </button>
                     </div>
                     
-                    <!-- NOVO LAYOUT DE GRELHA DO VEÍCULO (12 COLUNAS) -->
+                    <!-- GRELHA REFINADA: PLACA(2) - MODELO(4) - MARCA(2) - ANO(1) - UF(1) - KM(2) = 12 -->
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Placa</label>
@@ -489,6 +489,7 @@
                 </div>
             </div>
 
+            <!-- BLOCO DE ENDEREÇO SEPARADO -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-gray-50 dark:bg-[#0f172a] rounded-xl border border-gray-200 dark:border-gray-700">
                 <div class="md:col-span-3">
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">CEP</label>
@@ -536,6 +537,7 @@
         </div>
         
         <form onsubmit="window.salvarVeiculoRapido(event)" class="p-5 space-y-4">
+            <!-- LINHA 1: PLACA (3) - MODELO (5) - MARCA (4) -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
                 <div class="md:col-span-3">
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Placa</label>
@@ -551,6 +553,7 @@
                 </div>
             </div>
 
+            <!-- LINHA 2: ANO (2) - UF (2) - CLIENTE (8) -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Ano</label>
