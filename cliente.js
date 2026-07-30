@@ -52,7 +52,6 @@ window.mascaraCep = function(input) {
     input.value = v;
 };
 
-// Motor Universal de Busca de CEP
 window.consultarCep = async function(input, prefixo = '') {
     if(!input) return;
     let cep = input.value.replace(/\D/g, '');
@@ -97,10 +96,9 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
         if (data.cep) {
             const cepInput = document.getElementById('cli-cep');
             cepInput.value = String(data.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
-            window.consultarCep(cepInput, 'cli-'); // Aciona o gatilho do CEP para preencher o resto!
+            window.consultarCep(cepInput, 'cli-'); 
         }
         
-        // Complemento específico da empresa
         if(data.numero) document.getElementById('cli-numero_end').value = data.numero;
         if(data.complemento) document.getElementById('cli-complemento').value = data.complemento;
 
@@ -267,7 +265,7 @@ window.renderizarClientes = function() {
     }).join('');
 };
 
-// 🔴 O NOVO CÉREBRO DO CRM 🔴
+// 🔴 O NOVO CÉREBRO DO CRM (CORRIGIDO PARA IGNORAR ERROS DE DIGITAÇÃO) 🔴
 window.abrirPerfilCrmCliente = async function(id) {
     const cli = window.dadosClientesGerais.find(c => c.id === id);
     if (!cli) return;
@@ -288,20 +286,19 @@ window.abrirPerfilCrmCliente = async function(id) {
     document.getElementById('modal-perfil-cliente').classList.add('flex');
 
     try {
-        // 1. Busca as O.S. pelo NOME EXATO DO CLIENTE (que é o que a O.S. salva)
-        const nomeParaBusca = String(cli.nome_razao).trim().toUpperCase();
+        const nomeParaBusca = String(cli.nome_razao).trim();
         
+        // Usa ilike para não falhar por causa de espaços extras ou minúsculas/maiúsculas, e usa a data_hora correta da OS
         const { data: osData, error: osError } = await supabase
             .from('ordens_servico')
-            .select('numero_os, total_geral, created_at, situacao, placa, marca, modelo, ano')
-            .eq('cliente', nomeParaBusca)
-            .order('created_at', { ascending: false });
+            .select('numero_os, total_geral, data_hora, situacao, placa, marca, modelo, ano')
+            .ilike('cliente', `%${nomeParaBusca}%`)
+            .order('id', { ascending: false });
 
         if (!osError && osData && osData.length > 0) {
             const totalOs = osData.length;
             let ltv = 0;
             
-            // Calcula o Lifetime Value (LTV) usando a coluna certa (total_geral)
             osData.forEach(os => ltv += Number(os.total_geral || 0));
             
             const ticketMedio = totalOs > 0 ? (ltv / totalOs) : 0;
@@ -310,16 +307,17 @@ window.abrirPerfilCrmCliente = async function(id) {
             document.getElementById('crm-ltv').innerText = `R$ ${ltv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             document.getElementById('crm-ticket').innerText = `R$ ${ticketMedio.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             
-            // Última visita
-            if (osData[0].created_at) {
-                const ultima = new Date(osData[0].created_at);
+            // Corrige a leitura da última visita usando a data da O.S. (data_hora)
+            if (osData[0].data_hora) {
+                const ultima = new Date(osData[0].data_hora);
                 document.getElementById('crm-ultima-visita').innerText = ultima.toLocaleDateString('pt-BR');
+            } else {
+                document.getElementById('crm-ultima-visita').innerText = "---";
             }
 
-            // Renderiza Lista de O.S. (Top 10)
             const ultimasDezOs = osData.slice(0, 10);
             document.getElementById('crm-lista-os').innerHTML = ultimasDezOs.map(os => {
-                const dataOs = new Date(os.created_at).toLocaleDateString('pt-BR');
+                const dataOs = os.data_hora ? new Date(os.data_hora).toLocaleDateString('pt-BR') : '---';
                 const valFmt = Number(os.total_geral || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
                 return `
                     <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -332,9 +330,7 @@ window.abrirPerfilCrmCliente = async function(id) {
                 `;
             }).join('');
 
-            // 2. Extração Inteligente da Frota
-            // Como ainda não temos a tabela Veículos atrelada por ID, o sistema lê as O.S. antigas
-            // e descobre quais carros este cliente já arranjou na oficina!
+            // Extração Inteligente da Frota
             let frotaMap = new Map();
             osData.forEach(os => {
                 if (os.placa && os.placa.trim().toUpperCase() !== 'AVULSA') {
@@ -361,7 +357,7 @@ window.abrirPerfilCrmCliente = async function(id) {
             }
 
         } else {
-            // Se o cliente nunca fez uma O.S.
+            // Se o cliente nunca fez uma O.S. (ou erro silenciado)
             document.getElementById('crm-ltv').innerText = "R$ 0,00";
             document.getElementById('crm-ticket').innerText = "R$ 0,00";
             document.getElementById('crm-ultima-visita').innerText = "---";
