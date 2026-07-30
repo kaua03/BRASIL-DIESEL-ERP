@@ -88,10 +88,18 @@
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                        
+                        <!-- NOVO CAMPO DE PLACA COM BOTÃO DE CADASTRO RÁPIDO DE VEÍCULO -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Placa</label>
-                            <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase font-mono font-bold transition-colors duration-150" placeholder="ABC-1234" maxlength="8">
+                            <div class="flex gap-2 items-center">
+                                <input type="text" id="placa" required oninput="window.mascaraPlaca(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white uppercase font-mono font-bold transition-colors duration-150" placeholder="ABC1D23" maxlength="8">
+                                <button type="button" onclick="window.abrirCadastroRapidoVeiculo()" class="h-[42px] px-3 bg-[#1a428a] hover:bg-blue-800 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors duration-150 flex-shrink-0" title="Cadastrar Novo Veículo Rápido">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </div>
                         </div>
+
                         <div class="md:col-span-2 relative">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Veículo / Modelo</label>
                             <input type="text" id="modelo" list="lista-veiculos" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-[#1a428a] bg-gray-50 dark:bg-[#0f172a] dark:text-white transition-colors duration-150" placeholder="Selecione ou digite...">
@@ -345,7 +353,7 @@
     <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] border border-gray-200 dark:border-gray-700 anima-fade transition-colors duration-150 overflow-hidden">
         <div class="shrink-0 bg-amber-500 text-white p-4 sm:p-5 flex justify-between items-center transition-colors duration-150">
             <div>
-                <h3 class="text-xl font-black flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg> Fechamento Financeiro da O.S.</h3>
+                <h3 class="text-xl font-black flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg> Fechamento Financeiro da O.S.</h3>
             </div>
             <button onclick="document.getElementById('modal-fechamento-os').classList.add('hidden')" class="text-amber-200 hover:text-white text-3xl font-light transition-colors duration-150">&times;</button>
         </div>
@@ -507,6 +515,57 @@
                 <div class="md:col-span-4">
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Complemento</label>
                     <input type="text" id="cli-rapido-complemento" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] dark:text-white rounded-lg outline-none focus:border-[#1a428a] uppercase transition-colors duration-150">
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full bg-[#1a428a] hover:bg-blue-900 text-white font-black py-3 mt-2 rounded-xl shadow-md transition-all duration-150 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Salvar e Usar na O.S.
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE CADASTRO RÁPIDO DE VEÍCULO (DENTRO DA O.S)       -->
+<!-- ========================================================= -->
+<div id="modal-veiculo-rapido" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] hidden items-center justify-center p-4 transition-opacity duration-150">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-150 anima-fade relative">
+        <div class="bg-[#1a428a] dark:bg-[#081121] text-white p-4 flex justify-between items-center border-b border-blue-800 dark:border-gray-800">
+            <h3 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg> Cadastro Rápido de Veículo
+            </h3>
+            <button type="button" onclick="document.getElementById('modal-veiculo-rapido').classList.add('hidden'); document.getElementById('modal-veiculo-rapido').classList.remove('flex');" class="text-blue-200 hover:text-white text-2xl leading-none transition-colors">&times;</button>
+        </div>
+        
+        <form onsubmit="window.salvarVeiculoRapido(event)" class="p-5 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Placa</label>
+                    <input type="text" id="vei-rapido-placa" required oninput="window.mascaraPlacaVeiculoFormat(this)" maxlength="8" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-black text-[#1a428a] dark:text-[#3b82f6] focus:border-[#1a428a] uppercase text-center" placeholder="ABC1D23">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">UF</label>
+                    <input type="text" id="vei-rapido-uf" maxlength="2" oninput="this.value = this.value.replace(/[^A-Za-z]/g, '').toUpperCase()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] uppercase text-center" placeholder="MG">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Vincular a (Cliente)</label>
+                    <input type="text" id="vei-rapido-cliente" list="lista-clientes-rapido-vei" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] uppercase" placeholder="Buscar proprietário...">
+                    <datalist id="lista-clientes-rapido-vei"></datalist>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Marca</label>
+                    <input type="text" id="vei-rapido-marca" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] uppercase">
+                </div>
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Modelo</label>
+                    <input type="text" id="vei-rapido-modelo" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none text-sm font-bold focus:border-[#1a428a] uppercase">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Ano</label>
+                    <input type="text" id="vei-rapido-ano" maxlength="4" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] rounded-lg outline-none text-sm font-mono font-bold focus:border-[#1a428a] text-center">
                 </div>
             </div>
             
