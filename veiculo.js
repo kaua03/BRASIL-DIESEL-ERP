@@ -36,7 +36,7 @@ window.buscarPlacaNaApiPython = async function(placaLimpa) {
     if(window.mostrarToast) window.mostrarToast("Consultando dados no PlacaFipe...", "info");
 
     try {
-        const apiUrl = `http://127.0.0.1:8000/consulta/${placaLimpa}`; 
+        const apiUrl = `https://brasil-diesel-erp.onrender.com/consulta/${placaLimpa}`; 
         
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error("A API Python não respondeu.");
