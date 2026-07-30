@@ -1,19 +1,16 @@
-// funcionario.js
+// JS/modules/funcionario.js
 import { supabase } from './config.js';
 
 window.dadosFuncionarios = [];
 
 window.carregarFuncionarios = async function() {
     const tbody = document.getElementById('tabela-funcionarios');
-    
-    // Tática Sniper: Se a função chegou antes do HTML terminar de desenhar a tela, 
-    // ele recua, espera 100ms e ataca de novo.
     if (!tbody) {
         setTimeout(window.carregarFuncionarios, 100);
         return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500 font-bold">Consultando equipe...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-500 font-bold">Consultando equipe...</td></tr>';
 
     try {
         const { data, error } = await supabase.from('funcionarios').select('*').order('nome_completo');
@@ -23,7 +20,7 @@ window.carregarFuncionarios = async function() {
         window.renderizarFuncionarios();
     } catch (err) {
         console.error("ERRO AO CARREGAR FUNCIONÁRIOS:", err);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-red-500 font-bold">Erro de conexão com o banco.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-red-500 font-bold">Erro de conexão com o banco.</td></tr>';
     }
 };
 
@@ -32,15 +29,17 @@ window.renderizarFuncionarios = function() {
     if (!tbody) return;
 
     if (window.dadosFuncionarios.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-400 font-bold italic">Nenhum colaborador registrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-400 font-bold italic">Nenhum colaborador registrado.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = window.dadosFuncionarios.map(f => {
-        let corNivel = 'bg-gray-100 text-gray-800 border-gray-200';
-        if (f.nivel_acesso === 'Admin') corNivel = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200';
-        if (f.nivel_acesso === 'Recepção') corNivel = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
-        if (f.nivel_acesso === 'Operacional') corNivel = 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
+        // Cores táticas por Cargo
+        let corCargo = 'bg-gray-100 text-gray-800 border-gray-200';
+        if (f.cargo === 'Dono' || f.cargo === 'Analista') corCargo = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200';
+        else if (f.cargo === 'Mecânico RSP') corCargo = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
+        else if (f.cargo === 'Laboratório') corCargo = 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
+        else if (f.cargo === 'Tela') corCargo = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200';
 
         const corStatus = f.status === 'Ativo' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
 
@@ -48,13 +47,15 @@ window.renderizarFuncionarios = function() {
             <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-all">
                 <td class="p-4">
                     <span class="block font-black text-gray-800 dark:text-white uppercase">${f.nome_completo}</span>
-                    <span class="block text-xs text-gray-500 dark:text-gray-400">${f.email || 'Sem e-mail'}</span>
+                    <span class="block text-xs font-mono font-bold text-[#1a428a] dark:text-blue-400">@${f.nome_usuario || '---'}</span>
                 </td>
-                <td class="p-4 text-sm font-mono text-gray-600 dark:text-gray-400">${f.telefone || '---'}</td>
-                <td class="p-4 text-center font-bold text-gray-700 dark:text-gray-300 text-xs uppercase">${f.cargo}</td>
+                <td class="p-4 text-sm font-mono text-gray-600 dark:text-gray-400">
+                    <p>${f.telefone || '---'}</p>
+                    <p class="text-xs text-gray-400">${f.email || '---'}</p>
+                </td>
                 <td class="p-4 text-center">
-                    <span class="px-3 py-1 text-[10px] uppercase rounded-lg font-black tracking-wider border shadow-sm ${corNivel}">
-                        ${f.nivel_acesso}
+                    <span class="px-3 py-1 text-[10px] uppercase rounded-lg font-black tracking-wider border shadow-sm ${corCargo}">
+                        ${f.cargo}
                     </span>
                 </td>
                 <td class="p-4 text-center">
@@ -77,10 +78,11 @@ window.renderizarFuncionarios = function() {
 window.abrirModalFuncionario = function() {
     document.getElementById('func-id').value = '';
     document.getElementById('func-nome').value = '';
+    document.getElementById('func-username').value = '';
+    document.getElementById('func-senha').value = '';
     document.getElementById('func-email').value = '';
     document.getElementById('func-telefone').value = '';
     document.getElementById('func-cargo').value = 'Mecânico';
-    document.getElementById('func-nivel').value = 'Operacional';
     document.getElementById('func-status').value = 'Ativo';
     
     document.getElementById('titulo-modal-funcionario').innerText = 'CADASTRAR COLABORADOR';
@@ -94,10 +96,11 @@ window.editarFuncionario = function(id) {
 
     document.getElementById('func-id').value = f.id;
     document.getElementById('func-nome').value = f.nome_completo || '';
+    document.getElementById('func-username').value = f.nome_usuario || '';
+    document.getElementById('func-senha').value = ''; // Por segurança, a senha vem vazia (só atualiza se digitar)
     document.getElementById('func-email').value = f.email || '';
     document.getElementById('func-telefone').value = f.telefone || '';
     document.getElementById('func-cargo').value = f.cargo || 'Mecânico';
-    document.getElementById('func-nivel').value = f.nivel_acesso || 'Operacional';
     document.getElementById('func-status').value = f.status || 'Ativo';
 
     document.getElementById('titulo-modal-funcionario').innerText = 'EDITAR COLABORADOR';
@@ -109,16 +112,27 @@ window.salvarFuncionario = async function(event) {
     event.preventDefault();
     
     const id = document.getElementById('func-id').value;
-    const emailStr = document.getElementById('func-email').value.trim().toLowerCase();
+    const senhaBruta = document.getElementById('func-senha').value.trim();
     
     const payload = {
         nome_completo: document.getElementById('func-nome').value.trim().toUpperCase(),
-        email: emailStr,
+        nome_usuario: document.getElementById('func-username').value.trim().toLowerCase(),
+        email: document.getElementById('func-email').value.trim().toLowerCase(),
         telefone: document.getElementById('func-telefone').value.trim(),
         cargo: document.getElementById('func-cargo').value,
-        nivel_acesso: document.getElementById('func-nivel').value,
-        status: document.getElementById('func-status').value
+        status: document.getElementById('func-status').value,
+        nivel_acesso: document.getElementById('func-cargo').value // Mantemos replicado por segurança caso haja legado
     };
+
+    // 🔴 DEVSECOPS: Ofuscação Base64 Básica (Até implantarmos RPC / Edge Functions do Auth)
+    if (senhaBruta) {
+        payload.senha = btoa(senhaBruta); // Converte para string ofuscada
+    } else if (!id) {
+        // Se for cadastro novo, a senha é obrigatória
+        if(window.mostrarToast) window.mostrarToast("A senha é obrigatória para novos acessos.", "erro");
+        document.getElementById('func-senha').focus();
+        return;
+    }
 
     if(window.mostrarToast) window.mostrarToast("Salvando informações...", "info");
 
@@ -140,6 +154,11 @@ window.salvarFuncionario = async function(event) {
         
     } catch (err) {
         console.error("ERRO AO SALVAR:", err);
-        if(window.mostrarToast) window.mostrarToast("Erro ao salvar dados.", "erro");
+        // Tratamento elegante se o nome de usuário for duplicado
+        if (err.message && err.message.includes('unique constraint')) {
+            if(window.mostrarToast) window.mostrarToast("Este Nome de Usuário ou E-mail já existe!", "erro");
+        } else {
+            if(window.mostrarToast) window.mostrarToast("Erro ao salvar dados.", "erro");
+        }
     }
 };
