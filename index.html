@@ -141,7 +141,7 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Clientes</span>
                     </button>
                     
-                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="veiculos" title="Veículos">
+                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="veiculo" data-gatilho="carregarVeiculos" title="Veículos">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                         </div>
@@ -260,6 +260,7 @@
     <script type="module" src="lab.js"></script>
     <script type="module" src="receber.js"></script>
     <script type="module" src="pagar.js"></script>
+    <script type="module" src="veiculo.js"></script>
 
     <script>
         window.alternarModoNoturno = function() {
