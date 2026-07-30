@@ -62,8 +62,9 @@ window.mascaraPlaca = function(input, fromUserInput = true) {
 window.buscarDadosVeiculoNaOs = function(placaLimpa) {
     if (!window.listaVeiculosBdd) return;
     
-    // Procura o veículo na lista carregada do banco
-    const veiculoEncontrado = window.listaVeiculosBdd.find(v => v.placa === placaLimpa);
+    // Procura o veículo ignorando hífens e formatações na base de dados
+    const placaBusca = placaLimpa.replace(/[^A-Z0-9]/g, '');
+    const veiculoEncontrado = window.listaVeiculosBdd.find(v => String(v.placa).replace(/[^A-Z0-9]/g, '').toUpperCase() === placaBusca);
     
     if (veiculoEncontrado) {
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
@@ -72,6 +73,7 @@ window.buscarDadosVeiculoNaOs = function(placaLimpa) {
         setVal('modelo', veiculoEncontrado.modelo || '');
         setVal('marca', veiculoEncontrado.marca || '');
         setVal('ano', veiculoEncontrado.ano || '');
+        setVal('uf_veiculo', veiculoEncontrado.uf || '');
         
         // 2. A MÁGICA: Preenche o cliente automaticamente
         if (veiculoEncontrado.clientes && veiculoEncontrado.clientes.nome_razao) {
@@ -151,20 +153,24 @@ window.carregarDatalists = async function() {
         if (clientes) {
             window.listaClientesBdd = clientes;
             const dlClientes = document.getElementById('lista-clientes');
-            const dlClientesRapido = document.getElementById('lista-clientes-rapido-vei'); // Para o modal
+            const dlClientesRapido = document.getElementById('lista-clientes-rapido-vei');
             
             const opcoesHTML = clientes.map(c => `<option value="${c.nome_razao}">${c.cpf_cnpj || ''}</option>`).join('');
             if (dlClientes) dlClientes.innerHTML = opcoesHTML;
             if (dlClientesRapido) dlClientesRapido.innerHTML = opcoesHTML;
         }
 
-        // AGORA PUXAMOS O VEÍCULO E O CLIENTE DELE JUNTOS (Inner Join)
         const { data: veiculos } = await supabase.from('veiculos').select('*, clientes(nome_razao)').order('modelo');
         if (veiculos) {
             window.listaVeiculosBdd = veiculos;
-            const modelosUnicos = [...new Set(veiculos.map(v => v.modelo))];
+            // Preenche o datalist com "MODELO - PLACA" para facilitar a pesquisa visual
+            const opcoes = veiculos.map(v => {
+                const mod = String(v.modelo || '---').trim().toUpperCase();
+                const pla = window.formatarPlaca(v.placa);
+                return `<option value="${mod} - ${pla}">`;
+            });
             const dlVeiculos = document.getElementById('lista-veiculos');
-            if (dlVeiculos) dlVeiculos.innerHTML = modelosUnicos.map(m => `<option value="${m}">`).join('');
+            if (dlVeiculos) dlVeiculos.innerHTML = opcoes.join('');
         }
     } catch (e) { console.error("Erro ao carregar listas suspensas:", e); }
 };
@@ -188,19 +194,34 @@ window.preencherDadosClienteSelecionado = function(nomeDigitado) {
         if(clienteEncontrado.complemento) setVal('complemento', clienteEncontrado.complemento);
         if(clienteEncontrado.bairro) setVal('bairro', clienteEncontrado.bairro);
         if(clienteEncontrado.cidade) setVal('cidade', clienteEncontrado.cidade);
-        
-        if (window.mostrarToast) window.mostrarToast("Dados do cliente carregados!", "sucesso");
     }
 };
 
 document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'modelo') {
-        const mod = e.target.value.trim().toUpperCase();
-        if (window.listaVeiculosBdd && mod.length > 2) {
-            const achou = window.listaVeiculosBdd.find(v => v.modelo && String(v.modelo).toUpperCase() === mod);
-            if (achou && achou.marca) {
-                const elMarca = document.getElementById('marca');
-                if(elMarca) elMarca.value = String(achou.marca).toUpperCase();
+        const val = e.target.value.trim().toUpperCase();
+        
+        // Se o utilizador clicar na sugestão "MODELO - PLACA", nós isolamos a placa
+        if (val.includes(' - ')) {
+            const partes = val.split(' - ');
+            const placaExtraida = partes[partes.length - 1].trim(); 
+            
+            if (placaExtraida.length >= 7) {
+                const elPlaca = document.getElementById('placa');
+                if(elPlaca) {
+                    elPlaca.value = placaExtraida;
+                    // Ao aplicar a máscara e forçar true, ele dispara o gatilho automático de busca de dados!
+                    window.mascaraPlaca(elPlaca, true);
+                }
+            }
+        } else {
+            // Lógica antiga caso ele digite só o modelo sem placa (opcional de suporte)
+            if (window.listaVeiculosBdd && val.length > 2) {
+                const achou = window.listaVeiculosBdd.find(v => v.modelo && String(v.modelo).toUpperCase() === val);
+                if (achou && achou.marca) {
+                    const elMarca = document.getElementById('marca');
+                    if(elMarca) elMarca.value = String(achou.marca).toUpperCase();
+                }
             }
         }
     }
@@ -367,13 +388,11 @@ window.abrirCadastroRapidoVeiculo = function() {
     const form = document.querySelector('#modal-veiculo-rapido form');
     if(form) form.reset();
     
-    // Puxar a placa que o usuário já estava a tentar digitar
     const placaDigitada = document.getElementById('placa').value;
     if(placaDigitada) {
         document.getElementById('vei-rapido-placa').value = placaDigitada;
     }
 
-    // Se ele já tiver escolhido um cliente na O.S, sugere o vínculo
     const clienteOS = document.getElementById('cliente').value;
     if(clienteOS) {
         document.getElementById('vei-rapido-cliente').value = clienteOS;
@@ -393,7 +412,6 @@ window.salvarVeiculoRapido = async function(e) {
         document.getElementById('vei-rapido-placa').focus(); return;
     }
 
-    // Verificar se a placa já existe
     const { data: duplicados } = await supabase.from('veiculos').select('id').eq('placa', placaLimpa);
     if (duplicados && duplicados.length > 0) {
         if (window.mostrarToast) window.mostrarToast("Erro: Placa já cadastrada no sistema!", "erro");
@@ -426,13 +444,13 @@ window.salvarVeiculoRapido = async function(e) {
         
         await window.carregarDatalists();
         
-        // Auto-preencher na O.S
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) { el.value = val; el.dispatchEvent(new Event('input')); } };
         setVal('placa', payload.placa);
-        window.mascaraPlaca(document.getElementById('placa'), false); // formata o visual
+        window.mascaraPlaca(document.getElementById('placa'), false); 
         setVal('marca', payload.marca);
         setVal('modelo', payload.modelo);
         setVal('ano', payload.ano);
+        setVal('uf_veiculo', payload.uf);
         
         document.getElementById('modal-veiculo-rapido').classList.add('hidden');
         document.getElementById('modal-veiculo-rapido').classList.remove('flex');
@@ -441,7 +459,6 @@ window.salvarVeiculoRapido = async function(e) {
         if(window.mostrarToast) window.mostrarToast("Erro ao cadastrar veículo.", "erro");
     }
 };
-
 
 // =========================================================================
 // 3. MODO LEITURA E CORES DE STATUS
@@ -462,6 +479,7 @@ window.alternarModoLeitura = function(ativo) {
     const cabecalho = document.getElementById('cabecalho-modal-os');
     const painelTopoResumo = document.getElementById('painel-topo-resumo');
     const btnAddCliente = document.getElementById('btn-add-cliente'); 
+    const btnAddVeiculo = document.getElementById('btn-add-veiculo'); // Mapeado para ocultação
 
     if (ativo) {
         if (btnFecharOs) btnFecharOs.classList.add('hidden');
@@ -469,6 +487,7 @@ window.alternarModoLeitura = function(ativo) {
         if (painelAdicionar) painelAdicionar.classList.add('hidden');
         if (painelEdicao) painelEdicao.classList.add('hidden');
         if (btnAddCliente) btnAddCliente.classList.add('hidden');
+        if (btnAddVeiculo) btnAddVeiculo.classList.add('hidden');
         if (painelTopoResumo) painelTopoResumo.classList.remove('hidden');
         if (cabecalho) { cabecalho.classList.remove('bg-[#1a428a]'); cabecalho.classList.add('bg-gray-700'); }
     } else {
@@ -477,6 +496,7 @@ window.alternarModoLeitura = function(ativo) {
         if (painelAdicionar) painelAdicionar.classList.remove('hidden');
         if (painelEdicao) painelEdicao.classList.remove('hidden');
         if (btnAddCliente) btnAddCliente.classList.remove('hidden');
+        if (btnAddVeiculo) btnAddVeiculo.classList.remove('hidden');
         if (painelTopoResumo) painelTopoResumo.classList.add('hidden');
         if (cabecalho) { cabecalho.classList.add('bg-[#1a428a]'); cabecalho.classList.remove('bg-gray-700'); }
     }
@@ -1773,5 +1793,6 @@ window.preencherVeiculoAvulso = function() {
     setVal('modelo', 'VENDA BALCÃO / AVULSA');
     setVal('marca', 'N/A');
     setVal('ano', new Date().getFullYear());
+    setVal('uf_veiculo', 'N/A');
     if(window.mostrarToast) window.mostrarToast("Modo O.S. Avulsa ativado!", "info");
 };
