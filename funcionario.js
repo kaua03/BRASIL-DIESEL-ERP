@@ -1,11 +1,17 @@
-// JS/modules/funcionario.js
+// funcionario.js
 import { supabase } from './config.js';
 
 window.dadosFuncionarios = [];
 
 window.carregarFuncionarios = async function() {
     const tbody = document.getElementById('tabela-funcionarios');
-    if (!tbody) return;
+    
+    // Tática Sniper: Se a função chegou antes do HTML terminar de desenhar a tela, 
+    // ele recua, espera 100ms e ataca de novo.
+    if (!tbody) {
+        setTimeout(window.carregarFuncionarios, 100);
+        return;
+    }
 
     tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500 font-bold">Consultando equipe...</td></tr>';
 
@@ -31,13 +37,11 @@ window.renderizarFuncionarios = function() {
     }
 
     tbody.innerHTML = window.dadosFuncionarios.map(f => {
-        // Cores táticas para Nível de Acesso
         let corNivel = 'bg-gray-100 text-gray-800 border-gray-200';
         if (f.nivel_acesso === 'Admin') corNivel = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200';
         if (f.nivel_acesso === 'Recepção') corNivel = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200';
         if (f.nivel_acesso === 'Operacional') corNivel = 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200';
 
-        // Cores para Status
         const corStatus = f.status === 'Ativo' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
 
         return `
@@ -120,12 +124,10 @@ window.salvarFuncionario = async function(event) {
 
     try {
         if (id) {
-            // Edição
             const { error } = await supabase.from('funcionarios').update(payload).eq('id', id);
             if (error) throw error;
             if(window.mostrarToast) window.mostrarToast("Colaborador atualizado!", "sucesso");
         } else {
-            // Criação
             payload.data_admissao = new Date().toISOString().split('T')[0];
             const { error } = await supabase.from('funcionarios').insert([payload]);
             if (error) throw error;
