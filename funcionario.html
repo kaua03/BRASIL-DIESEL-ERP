@@ -1,0 +1,98 @@
+<!-- views/nav/funcionario.html -->
+<div class="fade-in space-y-6 flex flex-col h-full">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300 shrink-0">
+        <div>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]">Equipe & Acessos</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Gestão de funcionários, cargos e permissões do sistema.</p>
+        </div>
+        <button onclick="window.abrirModalFuncionario()" class="bg-[#1a428a] hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105 duration-150 flex items-center gap-2 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            Novo Colaborador
+        </button>
+    </div>
+
+    <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300 flex-1">
+        <div class="overflow-x-auto h-full">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                        <th class="p-4 font-black">Colaborador</th>
+                        <th class="p-4 font-black">Contato</th>
+                        <th class="p-4 font-black text-center">Cargo</th>
+                        <th class="p-4 font-black text-center">Nível de Acesso</th>
+                        <th class="p-4 font-black text-center">Status</th>
+                        <th class="p-4 font-black text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-funcionarios" class="divide-y divide-gray-100 dark:divide-gray-800 transition-colors">
+                    <tr><td colspan="6" class="text-center p-8 text-gray-500 dark:text-gray-400 font-bold">Aguardando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE FUNCIONÁRIO -->
+<div id="modal-funcionario" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col border border-transparent dark:border-gray-700 overflow-hidden text-gray-800 dark:text-white transition-all duration-300 anima-fade relative">
+        <div class="bg-[#1a428a] dark:bg-[#081121] text-white p-5 flex justify-between items-center border-b border-blue-800 dark:border-gray-800">
+            <h3 id="titulo-modal-funcionario" class="text-lg font-black tracking-widest uppercase flex items-center gap-2">
+                Cadastrar Colaborador
+            </h3>
+            <button type="button" onclick="document.getElementById('modal-funcionario').classList.add('hidden'); document.getElementById('modal-funcionario').classList.remove('flex');" class="text-blue-200 hover:text-white text-3xl leading-none transition-colors">&times;</button>
+        </div>
+        
+        <form onsubmit="window.salvarFuncionario(event)" class="p-6 space-y-6">
+            <input type="hidden" id="func-id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nome Completo</label>
+                    <input type="text" id="func-nome" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none focus:border-[#1a428a] font-bold text-sm uppercase transition-colors">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">E-mail (Para Login)</label>
+                    <input type="email" id="func-email" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none focus:border-[#1a428a] font-bold text-sm transition-colors">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Telefone / WhatsApp</label>
+                    <input type="text" id="func-telefone" oninput="window.mascaraCelular(this)" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e293b] rounded-lg outline-none focus:border-[#1a428a] font-mono text-sm transition-colors" placeholder="(00) 00000-0000">
+                </div>
+
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5 p-4 bg-gray-50 dark:bg-[#1e293b]/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Cargo</label>
+                        <select id="func-cargo" required class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] rounded-lg outline-none focus:border-[#1a428a] font-bold text-sm uppercase transition-colors cursor-pointer">
+                            <option value="Mecânico">Mecânico</option>
+                            <option value="Técnico de Laboratório">Técnico de Laboratório</option>
+                            <option value="Recepcionista">Recepcionista / Orçamentista</option>
+                            <option value="Gerente">Gerente</option>
+                            <option value="Administrador">Administrador Geral</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1 text-[#1a428a] dark:text-blue-400">Nível de Acesso</label>
+                        <select id="func-nivel" required class="w-full px-3 py-2.5 border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-[#1a428a] dark:text-blue-400 rounded-lg outline-none focus:border-[#1a428a] font-black text-sm uppercase transition-colors cursor-pointer shadow-inner">
+                            <option value="Operacional">Operacional (Apenas Pátio/Lab)</option>
+                            <option value="Recepção">Recepção (Cria OS, sem Financeiro)</option>
+                            <option value="Admin">Admin (Acesso Total)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Status</label>
+                        <select id="func-status" class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f172a] rounded-lg outline-none focus:border-[#1a428a] font-bold text-sm uppercase transition-colors cursor-pointer">
+                            <option value="Ativo" class="text-green-600">Ativo na Empresa</option>
+                            <option value="Inativo" class="text-red-600">Inativo / Desligado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg transition-all duration-150 uppercase tracking-widest flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Salvar Colaborador
+            </button>
+        </form>
+    </div>
+</div>
