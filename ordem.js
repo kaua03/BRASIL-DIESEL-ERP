@@ -54,10 +54,17 @@ window.mascaraCpfCnpj = function(input) {
     }
 };
 
+// 🔴 MÁSCARA INTELIGENTE CORRIGIDA (DETETA FIXO OU CELULAR) 🔴
 window.mascaraCelular = function(input) {
     if(!input) return;
     let v = input.value.replace(/\D/g, "").substring(0, 11);
-    v = v.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
+    if (v.length > 10) { 
+        v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+        v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    } else { 
+        v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    }
     input.value = v;
 };
 
@@ -256,13 +263,12 @@ window.salvarClienteRapido = async function(e) {
     
     const docFormatado = getVal('cli-rapido-doc').trim();
 
-    // 🔴 RADAR DE DUPLICIDADE (CADASTRO RÁPIDO) 🔴
     if (docFormatado) {
         const { data: duplicados } = await supabase.from('clientes').select('id').eq('cpf_cnpj', docFormatado);
         if (duplicados && duplicados.length > 0) {
             if (window.mostrarToast) window.mostrarToast("Erro: Este CPF/CNPJ já existe na base!", "erro");
             document.getElementById('cli-rapido-doc').focus();
-            return; // Bloqueia a inserção!
+            return; 
         }
     }
 
@@ -873,7 +879,7 @@ window.carregarOrdensServico = async function(isSilencioso = false) {
                             </button>
 
                             <div id="menu-${os.id}" class="menu-acao-os hidden fixed w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 text-left" style="min-width: 180px; z-index: 99999;">
-                                <button type="button" onclick="window.imprimirOsDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
+                                <button type="button" onclick="window.imprimirOsDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Imprimir O.S</button>
                                 <button type="button" onclick="window.salvarComoPdfDaLista(event, ${os.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Baixar PDF</button>
                                 
                                 <button type="button" onclick="window.enviarWhatsAppDaLista(event, ${os.id}, '${os.celular || ''}')" class="w-full text-left px-4 py-2 text-sm text-[#25D366] hover:bg-green-50 dark:hover:bg-green-900/20 font-bold flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 mt-1">
