@@ -52,6 +52,7 @@ window.mascaraCep = function(input) {
     input.value = v;
 };
 
+// Motor Universal de Busca de CEP
 window.consultarCep = async function(input, prefixo = '') {
     if(!input) return;
     let cep = input.value.replace(/\D/g, '');
@@ -96,9 +97,10 @@ window.buscarCnpjNaReceita = async function(cnpjLimpo) {
         if (data.cep) {
             const cepInput = document.getElementById('cli-cep');
             cepInput.value = String(data.cep).replace(/\D/g, '').replace(/^(\d{5})(\d{3})$/, "$1-$2");
-            window.consultarCep(cepInput, 'cli-'); 
+            window.consultarCep(cepInput, 'cli-'); // Aciona o gatilho do CEP para preencher o resto!
         }
         
+        // Complemento específico da empresa
         if(data.numero) document.getElementById('cli-numero_end').value = data.numero;
         if(data.complemento) document.getElementById('cli-complemento').value = data.complemento;
 
@@ -265,6 +267,7 @@ window.renderizarClientes = function() {
     }).join('');
 };
 
+// 🔴 O NOVO CÉREBRO DO CRM 🔴
 window.abrirPerfilCrmCliente = async function(id) {
     const cli = window.dadosClientesGerais.find(c => c.id === id);
     if (!cli) return;
@@ -285,22 +288,21 @@ window.abrirPerfilCrmCliente = async function(id) {
     document.getElementById('modal-perfil-cliente').classList.add('flex');
 
     try {
+        // 1. Busca as O.S. pelo NOME EXATO DO CLIENTE (que é o que a O.S. salva)
+        const nomeParaBusca = String(cli.nome_razao).trim().toUpperCase();
+        
         const { data: osData, error: osError } = await supabase
             .from('ordens_servico')
-            .select('numero_os, valor_total, created_at, status')
-            .eq('cliente_id', id)
-            .order('created_at', { ascending: false })
-            .limit(10); 
+            .select('numero_os, total_geral, created_at, situacao, placa, marca, modelo, ano')
+            .eq('cliente', nomeParaBusca)
+            .order('created_at', { ascending: false });
 
-        const { data: veiData, error: veiError } = await supabase
-            .from('veiculos')
-            .select('placa, marca, modelo, ano')
-            .eq('cliente_id', id);
-
-        if (!osError && osData) {
+        if (!osError && osData && osData.length > 0) {
             const totalOs = osData.length;
             let ltv = 0;
-            osData.forEach(os => ltv += Number(os.valor_total || 0));
+            
+            // Calcula o Lifetime Value (LTV) usando a coluna certa (total_geral)
+            osData.forEach(os => ltv += Number(os.total_geral || 0));
             
             const ticketMedio = totalOs > 0 ? (ltv / totalOs) : 0;
 
@@ -308,49 +310,63 @@ window.abrirPerfilCrmCliente = async function(id) {
             document.getElementById('crm-ltv').innerText = `R$ ${ltv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             document.getElementById('crm-ticket').innerText = `R$ ${ticketMedio.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             
-            if (totalOs > 0 && osData[0].created_at) {
+            // Última visita
+            if (osData[0].created_at) {
                 const ultima = new Date(osData[0].created_at);
                 document.getElementById('crm-ultima-visita').innerText = ultima.toLocaleDateString('pt-BR');
-            } else {
-                document.getElementById('crm-ultima-visita').innerText = "Nenhuma O.S.";
             }
 
-            if(totalOs > 0) {
-                document.getElementById('crm-lista-os').innerHTML = osData.map(os => {
-                    const dataOs = new Date(os.created_at).toLocaleDateString('pt-BR');
-                    const valFmt = Number(os.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    return `
-                        <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <div>
-                                <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">O.S. #${String(os.numero_os).padStart(4, '0')}</span>
-                                <span class="block text-[9px] text-gray-500 uppercase mt-0.5">${dataOs} | Status: ${os.status}</span>
-                            </div>
-                            <span class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">R$ ${valFmt}</span>
-                        </li>
-                    `;
-                }).join('');
+            // Renderiza Lista de O.S. (Top 10)
+            const ultimasDezOs = osData.slice(0, 10);
+            document.getElementById('crm-lista-os').innerHTML = ultimasDezOs.map(os => {
+                const dataOs = new Date(os.created_at).toLocaleDateString('pt-BR');
+                const valFmt = Number(os.total_geral || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                return `
+                    <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div>
+                            <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">O.S. #${String(os.numero_os).padStart(4, '0')}</span>
+                            <span class="block text-[9px] text-gray-500 uppercase mt-0.5">${dataOs} | Status: ${os.situacao}</span>
+                        </div>
+                        <span class="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">R$ ${valFmt}</span>
+                    </li>
+                `;
+            }).join('');
+
+            // 2. Extração Inteligente da Frota
+            // Como ainda não temos a tabela Veículos atrelada por ID, o sistema lê as O.S. antigas
+            // e descobre quais carros este cliente já arranjou na oficina!
+            let frotaMap = new Map();
+            osData.forEach(os => {
+                if (os.placa && os.placa.trim().toUpperCase() !== 'AVULSA') {
+                    if (!frotaMap.has(os.placa)) {
+                        frotaMap.set(os.placa, { placa: os.placa, marca: os.marca, modelo: os.modelo, ano: os.ano });
+                    }
+                }
+            });
+            
+            const frotaUnica = Array.from(frotaMap.values());
+            
+            if (frotaUnica.length > 0) {
+                document.getElementById('crm-lista-veiculos').innerHTML = frotaUnica.map(v => `
+                    <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div>
+                            <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">${v.marca || ''} ${v.modelo || 'VEÍCULO DESCONHECIDO'}</span>
+                            <span class="block text-[9px] text-gray-500 uppercase mt-0.5">Ano: ${v.ano || '---'}</span>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono font-black text-[#1a428a] dark:text-blue-400 text-xs tracking-widest">${window.formatarPlaca(v.placa)}</span>
+                    </li>
+                `).join('');
             } else {
-                document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Cliente ainda não abriu Ordens de Serviço.</li>';
+                document.getElementById('crm-lista-veiculos').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Nenhum veículo registado nas O.S.</li>';
             }
+
         } else {
+            // Se o cliente nunca fez uma O.S.
             document.getElementById('crm-ltv').innerText = "R$ 0,00";
             document.getElementById('crm-ticket').innerText = "R$ 0,00";
             document.getElementById('crm-ultima-visita').innerText = "---";
-            document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Módulo de O.S. não conectado.</li>';
-        }
-
-        if (!veiError && veiData && veiData.length > 0) {
-            document.getElementById('crm-lista-veiculos').innerHTML = veiData.map(v => `
-                <li class="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <div>
-                        <span class="block font-black text-gray-800 dark:text-white text-xs uppercase">${v.marca} ${v.modelo}</span>
-                        <span class="block text-[9px] text-gray-500 uppercase mt-0.5">Ano: ${v.ano || '---'}</span>
-                    </div>
-                    <span class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono font-black text-[#1a428a] dark:text-blue-400 text-xs tracking-widest">${v.placa}</span>
-                </li>
-            `).join('');
-        } else {
-            document.getElementById('crm-lista-veiculos').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Nenhum veículo vinculado a este cliente.</li>';
+            document.getElementById('crm-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Cliente ainda não abriu Ordens de Serviço.</li>';
+            document.getElementById('crm-lista-veiculos').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Nenhum veículo registado.</li>';
         }
 
     } catch(e) {
@@ -442,17 +458,16 @@ window.salvarCliente = async function(event) {
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
     const docFormatado = getVal('cli-doc').trim();
 
-    // 🔴 RADAR DE DUPLICIDADE 🔴
     if (docFormatado) {
         let query = supabase.from('clientes').select('id').eq('cpf_cnpj', docFormatado);
         if (id) {
-            query = query.neq('id', id); // Se for edição, ignora a si mesmo
+            query = query.neq('id', id); 
         }
         const { data: duplicados, error: errBusca } = await query;
         if (duplicados && duplicados.length > 0) {
             if (window.mostrarToast) window.mostrarToast("Erro: Este CPF/CNPJ já está cadastrado!", "erro");
             document.getElementById('cli-doc').focus();
-            return; // Aborta a operação!
+            return; 
         }
     }
 
@@ -517,4 +532,11 @@ window.excluirCliente = async function(id, btnElement) {
         if (window.mostrarToast) window.mostrarToast("Falha. Cliente pode estar atrelado a uma O.S.", "erro");
         window.carregarClientes(true);
     }
+};
+
+window.formatarPlaca = function(placa) {
+    if (!placa) return '';
+    let p = String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    if (/^[A-Z]{3}[0-9]{4}$/.test(p)) return p.substring(0, 3) + '-' + p.substring(3, 7);
+    return p;
 };
