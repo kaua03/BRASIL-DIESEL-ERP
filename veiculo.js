@@ -10,17 +10,21 @@ const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
+window.formatarPlacaParaBusca = function(placa) {
+    if (!placa) return '';
+    return String(placa).toUpperCase().replace(/[^A-Z0-9-]/g, '');
+};
+
 window.mascaraPlacaVeiculo = function(input, fromUserInput = true) {
     let p = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7);
     
-    // Formata visualmente se bater o padrão antigo
     if (p.length === 7) {
         if (/^[A-Z]{3}[0-9]{4}$/.test(p)) {
             input.value = p.substring(0, 3) + '-' + p.substring(3, 7);
         } else {
-            input.value = p; // Formato Mercosul
+            input.value = p; 
         }
-        
+
         if (fromUserInput) {
             window.buscarPlacaNaApiPython(p);
         }
@@ -44,7 +48,6 @@ window.buscarPlacaNaApiPython = async function(placaLimpa) {
         const data = await response.json();
         if (data.erro) throw new Error(data.erro);
 
-        // Preenchimento Mágico (Idêntico ao da Receita Federal)
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
         
         if(data.marca) setVal('vei-marca', data.marca);
@@ -57,10 +60,8 @@ window.buscarPlacaNaApiPython = async function(placaLimpa) {
 
     } catch (error) {
         console.error("FALHA NA BUSCA DE PLACA:", error);
-        // O FALLBACK MANUAL: Se der erro, só avisa e libera a tela para digitação manual!
         if(window.mostrarToast) window.mostrarToast("Placa não encontrada. Preencha manualmente.", "aviso");
     } finally {
-        // Desliga o loading para liberar os campos
         if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
     }
 };
@@ -102,7 +103,6 @@ window.carregarVeiculos = async function(isSilencioso = false) {
     window.carregarDropdownClientesParaVeiculos();
 
     try {
-        // Traz os veículos com os dados do cliente embutidos (Inner Join inteligente do Supabase)
         const { data, error } = await supabase
             .from('veiculos')
             .select('*, clientes(nome_razao)')
@@ -211,8 +211,12 @@ window.abrirModalEditarVeiculo = function(id) {
     if (!v) return;
 
     document.getElementById('vei-id').value = v.id;
-    document.getElementById('vei-placa').value = v.placa || '';
-    document.getElementById('vei-uf').value = v.uf || '';
+    
+    const inputP = document.getElementById('vei-placa');
+    inputP.value = v.placa || '';
+    window.mascaraPlacaVeiculo(inputP, false); 
+    
+    document.getElementById('vei-uf').value = v.uf || ''; 
     document.getElementById('vei-marca').value = v.marca || '';
     document.getElementById('vei-modelo').value = v.modelo || '';
     document.getElementById('vei-ano').value = v.ano || '';
@@ -220,7 +224,6 @@ window.abrirModalEditarVeiculo = function(id) {
     document.getElementById('vei-motorizacao').value = v.motorizacao || '';
     document.getElementById('vei-obs').value = v.observacoes || '';
     
-    // Injeta o nome do cliente no input se existir vínculo
     if (v.clientes && v.clientes.nome_razao) {
         document.getElementById('vei-cliente').value = v.clientes.nome_razao;
     } else {
@@ -248,7 +251,6 @@ window.salvarVeiculo = async function(event) {
         document.getElementById('vei-placa').focus(); return;
     }
 
-    // Procura o ID do cliente digitado
     const clienteDigitado = getVal('vei-cliente').trim().toUpperCase();
     let clienteIdEncontrado = null;
     if (clienteDigitado) {
@@ -256,12 +258,10 @@ window.salvarVeiculo = async function(event) {
         if (achou) {
             clienteIdEncontrado = achou.id;
         } else {
-            // Cliente digitado mas não está no banco (Deseja bloquear ou permitir? Melhor permitir como Avulso e avisar)
             if(window.mostrarToast) window.mostrarToast("Cliente não encontrado. Veículo salvo como Avulso.", "aviso");
         }
     }
 
-    // 🔴 RADAR DE DUPLICIDADE DE PLACA 🔴
     let query = supabase.from('veiculos').select('id').eq('placa', placaLimpa);
     if (id) query = query.neq('id', id);
     
@@ -330,9 +330,7 @@ window.excluirVeiculo = async function(id, btnElement) {
     }
 };
 
-// 🔴 O CÉREBRO MÉDICO DO CARRO (Raio-X de O.S da Placa)
 window.abrirPerfilCrmVeiculo = async function(placaBusca, modeloStr, clienteStr) {
-    
     document.getElementById('vei-perfil-placa').innerText = window.formatarPlacaParaBusca(placaBusca);
     document.getElementById('vei-perfil-modelo').innerText = modeloStr;
     document.getElementById('vei-perfil-dono').innerText = `Guardião: ${clienteStr}`;
@@ -346,14 +344,12 @@ window.abrirPerfilCrmVeiculo = async function(placaBusca, modeloStr, clienteStr)
     document.getElementById('modal-perfil-veiculo').classList.add('flex');
 
     try {
-        // A INTELIGÊNCIA: Nós procuramos na tabela de O.S. tudo o que tem esta placa,
-        // INDEPENDENTEMENTE de quem foi o cliente que abriu a O.S.!
         const placaLimpaBusca = placaBusca.replace(/[^A-Za-z0-9]/g, '');
 
         const { data: osData, error: osError } = await supabase
             .from('ordens_servico')
             .select('numero_os, total_geral, data_hora, situacao, cliente')
-            .ilike('veiculo_placa', `%${placaLimpaBusca}%`) // Nossa O.S. salva a placa limpa lá
+            .ilike('veiculo_placa', `%${placaLimpaBusca}%`) 
             .order('id', { ascending: false });
 
         if (!osError && osData && osData.length > 0) {
@@ -389,7 +385,6 @@ window.abrirPerfilCrmVeiculo = async function(placaBusca, modeloStr, clienteStr)
             }).join('');
 
         } else {
-            // Se o carro nunca pisou na oficina
             document.getElementById('vei-perfil-gasto').innerText = "R$ 0,00";
             document.getElementById('vei-perfil-ultima').innerText = "---";
             document.getElementById('vei-perfil-lista-os').innerHTML = '<li class="p-4 text-center text-xs font-bold text-gray-400">Este veículo ainda não possui histórico de O.S.</li>';
