@@ -28,6 +28,16 @@
         /* Acelerador da animação antiga (para garantir velocidade global) */
         @keyframes fadeSuave { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .anima-fade { animation: fadeSuave 0.15s ease-in-out forwards; }
+        
+        /* Ocultar barra de rolagem preservando o scroll */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Para os modais/tabelas se quiser depois, custom scrollbar fininha */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 3px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.5); }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -62,8 +72,8 @@
         <!-- CABEÇALHO COM A NOVA LOGO "B" -->
         <header class="bg-[#1a428a] dark:bg-[#0b1b3b] text-white px-6 py-3 shadow-md flex justify-between items-center z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-[#0f2757] border border-blue-400/20 rounded-xl flex items-center justify-center shadow-inner">
-                    <span class="text-[#facc15] font-black text-lg italic">B</span>
+                <div class="w-9 h-9 bg-[#0f2757] border border-blue-400/20 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+                    <span class="text-[#facc15] font-black text-lg italic leading-none pt-0.5">B</span>
                 </div>
                 <h1 class="text-xl font-black italic text-[#facc15]">BRASIL DIESEL <span class="text-sm font-normal text-white not-italic uppercase tracking-widest ml-1">ERP</span></h1>
             </div>
@@ -73,111 +83,111 @@
                     <p id="usuario-logado" class="text-sm font-bold leading-none uppercase text-white">Utilizador</p>
                     <p id="cargo-logado" class="text-xs text-[#facc15] font-mono leading-none mt-1">Cargo</p>
                 </div>
-                <button id="btn-sair" onclick="window.fazerLogout()" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 px-4 py-2 rounded text-xs font-bold shadow transition-colors text-white">Sair</button>
+                <button id="btn-sair" onclick="window.fazerLogout()" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 px-4 py-2 rounded text-xs font-bold shadow transition-colors text-white shrink-0">Sair</button>
             </div>
         </header>
 
         <div class="flex flex-1 overflow-hidden">
 
-            <!-- SIDEBAR DINÂMICA (ALINHAMENTO MATEMÁTICO PERFEITO) -->
-            <aside id="sidebar" class="group/sidebar bg-[#0f2757] dark:bg-[#081121] text-white w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col shadow-xl z-50 overflow-visible border-r border-transparent dark:border-gray-800 flex-shrink-0">
+            <!-- SIDEBAR DINÂMICA (ALINHAMENTO MATEMÁTICO PERFEITO E SCROLLBAR OCULTA) -->
+            <aside id="sidebar" class="group/sidebar bg-[#0f2757] dark:bg-[#081121] text-white w-[72px] hover:w-64 transition-all duration-300 ease-in-out flex flex-col shadow-xl z-50 overflow-hidden border-r border-transparent dark:border-gray-800 shrink-0">
                 
-                <div class="p-4 border-b border-blue-900/50 dark:border-gray-800 flex items-center h-[60px]">
+                <div class="p-4 border-b border-blue-900/50 dark:border-gray-800 flex items-center justify-center group-hover/sidebar:justify-start h-[60px]">
                     <p class="text-[10px] font-black uppercase tracking-wider text-gray-400 opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap ml-2">Menu Principal</p>
                 </div>
 
-                <nav class="flex-1 py-4 space-y-2 px-3 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                <nav class="flex-1 py-4 space-y-2 px-2 overflow-y-auto hide-scrollbar overflow-x-hidden">
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="patio" data-gatilho="carregarPatio" title="Pátio">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Pátio</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="ordem" data-gatilho="carregarOrdensServico" title="Ordem de Serviço">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Ordem de Serviço</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="lab" data-gatilho="carregarLaboratorio" title="Laboratório">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Laboratório</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="itens" title="Itens">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Itens</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="estoque" title="Estoque">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Estoque</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="cliente" data-gatilho="carregarClientes" title="Clientes">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Clientes</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="veiculos" title="Veículos">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Veículos</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="funcionario" data-gatilho="carregarFuncionarios" title="Funcionários">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Funcionários</span>
                     </button>
 
-                    <div class="mt-4 mb-1"></div>
+                    <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div>
 
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-emerald-900/50 hover:text-emerald-400 transition-all text-sm group/btn" data-pasta="nav" data-tela="receber" data-gatilho="carregarContasReceber" title="Contas a Receber">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">A Receber</span>
                     </button>
 
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-red-900/50 hover:text-red-400 transition-all text-sm group/btn" data-pasta="nav" data-tela="pagar" data-gatilho="carregarContasPagar" title="Contas a Pagar">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">A Pagar</span>
                     </button>
 
-                    <div class="mt-4 mb-1"></div>
+                    <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div>
 
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="dashboard" data-gatilho="carregarDashboard" title="Dashboard">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Dashboard</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="PainelMaster" title="Painel MASTER">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Painel MASTER</span>
                     </button>
                     
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="configuracoes" title="Configurações">
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </div>
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Configurações</span>
@@ -185,10 +195,10 @@
                 </nav>
 
                 <!-- BOTÃO DE MODO NOTURNO -->
-                <div class="px-3 pb-4 border-t border-blue-900/50 dark:border-gray-800 pt-3">
+                <div class="px-2 pb-4 border-t border-blue-900/50 dark:border-gray-800 pt-3">
                     <button onclick="window.alternarModoNoturno()" class="group/theme flex items-center p-2 w-full text-left text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white rounded-xl transition-all duration-300 font-bold border border-transparent dark:border-gray-700 shadow-sm overflow-hidden" title="Alternar Tema">
                         
-                        <div class="w-10 h-10 flex items-center justify-center shrink-0 relative">
+                        <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 relative transition-transform">
                             <!-- Lua -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-6 w-6 transition-all duration-500 transform rotate-0 scale-100 opacity-100 dark:-rotate-90 dark:scale-0 dark:opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
