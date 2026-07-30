@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Brasil Diesel - ERP</title>
-    <!-- FAVICON EXCLUSIVO (Letra B Amarela com Fundo Azul e Bordas Arredondadas) -->
+    <!-- FAVICON EXCLUSIVO -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%231a428a'/><text x='50%' y='54%' font-size='65' font-weight='900' font-family='Arial, sans-serif' fill='%23facc15' text-anchor='middle' dominant-baseline='middle'>B</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,23 +18,18 @@
     </script>
 
     <style>
-        /* Acelerador de Ecrãs (DevSecOps) */
         .fade-in { animation: fadeIn 0.15s ease-in-out forwards !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Acelerador de Toasts / Alertas */
         .toast-enter { animation: toastIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; }
         @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* Acelerador da animação antiga (para garantir velocidade global) */
         @keyframes fadeSuave { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .anima-fade { animation: fadeSuave 0.15s ease-in-out forwards; }
         
-        /* Ocultar barra de rolagem preservando o scroll */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Para os modais/tabelas se quiser depois, custom scrollbar fininha */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 3px; }
@@ -44,10 +39,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
-<!-- O BODY AGORA ACEITA CORES NOTURNAS -->
 <body class="bg-gray-100 h-screen overflow-hidden text-gray-800 dark:bg-[#0f172a] dark:text-gray-200 transition-colors duration-300">
 
-    <!-- CAIXA 1: TELA DE LOGIN -->
     <div id="tela-login" class="flex items-center justify-center h-full bg-[#0f2757] dark:bg-[#081121] transition-colors duration-500">
         <div class="bg-white dark:bg-[#1e293b] p-8 rounded-xl shadow-lg w-full max-w-sm text-center border border-transparent dark:border-gray-700 transition-colors duration-300">
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] mb-6">BRASIL <span class="text-[#facc15]">DIESEL</span></h2>
@@ -67,10 +60,8 @@
         </div>
     </div>
 
-    <!-- CAIXA 2: PAINEL DO SISTEMA -->
     <div id="tela-erp" class="hidden h-full flex-col anima-fade">
 
-        <!-- CABEÇALHO COM A NOVA LOGO "B" -->
         <header class="bg-[#1a428a] dark:bg-[#0b1b3b] text-white px-6 py-3 shadow-md flex justify-between items-center z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-[#0f2757] border border-blue-400/20 rounded-xl flex items-center justify-center shadow-inner shrink-0">
@@ -90,7 +81,6 @@
 
         <div class="flex flex-1 overflow-hidden">
 
-            <!-- SIDEBAR DINÂMICA (ALINHAMENTO MATEMÁTICO PERFEITO E SCROLLBAR OCULTA) -->
             <aside id="sidebar" class="group/sidebar bg-[#0f2757] dark:bg-[#081121] text-white w-[72px] hover:w-64 transition-all duration-300 ease-in-out flex flex-col shadow-xl z-50 overflow-hidden border-r border-transparent dark:border-gray-800 shrink-0">
                 
                 <div class="p-4 border-b border-blue-900/50 dark:border-gray-800 flex items-center justify-center group-hover/sidebar:justify-start h-[60px]">
@@ -148,7 +138,8 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Veículos</span>
                     </button>
                     
-                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="funcionario" data-gatilho="carregarFuncionarios" title="Funcionários">
+                    <!-- BOTÃO FUNCIONÁRIOS (COM TRAVA DE SEGURANÇA ONCLICK ADICIONADA) -->
+                    <button onclick="if(window.carregarFuncionarios) setTimeout(window.carregarFuncionarios, 200);" class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="cadastros" data-tela="funcionario" data-gatilho="carregarFuncionarios" title="Funcionários">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
                         </div>
@@ -195,16 +186,13 @@
                     </button>
                 </nav>
 
-                <!-- BOTÃO DE MODO NOTURNO -->
                 <div class="px-2 pb-4 border-t border-blue-900/50 dark:border-gray-800 pt-3">
                     <button onclick="window.alternarModoNoturno()" class="group/theme flex items-center p-2 w-full text-left text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white rounded-xl transition-all duration-300 font-bold border border-transparent dark:border-gray-700 shadow-sm overflow-hidden" title="Alternar Tema">
                         
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 relative transition-transform">
-                            <!-- Lua -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-6 w-6 transition-all duration-500 transform rotate-0 scale-100 opacity-100 dark:-rotate-90 dark:scale-0 dark:opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                             </svg>
-                            <!-- Sol -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-6 w-6 transition-all duration-500 transform rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100 text-[#facc15]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
@@ -222,7 +210,6 @@
                 </div>
             </aside>
 
-            <!-- O PALCO (Onde o Roteador Injeta as Telas) -->
             <main class="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-[#0f172a] transition-colors duration-300 relative" id="conteudo-dinamico">
                 <!-- As telas HTML aparecerão aqui magicamente -->
             </main>
