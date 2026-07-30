@@ -46,26 +46,37 @@ window.mascaraCpfCnpj = function(input) {
     if(!input) return;
     let v = input.value.replace(/\D/g, "");
     if (v.length <= 11) {
+        // MÁSCARA CPF - SEMPRE LIMITADA A 11 DÍGITOS
         v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         input.value = v;
     } else {
-        v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        // MÁSCARA CNPJ - CORTE TÁTICO AOS 14 DÍGITOS ANTES DE FORMATAR
+        v = v.substring(0, 14); 
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
         input.value = v;
     }
 };
 
-// 🔴 MÁSCARA INTELIGENTE CORRIGIDA (DETETA FIXO OU CELULAR) 🔴
-window.mascaraCelular = function(input) {
-    if(!input) return;
-    let v = input.value.replace(/\D/g, "").substring(0, 11);
-    if (v.length > 10) { 
-        v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
-        v = v.replace(/(\d{5})(\d)/, "$1-$2");
+window.mascaraCpfCnpjRapido = function(input) {
+    let v = input.value.replace(/\D/g, ""); 
+    const isPj = document.querySelector('input[name="cli-rapido-tipo"][value="Jurídica"]').checked;
+
+    if (!isPj) { 
+        // 🔴 TRAVA DE ELITE: Só entra 11 números, nem mais um!
+        v = v.substring(0, 11); 
+        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        input.value = v;
     } else { 
-        v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
-        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+        
+        v = v.substring(0, 14); 
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        input.value = v;
+
+        const limpo = v.replace(/\D/g, "");
+        if (limpo.length === 14) {
+            window.buscarCnpjRapido(limpo);
+        }
     }
-    input.value = v;
 };
 
 window.mascaraCep = function(input) {
