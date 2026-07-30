@@ -11,22 +11,26 @@ const removerAcentos = (str) => {
 };
 
 window.mascaraDoc = function(input, fromUserInput = true) {
+    if(!input) return;
     let v = input.value.replace(/\D/g, ""); 
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
 
     if (!isPj) { 
-        v = v.substring(0, 11); 
-        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-        input.value = v;
+        v = v.substring(0, 11);
+        if (v.length > 9) input.value = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+        else if (v.length > 6) input.value = v.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+        else if (v.length > 3) input.value = v.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+        else input.value = v;
     } else { 
-    
-        v = v.substring(0, 14); 
-        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
-        input.value = v;
+        v = v.substring(0, 14);
+        if (v.length > 12) input.value = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5");
+        else if (v.length > 8) input.value = v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, "$1.$2.$3/$4");
+        else if (v.length > 5) input.value = v.replace(/(\d{2})(\d{3})(\d{1,3})/, "$1.$2.$3");
+        else if (v.length > 2) input.value = v.replace(/(\d{2})(\d{1,3})/, "$1.$2");
+        else input.value = v;
 
-        const limpo = v.replace(/\D/g, "");
-        if (fromUserInput && limpo.length === 14) {
-            window.buscarCnpjNaReceita(limpo);
+        if (fromUserInput && v.length === 14) {
+            window.buscarCnpjNaReceita(v);
         }
     }
 };
