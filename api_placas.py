@@ -1,15 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import re
 
 app = FastAPI()
 
-# Liberar o CORS para o seu ERP conseguir chamar esta API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Na prática, coloque aqui o link do seu sistema
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,32 +19,26 @@ def consultar_placa(placa: str):
     placa_limpa = placa.upper().replace("-", "").strip()
     url = f"https://placafipe.com/placa/{placa_limpa}"
     
-    # Finge ser um navegador real para o site não nos bloquear
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
     
     try:
-        response = requests.get(url, headers=headers)
+        # A Mágica: Cloudscraper ignora o bloqueio do site
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(url, headers=headers)
+        
         if response.status_code != 200:
-            return {"erro": "Placa não encontrada ou site bloqueou a requisição."}
+            return {"erro": f"Erro {response.status_code}: Placa não encontrada ou bloqueio ativo."}
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # O site PlacaFipe costuma colocar os detalhes num parágrafo ou tabela
-        # Baseado no seu print, vamos extrair o texto principal do carro
         texto_detalhes = soup.find(text=re.compile(f"placa {placa_limpa} é de um carro", re.IGNORECASE))
         
         if not texto_detalhes:
-            # Alternativa: Buscar por tabelas (<td>) caso o texto mude
-            tabelas = soup.find_all('td')
-            # ... (aqui entraria a lógica de ler a tabela caso o texto falhe)
-            return {"erro": "Estrutura do site mudou, não achei o texto."}
+            return {"erro": "Estrutura do site mudou ou placa inválida."}
         
         texto_completo = texto_detalhes.parent.text
-        
-        # Usamos REGEX (Expressões Regulares) para "pescar" a informação no meio da frase
-        # Ex de frase no seu print: "A placa RNR4I69 é de um carro GM - CHEVROLET S10 LTZ DD4A 2021 (modelo 2022) de cor Cinza..."
         
         marca_modelo = re.search(r'carro\s+(.*?)\s+\d{4}', texto_completo)
         ano = re.search(r'(\d{4})\s*\(modelo', texto_completo)
@@ -60,14 +53,13 @@ def consultar_placa(placa: str):
             "uf": uf.group(1) if uf else ""
         }
 
-        # Opcional: Separar Marca do Modelo (ex: divide no hífen "GM - CHEVROLET S10")
         if " - " in dados["marca_modelo"]:
             partes = dados["marca_modelo"].split(" - ", 1)
             dados["marca"] = partes[0].strip()
             dados["modelo"] = partes[1].strip()
         else:
-            dados["marca"] = dados["marca_modelo"].split(" ")[0]
-            dados["modelo"] = dados["marca_modelo"].replace(dados["marca"], "").strip()
+            dados["marca"] = dados["marca_modelo"].split(" ")[0] if dados["marca_modelo"] else ""
+            dados["modelo"] = dados["marca_modelo"].replace(dados["marca"], "").strip() if dados["marca_modelo"] else ""
 
         return dados
 
