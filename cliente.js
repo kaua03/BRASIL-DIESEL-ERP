@@ -15,18 +15,16 @@ window.mascaraDoc = function(input, fromUserInput = true) {
     const isPj = document.querySelector('input[name="cli-tipo"][value="Jurídica"]').checked;
 
     if (!isPj) { 
-        v = v.replace(/(\d{3})(\d)/, "$1.$2");
-        v = v.replace(/(\d{3})(\d)/, "$1.$2");
-        v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-        input.value = v.substring(0, 14);
+        v = v.substring(0, 11); 
+        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        input.value = v;
     } else { 
-        v = v.replace(/^(\d{2})(\d)/, "$1.$2");
-        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
-        v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
-        v = v.replace(/(\d{4})(\d)/, "$1-$2");
-        input.value = v.substring(0, 18);
+    
+        v = v.substring(0, 14); 
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        input.value = v;
 
-        const limpo = input.value.replace(/\D/g, "");
+        const limpo = v.replace(/\D/g, "");
         if (fromUserInput && limpo.length === 14) {
             window.buscarCnpjNaReceita(limpo);
         }
