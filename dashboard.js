@@ -1,11 +1,6 @@
 // JS/modules/dashboard.js
 import { supabase } from './config.js';
 
-// ==========================================
-// 🚨 COLOQUE A SUA CHAVE DO GOOGLE GEMINI AQUI:
-const GEMINI_API_KEY = "AQ.Ab8RN6LFVh86q5XuaOq82dcp-tSwsQHYTFBfC-vkXdIz3sWvog";
-// ==========================================
-
 window.graficosAbertos = {};
 window.mapaClientes = null;
 window.dadosContextoIA = {};
@@ -234,25 +229,30 @@ window.enviarMensagemIA = async function() {
     input.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Indicador de "A Pensar..."
     const idLoading = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div id="${idLoading}" class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-400 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium animate-pulse">A analisar dados ao vivo...</div></div>`;
+    chatBox.innerHTML += `<div id="${idLoading}" class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-400 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium animate-pulse">A extrair inteligência da base de dados...</div></div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
     try {
-        if (GEMINI_API_KEY === "COLOQUE_SUA_CHAVE_AQUI") {
+        // TÁTICA DE ELITE: Busca a chave secreta no Cofre do Banco de Dados
+        const { data: cofre, error: errCofre } = await supabase.from('cofre_seguranca').select('gemini_key').eq('id', 1).single();
+        
+        if (errCofre || !cofre || !cofre.gemini_key || cofre.gemini_key === 'COLOQUE_SUA_CHAVE_AQUI') {
             throw new Error("SEM_CHAVE");
         }
 
-        // PREPARA O CÉREBRO DA IA COM OS DADOS REAIS
         const contextoJSON = JSON.stringify(window.dadosContextoIA);
         const promptSistema = `Você é o CFO Digital (Consultor de Negócios e Dados) da oficina Brasil Diesel.
-        Aqui estão os DADOS REAIS extraídos agora mesmo do banco de dados: ${contextoJSON}.
-        Regras: Responda à pergunta do usuário de forma executiva, objetiva e inteligente. Use os dados exatos para provar o seu ponto. Não invente números. Não use formatação markdown como ** ou ##, escreva um texto normal e limpo.
+        DADOS REAIS DA OFICINA: ${contextoJSON}.
+        Regra 1: Responda de forma executiva, objetiva e inteligente.
+        Regra 2: Baseie-se apenas nestes dados.
+        Regra 3: Escreva em texto limpo (não use asteriscos ** ou símbolos estranhos).
         Pergunta do usuário: "${msg}"`;
 
-        // CHAMADA REAL À API DO GOOGLE GEMINI
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        // CORREÇÃO DO ERRO 404: Atualização para a versão "latest" do modelo
+        const urlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cofre.gemini_key}`;
+        
+        const response = await fetch(urlGemini, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -262,23 +262,24 @@ window.enviarMensagemIA = async function() {
 
         const data = await response.json();
         
-        if (!response.ok) throw new Error("Erro na API da IA");
+        if (!response.ok) {
+            console.error("Erro detalhado do Google:", data);
+            throw new Error("Erro na API da IA");
+        }
 
         const respostaIA = data.candidates[0].content.parts[0].text;
 
-        // Remove o loading e exibe a resposta real!
         document.getElementById(idLoading).remove();
         chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium whitespace-pre-wrap">${respostaIA}</div></div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
-        
-        if (window.registrarLog) window.registrarLog('Dashboard', 'Consultou IA Gemini', 'Interação analítica realizada.');
 
     } catch (error) {
         console.error(error);
-        document.getElementById(idLoading).remove();
+        if(document.getElementById(idLoading)) document.getElementById(idLoading).remove();
+        
         let erroMsg = error.message === "SEM_CHAVE" 
-            ? "⚠️ Alerta Tático: Você esqueceu-se de colocar a sua chave da API do Gemini no código (linha 5 do dashboard.js). Sem a chave, o meu cérebro não funciona!" 
-            : "Desculpe, os servidores da IA estão sobrecarregados no momento. Tente novamente.";
+            ? "⚠️ Chave de segurança não encontrada. Coloque a sua chave na tabela 'cofre_seguranca' do Supabase." 
+            : "Desculpe, os servidores da IA rejeitaram a conexão. Verifique se a sua chave API é válida.";
             
         chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-red-100 text-red-800 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">${erroMsg}</div></div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
