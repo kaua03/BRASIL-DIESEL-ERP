@@ -184,4 +184,11 @@ window.salvarFuncionario = async function(event) {
             if(window.mostrarToast) window.mostrarToast("Erro ao salvar dados.", "erro");
         }
     }
+
+    if(window.registrarLog) {
+        const acao = idFuncionario ? 'Editou Utilizador' : 'Cadastrou Utilizador';
+        const nomeFunc = document.getElementById('func-nome').value;
+    window.registrarLog('Equipe', acao, `Nome: ${nomeFunc}`);
+    }
+    
 };
