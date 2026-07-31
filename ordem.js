@@ -646,7 +646,7 @@ window.alterarStatusOsInline = async function(id, selectElement) {
         window.carregarOrdensServico(); 
     }
 
-    if(window.registrarLog) window.registrarLog('Ordem de Serviço', 'Alterou Status', `Novo Status: ${novoStatus}`);
+    if(window.registrarLog) window.registrarLog('Ordem de Serviço', 'Alterou Status Rápido', `O.S Atualizada`);
     
 };
 
