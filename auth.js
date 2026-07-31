@@ -131,6 +131,11 @@ window.tentarLogar = async function(e) {
         // Sucesso! Grava a sessão local no navegador
         sessionStorage.setItem('bdp_user', JSON.stringify(user));
 
+    // REGISTRA O LOGIN NO PAINEL MASTER
+    if(window.registrarLog) {
+        window.registrarLog('Autenticação', 'Login no Sistema', `Usuário logado com sucesso.`);
+    }
+
         document.getElementById('tela-login')?.classList.add('opacity-0');
         
         setTimeout(() => {
