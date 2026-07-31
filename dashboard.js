@@ -3,164 +3,144 @@ import { supabase } from './config.js';
 
 window.graficosAbertos = {};
 window.mapaClientes = null;
-window.dashRealtimeTimer = null;
 window.dadosContextoIA = {};
 
 // ==========================================================
-// 1. GESTÃO DO MÊS E INICIALIZAÇÃO
+// 1. GESTÃO DE DATAS
 // ==========================================================
-window.preencherFiltroMeses = function() {
-    const select = document.getElementById('dash-mes');
-    if (!select || select.options.length > 0) return; 
-    
-    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    const dataAtual = new Date();
-    let anoAtual = dataAtual.getFullYear();
-    let mesAtual = dataAtual.getMonth(); 
-
-    for (let i = 0; i < 6; i++) {
-        let m = mesAtual - i;
-        let a = anoAtual;
-        if (m < 0) { m += 12; a -= 1; }
-        
-        const option = document.createElement('option');
-        option.value = `${a}-${String(m + 1).padStart(2, '0')}`;
-        option.text = `${meses[m]} de ${a}`;
-        if (i === 0) option.selected = true; 
-        select.appendChild(option);
+window.inicializarDatas = function() {
+    const inputIni = document.getElementById('dash-data-ini');
+    const inputFim = document.getElementById('dash-data-fim');
+    if (!inputIni.value) {
+        const hoje = new Date();
+        // Primeiro dia do mês atual
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        inputIni.value = primeiroDia.toISOString().split('T')[0];
+        inputFim.value = hoje.toISOString().split('T')[0];
     }
 };
 
 window.carregarDashboard = async function() {
-    window.preencherFiltroMeses();
-    const mesFiltro = document.getElementById('dash-mes').value; 
+    window.inicializarDatas();
+    const dataIni = document.getElementById('dash-data-ini').value + "T00:00:00";
+    const dataFim = document.getElementById('dash-data-fim').value + "T23:59:59";
     
-    // Pequeno atraso para garantir que o HTML carregou (Comportamento SPA)
     setTimeout(async () => {
         try {
-            // Busca Massiva
-            const [receitasReq, despesasReq, osReq, clientesReq] = await Promise.all([
+            // MÁQUINA DE DADOS
+            const [receitasReq, despesasReq, osReq, clientesReq, logsReq] = await Promise.all([
                 supabase.from('contas_receber').select('*'),
                 supabase.from('contas_pagar').select('*'),
                 supabase.from('ordens_servico').select('*, itens_orcamento(*)'),
-                supabase.from('clientes').select('id, nome, endereco') // Para o mapa
+                supabase.from('clientes').select('id, nome, endereco'),
+                supabase.from('auditoria_logs').select('*').gte('created_at', dataIni).lte('created_at', dataFim)
             ]);
 
-            const receber = receitasReq.data || [];
-            const pagar = despesasReq.data || [];
             const ordens = osReq.data || [];
-            const clientes = clientesReq.data || [];
-
-            // Variáveis de Cálculo
             let lucroMensal = 0, recebido = 0, atrasado = 0, aPagar = 0, despesaPaga = 0;
-            let valPatio = 0, valLab = 0;
-            let contagemVeiculos = {};
-            let contagemPecas = {};
-            let contagemFornecedores = {};
-            let osFechadas = 0, valorTotalOs = 0;
+            let osNoPeriodo = 0, valorTotalOs = 0;
+            
+            // Novos Contadores
+            let contagemStatus = {};
+            let patioAtivos = [];
+            let prodEquipe = {};
 
-            // Processar Receitas (Mês atual)
-            receber.forEach(c => {
-                const data = c.data_vencimento || c.created_at;
-                if (data.startsWith(mesFiltro)) {
+            // 1. Financeiro
+            (receitasReq.data || []).forEach(c => {
+                const d = c.data_vencimento || c.created_at;
+                if (d >= dataIni && d <= dataFim) {
                     const v = Number(c.valor || 0);
-                    if (c.status === 'Pago') recebido += v;
-                    else atrasado += v;
+                    if (c.status === 'Pago') recebido += v; else atrasado += v;
                 }
             });
 
-            // Processar Despesas (Mês atual)
-            pagar.forEach(c => {
-                const data = c.data_vencimento || c.created_at;
-                if (data.startsWith(mesFiltro)) {
+            (despesasReq.data || []).forEach(c => {
+                const d = c.data_vencimento || c.created_at;
+                if (d >= dataIni && d <= dataFim) {
                     const v = Number(c.valor || 0);
                     aPagar += v;
                     if (c.status === 'Pago') despesaPaga += v;
-                    // Ranking Fornecedores
-                    const forn = String(c.fornecedor || 'Diversos').toUpperCase().substring(0, 25);
-                    contagemFornecedores[forn] = (contagemFornecedores[forn] || 0) + v;
                 }
             });
 
             lucroMensal = recebido - despesaPaga;
 
-            // Processar O.S. e Veículos (Mês atual)
+            // 2. O.S. e Veículos no Pátio
             ordens.forEach(os => {
-                if (os.created_at && os.created_at.startsWith(mesFiltro)) {
-                    osFechadas++;
-                    
-                    // Ranking Veículos
-                    const modelo = String(os.modelo || 'OUTROS').toUpperCase();
-                    contagemVeiculos[modelo] = (contagemVeiculos[modelo] || 0) + 1;
+                // Veículos atualmente no Pátio (independente da data do filtro)
+                if (os.status !== 'Finalizada' && os.status !== 'Entregue' && os.status !== 'Cancelada') {
+                    patioAtivos.push({ os: os.numero_os || os.id, placa: os.placa || 'N/A', modelo: os.modelo || '---', status: os.status });
+                }
+
+                // Filtradas pelo período
+                if (os.created_at >= dataIni && os.created_at <= dataFim) {
+                    osNoPeriodo++;
+                    const st = os.status || 'Nova';
+                    contagemStatus[st] = (contagemStatus[st] || 0) + 1;
 
                     (os.itens_orcamento || []).forEach(item => {
-                        const valItem = Number(item.valor_total || 0);
-                        valorTotalOs += valItem;
-                        
-                        // Lab vs Pátio
-                        const desc = String(item.descricao).toUpperCase();
-                        if (desc.includes('BICO') || desc.includes('BOMBA') || desc.includes('INJETOR')) {
-                            valLab += valItem;
-                        } else {
-                            valPatio += valItem;
-                        }
-
-                        // Ranking Peças
-                        if (item.tipo === 'Peça') {
-                            contagemPecas[desc] = (contagemPecas[desc] || 0) + item.quantidade;
-                        }
+                        valorTotalOs += Number(item.valor_total || 0);
                     });
                 }
             });
 
-            const ticketMedio = osFechadas > 0 ? (valorTotalOs / osFechadas) : 0;
+            // 3. Produtividade da Equipe (Lendo os Logs de Auditoria)
+            (logsReq.data || []).forEach(log => {
+                if (log.modulo === 'Pátio' && log.acao.includes('Checklist')) {
+                    const nome = String(log.usuario).toUpperCase().split(' ')[0];
+                    prodEquipe[nome] = (prodEquipe[nome] || 0) + 1;
+                }
+            });
 
-            // ATUALIZAR KPIs TELA
+            // ATUALIZAR ZONA 1 (KPIs)
             const formatMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+            document.getElementById('kpi-lucro').innerText = formatMoeda(lucroMensal);
+            document.getElementById('kpi-lucro').className = `text-3xl font-black ${lucroMensal >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`;
+            document.getElementById('kpi-receber').innerText = formatMoeda(atrasado);
+            document.getElementById('kpi-pagar').innerText = formatMoeda(aPagar);
+            document.getElementById('kpi-ticket').innerText = formatMoeda(osNoPeriodo > 0 ? (valorTotalOs / osNoPeriodo) : 0);
+            document.getElementById('kpi-vol-os').innerText = `${osNoPeriodo} O.S. no Período`;
+
+            // ATUALIZAR ZONA 2 (Listas)
+            const objParaArraySort = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]);
             
-            if(document.getElementById('kpi-lucro')) {
-                document.getElementById('kpi-lucro').innerText = formatMoeda(lucroMensal);
-                document.getElementById('kpi-receber').innerText = formatMoeda(atrasado);
-                document.getElementById('kpi-pagar').innerText = formatMoeda(aPagar);
-                document.getElementById('kpi-ticket').innerText = formatMoeda(ticketMedio);
-                document.getElementById('kpi-vol-os').innerText = `${osFechadas} O.S. Executadas`;
-            }
+            // Pátio
+            const ulPatio = document.getElementById('lista-patio-ativos');
+            ulPatio.innerHTML = patioAtivos.length ? patioAtivos.map(p => `
+                <li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                    <div>
+                        <span class="text-[#1a428a] dark:text-[#3b82f6] font-black">#${p.os}</span> 
+                        <span class="text-xs uppercase ml-1">${p.placa}</span>
+                    </div>
+                    <span class="text-[9px] px-2 py-0.5 rounded bg-orange-100 text-orange-700 uppercase">${p.status}</span>
+                </li>`).join('') : '<li class="text-xs text-gray-400">Pátio limpo e vazio.</li>';
 
-            // ATUALIZAR LISTAS (TOP 5)
-            const objParaArraySort = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            
-            const topPecas = objParaArraySort(contagemPecas);
-            const ulPecas = document.getElementById('lista-top-pecas');
-            if(ulPecas) {
-                ulPecas.innerHTML = topPecas.length ? topPecas.map(p => `<li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1"><span>${p[0]}</span> <span class="text-orange-500">${p[1]}x</span></li>`).join('') : '<li class="text-xs text-gray-400">Sem dados no mês.</li>';
-            }
+            // Equipe
+            const topEq = objParaArraySort(prodEquipe).slice(0, 5);
+            const ulEq = document.getElementById('lista-top-equipe');
+            ulEq.innerHTML = topEq.length ? topEq.map(e => `
+                <li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2 items-center">
+                    <span class="uppercase">${e[0]}</span> 
+                    <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-black">${e[1]} Ações</span>
+                </li>`).join('') : '<li class="text-xs text-gray-400">Sem ações registradas no período.</li>';
 
-            const topForn = objParaArraySort(contagemFornecedores);
-            const ulForn = document.getElementById('lista-top-fornecedores');
-            if(ulForn) {
-                ulForn.innerHTML = topForn.length ? topForn.map(f => `<li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1 truncate"><span class="truncate pr-2">${f[0]}</span> <span class="text-purple-500">${formatMoeda(f[1])}</span></li>`).join('') : '<li class="text-xs text-gray-400">Sem dados no mês.</li>';
-            }
+            // GRÁFICOS E MAPAS
+            window.desenharGraficos(recebido, despesaPaga, contagemStatus);
+            if (typeof L !== 'undefined') window.desenharMapa(clientesReq.data || []);
 
-            // =====================================
-            // DESENHAR GRÁFICOS & MAPA
-            // =====================================
-            window.desenharGraficos(recebido, despesaPaga, contagemVeiculos, valPatio, valLab);
-            window.desenharMapa(clientes);
-            window.iniciarRealtimeDash();
+            // Salva Contexto para IA
+            window.dadosContextoIA = { lucroMensal, recebido, atrasado, aPagar, osNoPeriodo, patioQtd: patioAtivos.length, melhorFunc: topEq.length ? topEq[0][0] : 'Ninguém' };
 
-            // Salva dados para o Bot CFO
-            window.dadosContextoIA = { lucroMensal, recebido, atrasado, aPagar, osFechadas, ticketMedio, topVeiculos: topPecas, topForn };
-
-        } catch (e) {
-            console.error("Erro Dashboard:", e);
-        }
-    }, 100);
+        } catch (e) { console.error("Erro Dashboard:", e); }
+    }, 200); // 200ms garante que o HTML injetado foi renderizado no SPA
 };
 
 // ==========================================================
-// 2. RENDERIZAÇÃO GRÁFICA (CHART.JS)
+// 2. GRÁFICOS (Chart.js)
 // ==========================================================
-window.desenharGraficos = function(rec, des, veiculosObj, patio, lab) {
+window.desenharGraficos = function(rec, des, stObj) {
+    if (typeof Chart === 'undefined') return; // Segurança SPA
+
     const txtCor = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563';
     const gridCor = document.documentElement.classList.contains('dark') ? '#334155' : '#e5e7eb';
     
@@ -171,93 +151,55 @@ window.desenharGraficos = function(rec, des, veiculosObj, patio, lab) {
         window.graficosAbertos[id] = new Chart(ctx, { type, data, options });
     };
 
-    // 1. Fluxo de Caixa (Barra Dupla)
+    // Fluxo
     criarGrafico('chart-fluxo', 'bar', {
-        labels: ['Mês Analisado'],
+        labels: ['Período Filtrado'],
         datasets: [
             { label: 'Entradas', data: [rec], backgroundColor: '#10b981', borderRadius: 4 },
             { label: 'Saídas', data: [des], backgroundColor: '#ef4444', borderRadius: 4 }
         ]
     }, { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: gridCor }, ticks: { color: txtCor } }, x: { grid: { display: false }, ticks: { color: txtCor } } }, plugins: { legend: { labels: { color: txtCor } } } });
 
-    // 2. Top Veículos (Barra Horizontal)
-    const topV = Object.entries(veiculosObj).sort((a,b) => b[1] - a[1]).slice(0, 5);
-    criarGrafico('chart-veiculos', 'bar', {
-        labels: topV.map(v => v[0]),
-        datasets: [{ label: 'Qtd na Oficina', data: topV.map(v => v[1]), backgroundColor: '#1a428a', borderRadius: 4 }]
-    }, { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: gridCor }, ticks: { color: txtCor, stepSize: 1 } }, y: { grid: { display: false }, ticks: { color: txtCor, font: {size: 10} } } }, plugins: { legend: { display: false } } });
-
-    // 3. Origem Faturamento (Doughnut)
-    criarGrafico('chart-origem', 'doughnut', {
-        labels: ['Serviço Pátio', 'Laboratório/Bancada'],
-        datasets: [{ data: [patio || 1, lab || 1], backgroundColor: ['#3b82f6', '#facc15'], borderWidth: 0, hoverOffset: 5 }]
-    }, { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: txtCor } } } });
+    // Status O.S. (Pizza)
+    const stKeys = Object.keys(stObj);
+    const stVals = Object.values(stObj);
+    criarGrafico('chart-status-os', 'pie', {
+        labels: stKeys.length ? stKeys : ['Nenhuma'],
+        datasets: [{ data: stVals.length ? stVals : [1], backgroundColor: ['#3b82f6', '#facc15', '#10b981', '#ef4444', '#8b5cf6'], borderWidth: 0 }]
+    }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: txtCor, font: {size: 10} } } } });
 };
 
 // ==========================================================
-// 3. MAPA DE CALOR GEOGRÁFICO (LEAFLET)
+// 3. MAPA (Leaflet)
 // ==========================================================
 window.desenharMapa = function(clientes) {
     const mapDiv = document.getElementById('mapa-clientes');
     if(!mapDiv) return;
 
     if(window.mapaClientes) {
-        window.mapaClientes.remove(); // Limpa mapa antigo se existir
+        window.mapaClientes.remove();
     }
 
-    // Inicializa centrado em Uberlândia (como exemplo de centro tático)
+    // Inicializa centrado (Ex: Uberlândia)
     window.mapaClientes = L.map('mapa-clientes').setView([-18.9113, -48.2622], 12);
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(window.mapaClientes);
-
-    // Simulação visual: Como o banco de dados tem endereços de texto e não Latitude/Longitude exata ainda, 
-    // nós desenhamos uma área de cobertura de influência para mostrar ao patrão a ideia (Raio de 15km).
-    // Num sistema final com API de Geocoding do Google, cada cliente seria um ponto exato.
-    L.circle([-18.9113, -48.2622], {
-        color: '#1a428a',
-        fillColor: '#3b82f6',
-        fillOpacity: 0.2,
-        radius: 12000 // 12km
-    }).addTo(window.mapaClientes).bindPopup("Área de densidade alta de clientes. Focar Marketing aqui.");
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(window.mapaClientes);
     
-    // Marcador da Oficina
-    L.marker([-18.9113, -48.2622]).addTo(window.mapaClientes).bindPopup("<b>Sua Oficina</b>").openPopup();
+    // Raio Simulado de 15km
+    L.circle([-18.9113, -48.2622], { color: '#1a428a', fillColor: '#3b82f6', fillOpacity: 0.2, radius: 15000 }).addTo(window.mapaClientes).bindPopup("Área de atuação primária.");
+    L.marker([-18.9113, -48.2622]).addTo(window.mapaClientes).bindPopup("<b>Base Brasil Diesel</b>").openPopup();
 };
 
 // ==========================================================
-// 4. SUPABASE REALTIME (ATUALIZAÇÃO AO VIVO)
-// ==========================================================
-window.iniciarRealtimeDash = function() {
-    if(window.dashRealtimeAtivo) return;
-    
-    supabase.channel('dashboard-inteligente')
-        .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
-            // Se qualquer tabela mudar (O.S, Financeiro, Clientes), recarrega o Dash em 1.5s
-            // Usa Timeout para evitar que 10 mudanças juntas travem a tela.
-            clearTimeout(window.dashRealtimeTimer);
-            window.dashRealtimeTimer = setTimeout(() => {
-                if(document.getElementById('dash-mes')) window.carregarDashboard();
-            }, 1500);
-        })
-        .subscribe();
-        
-    window.dashRealtimeAtivo = true;
-};
-
-// ==========================================================
-// 5. AGENTE DE IA (CFO DIGITAL) - CHATBOT
+// 4. AGENTE DE IA
 // ==========================================================
 window.toggleChatIA = function() {
-    const janela = document.getElementById('chat-ia-janela');
-    if (janela.classList.contains('scale-0')) {
-        janela.classList.remove('scale-0', 'opacity-0');
-        janela.classList.add('scale-100', 'opacity-100');
-        document.getElementById('chat-ia-input').focus();
+    const j = document.getElementById('chat-ia-janela');
+    if (j.classList.contains('scale-0')) {
+        j.classList.remove('scale-0', 'opacity-0');
+        j.classList.add('scale-100', 'opacity-100');
     } else {
-        janela.classList.remove('scale-100', 'opacity-100');
-        janela.classList.add('scale-0', 'opacity-0');
+        j.classList.add('scale-0', 'opacity-0');
+        j.classList.remove('scale-100', 'opacity-100');
     }
 };
 
@@ -267,47 +209,26 @@ window.enviarMensagemIA = function() {
     if(!msg) return;
 
     const chatBox = document.getElementById('chat-ia-mensagens');
-    
-    // 1. Mensagem do Usuário
-    chatBox.innerHTML += `
-        <div class="flex justify-end">
-            <div class="bg-[#1a428a] text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[85%]">
-                ${msg}
-            </div>
-        </div>
-    `;
+    chatBox.innerHTML += `<div class="flex justify-end"><div class="bg-[#1a428a] text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[85%]">${msg}</div></div>`;
     input.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 2. Simula o raciocínio do LLM/Python
     setTimeout(() => {
         const d = window.dadosContextoIA;
         let resposta = "";
         const m = msg.toLowerCase();
 
-        // Lógica simulada de Processamento de Linguagem Natural Básica
-        if(m.includes('resumo') || m.includes('geral') || m.includes('mês')) {
-            resposta = `Comandante, neste mês o Lucro Líquido é de R$ ${d.lucroMensal}. Executamos ${d.osFechadas} Ordens de Serviço com ticket médio de R$ ${d.ticketMedio.toFixed(2)}. Atenção ao capital na rua: temos R$ ${d.atrasado} em atraso/a receber.`;
-        } 
-        else if (m.includes('pátio') || m.includes('fechar') || m.includes('laboratório')) {
-            resposta = `Analisando os dados da arena: O Pátio atrai clientes, e o Laboratório gera margem alta em bombas/bicos. Fechar o Pátio agora eliminaria a "porta de entrada" dos serviços do Laboratório. Sugiro otimizar a mão de obra em vez de fechar.`;
-        }
-        else if (m.includes('fornecedor') || m.includes('custo')) {
-            resposta = `Os custos do mês totalizam R$ ${d.aPagar}. Revise compras com os fornecedores principais para renegociar prazos e aliviar o caixa.`;
-        }
-        else {
-            resposta = `Como seu CFO Digital, estou monitorizando a oficina em tempo real. O nosso foco principal deve ser recuperar os R$ ${d.atrasado} pendentes para proteger o caixa. Quer que eu detalhe as despesas?`;
+        if (m.includes('resumo') || m.includes('mês')) {
+            resposta = `Comandante, no período selecionado, fechamos com R$ ${d.lucroMensal} líquidos. Executamos ${d.osNoPeriodo} Ordens. O destaque operacional foi ${d.melhorFunc}, com o maior número de checklists concluídos.`;
+        } else if (m.includes('pátio') || m.includes('fechar')) {
+            resposta = `Analisando o Pátio: Temos ${d.patioQtd} veículos aguardando/em execução. Encerrar o pátio é arriscado pois é o principal alimentador do laboratório.`;
+        } else if (m.includes('ralo') || m.includes('cobrar') || m.includes('inadimplência')) {
+            resposta = `O nosso ralo está em R$ ${d.atrasado}. Sugiro que acione o setor de cobrança IMEDIATAMENTE para os clientes com O.S. finalizada que ainda não pagaram.`;
+        } else {
+            resposta = `Como seu CFO Digital, baseio as minhas respostas na matemática. Com um lucro de R$ ${d.lucroMensal} e R$ ${d.atrasado} na rua, a prioridade é transformar inadimplência em caixa. Quer detalhes dos veículos presos no pátio?`;
         }
 
-        chatBox.innerHTML += `
-            <div class="flex justify-start">
-                <div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">
-                    ${resposta}
-                </div>
-            </div>
-        `;
+        chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">${resposta}</div></div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
-        
-        if (window.registrarLog) window.registrarLog('Dashboard', 'Consultou IA Analítica', msg);
     }, 1500);
 };
