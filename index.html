@@ -179,7 +179,7 @@
                 </nav>
 
                 <div class="px-2 pb-4 border-t border-blue-900/50 dark:border-gray-800 pt-3">
-                    <button onclick="window.alternarModoNoturno()" class="group/theme flex items-center p-2 w-full text-left text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white rounded-xl transition-all duration-300 font-bold border border-transparent dark:border-gray-700 shadow-sm overflow-hidden" title="Alternar Tema">
+                    <button onclick="window.alternarModoEscuro()" class="group/theme flex items-center p-2 w-full text-left text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white rounded-xl transition-all duration-300 font-bold border border-transparent dark:border-gray-700 shadow-sm overflow-hidden" title="Alternar Tema">
                         
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 relative transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-6 w-6 transition-all duration-500 transform rotate-0 scale-100 opacity-100 dark:-rotate-90 dark:scale-0 dark:opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,7 +192,7 @@
 
                         <div class="relative flex-1 h-4 overflow-hidden ml-0 group-hover/sidebar:ml-3 opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto transition-all duration-300 whitespace-nowrap">
                             <span class="absolute inset-0 flex items-center transition-all duration-500 transform translate-y-0 opacity-100 dark:translate-y-4 dark:opacity-0 text-xs uppercase tracking-wider font-bold">
-                                Modo Noturno
+                                Modo Escuro
                             </span>
                             <span class="absolute inset-0 flex items-center transition-all duration-500 transform -translate-y-4 opacity-0 dark:translate-y-0 dark:opacity-100 text-xs uppercase tracking-wider font-bold text-[#facc15]">
                                 Modo Claro
@@ -245,7 +245,7 @@
     <script type="module" src="master.js"></script>
 
     <script>
-        window.alternarModoNoturno = function() {
+        window.alternarModoEscuro = function() {
             // Se for Tela de TV, ignora
             const userStr = sessionStorage.getItem('bdp_user');
             if(userStr) {
@@ -257,7 +257,7 @@
             html.classList.toggle('dark');
             if (html.classList.contains('dark')) {
                 localStorage.setItem('tema', 'dark');
-                if(window.mostrarToast) window.mostrarToast("Modo Noturno Ativado 🌙", "sucesso");
+                if(window.mostrarToast) window.mostrarToast("Modo Escuro Ativado 🌙", "sucesso");
             } else {
                 localStorage.setItem('tema', 'light');
                 if(window.mostrarToast) window.mostrarToast("Modo Claro Ativado ☀️", "sucesso");
