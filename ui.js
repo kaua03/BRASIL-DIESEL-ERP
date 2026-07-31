@@ -91,3 +91,7 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
         document.getElementById('btn-confirm-ok').onclick = () => fechar(true);
     });
 };
+
+if (tela === 'dashboard' && typeof window.carregarDashboard === 'function') {
+    window.carregarDashboard();
+}
