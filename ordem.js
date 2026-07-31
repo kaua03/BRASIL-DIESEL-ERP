@@ -645,6 +645,9 @@ window.alterarStatusOsInline = async function(id, selectElement) {
         if (window.mostrarToast) window.mostrarToast("Erro ao atualizar situação.", "erro");
         window.carregarOrdensServico(); 
     }
+
+    if(window.registrarLog) window.registrarLog('Ordem de Serviço', 'Alterou Status', `Novo Status: ${novoStatus}`);
+    
 };
 
 // =========================================================================
@@ -1244,6 +1247,11 @@ window.salvarOs = async function(event) {
         console.error("FALHA DE INTEGRIDADE NO BANCO:", err);
         alert("ERRO AO SALVAR! Verifique o console. Detalhe: " + err.message);
     }
+
+    if(window.registrarLog) {
+        const placaOs = document.getElementById('os-placa').value.toUpperCase();
+    window.registrarLog('Ordem de Serviço', 'Criou/Atualizou O.S.', `Veículo: ${placaOs}`);
+    }
 };
 
 window.editarOs = async function(event, id) {
@@ -1288,6 +1296,9 @@ window.excluirOs = async function(event, id, placa, numeroOs) {
     } catch (e) { 
         alert("Erro ao eliminar O.S."); 
     }
+
+    if(window.registrarLog) window.registrarLog('Ordem de Serviço', 'Excluiu O.S.', `ID Removido: ${id}`);
+    
 };
 
 window.configurarRastreioAlteracoes = function() {
