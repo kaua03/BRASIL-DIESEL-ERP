@@ -369,12 +369,16 @@ window.registrarLog = async function(modulo, acao, detalhes = '') {
         const userStr = sessionStorage.getItem('bdp_user');
         const usuarioLogado = userStr ? JSON.parse(userStr).nome_completo : 'SISTEMA';
 
-        await supabase.from('auditoria_logs').insert([{
+        const { error } = await supabase.from('auditoria_logs').insert([{
             usuario: usuarioLogado,
             modulo: modulo,
             acao: acao,
             detalhes: detalhes
         }]);
+
+        if (error) {
+            console.warn("Aviso do banco ao gravar log:", error.message);
+        }
     } catch (e) {
         console.warn("Falha silenciosa ao registrar auditoria:", e);
     }
