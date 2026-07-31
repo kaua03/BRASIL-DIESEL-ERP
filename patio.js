@@ -5,7 +5,6 @@ import { supabase } from './config.js';
 window.dadosPatio = [];
 window.osPatioAbertaId = null;
 window.patioSubscription = null; // Guarda a conexão em tempo real
-window.modoTvAtivo = false;
 
 // =========================================================================
 // 1. CARREGAMENTO E RENDERIZAÇÃO DO RADAR (CARDS)
@@ -61,8 +60,8 @@ window.carregarPatio = async function() {
 
         // Automação: Ocultar sidebar automaticamente se for login dedicado à TV
         const cargo = document.getElementById('cargo-logado')?.innerText;
-        if (cargo && (cargo.includes('PATIO') || cargo.includes('TV')) && !window.modoTvAtivo) {
-            window.alternarModoTV();
+        if (cargo && (cargo.includes('PATIO') || cargo.includes('TV')) && !window.Ativo) {
+            window.alternar();
         }
 
     } catch (err) {
@@ -155,29 +154,6 @@ window.pararSincronizacaoPatio = function() {
     }
 };
 
-// =========================================================================
-// 3. GESTÃO DE TELAS E MODO TV
-// =========================================================================
-window.alternarModoTV = function() {
-    window.modoTvAtivo = !window.modoTvAtivo;
-    const sidebar = document.querySelector('aside'); // Busca a barra lateral no index
-    const btnModoTv = document.getElementById('btn-modo-tv');
-
-    if (window.modoTvAtivo) {
-        if (sidebar) sidebar.classList.add('hidden');
-        if (btnModoTv) btnModoTv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg> Sair Modo TV`;
-        
-        // Bloqueia rolagem do corpo principal para ficar bonito na TV
-        document.body.style.overflow = 'hidden'; 
-        if(window.mostrarToast) window.mostrarToast("Modo TV Ativado. Tela Expandida.", "info");
-    } else {
-        if (sidebar) sidebar.classList.remove('hidden');
-        if (btnModoTv) btnModoTv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> Modo TV`;
-        
-        document.body.style.overflow = '';
-        if(window.mostrarToast) window.mostrarToast("Modo Padrão Restaurado.", "info");
-    }
-};
 
 // =========================================================================
 // 4. MODAL DE EXECUÇÃO (Mestre-Detalhe)
