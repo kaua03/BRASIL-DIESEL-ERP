@@ -528,6 +528,8 @@ window.excluirCliente = async function(id, btnElement) {
     try {
         const { error } = await supabase.from('clientes').delete().eq('id', id);
         if (error) throw error;
+
+        if(window.registrarLog) window.registrarLog('Clientes', 'Excluiu Cliente', `ID Removido: ${id}`);
         
         if (window.mostrarToast) window.mostrarToast("Registro eliminado!", "sucesso");
         setTimeout(() => window.carregarClientes(true), 600);
