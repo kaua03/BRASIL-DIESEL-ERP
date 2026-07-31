@@ -341,3 +341,22 @@ window.validarSenhaGerencial = async function(e) {
         if(window.mostrarToast) window.mostrarToast("Erro de comunicação.", "erro");
     }
 };
+
+// ==========================================
+// 7. DEVSECOPS: MOTOR DE AUDITORIA GLOBAL (LOGS)
+// ==========================================
+window.registrarLog = async function(modulo, acao, detalhes = '') {
+    try {
+        const userStr = sessionStorage.getItem('bdp_user');
+        const usuarioLogado = userStr ? JSON.parse(userStr).nome_completo : 'SISTEMA';
+
+        await supabase.from('auditoria_logs').insert([{
+            usuario: usuarioLogado,
+            modulo: modulo,
+            acao: acao,
+            detalhes: detalhes
+        }]);
+    } catch (e) {
+        console.warn("Falha silenciosa ao registrar auditoria:", e);
+    }
+};
