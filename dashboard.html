@@ -1,0 +1,84 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="fade-in space-y-6 flex flex-col h-full overflow-y-auto custom-scrollbar pb-8 pr-2">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
+        <div>
+            <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-tight">Business Intelligence</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Visão global de saúde financeira, ralo de custos e performance operacional.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <select id="dash-mes" onchange="window.carregarDashboard()" class="bg-gray-50 dark:bg-[#0f172a] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#1a428a] transition-colors cursor-pointer">
+                </select>
+            <button onclick="window.carregarDashboard()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 shrink-0">
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">💰</span></div>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Caixa Real (Realizado)</p>
+            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-caixa">R$ 0,00</h3>
+            <p class="text-xs font-bold mt-2" id="kpi-caixa-status">A calcular...</p>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-red-200 dark:border-red-900/30 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">⚠️</span></div>
+            <p class="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">O Ralo (A Receber / Atrasado)</p>
+            <h3 class="text-3xl font-black text-red-600 dark:text-red-500" id="kpi-receber">R$ 0,00</h3>
+            <p class="text-xs text-red-400 font-bold mt-2">Capital travado na rua.</p>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">🧾</span></div>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">A Pagar (Obrigação do Mês)</p>
+            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-pagar">R$ 0,00</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold mt-2">Custo fixo e fornecedores.</p>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">📈</span></div>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Ticket Médio O.S.</p>
+            <h3 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]" id="kpi-ticket">R$ 0,00</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold mt-2">Receita média por veículo.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
+        
+        <div class="lg:col-span-2 bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Curva de Sobrevivência (Receitas x Despesas)</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="grafico-caixa"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">A Arena: Pátio vs Laboratório</h3>
+            <div class="relative flex-1 w-full min-h-[200px] flex items-center justify-center">
+                <canvas id="grafico-arena"></canvas>
+            </div>
+            <p class="text-[10px] text-center text-gray-400 font-bold uppercase mt-4">Origem do Faturamento</p>
+        </div>
+    </div>
+
+    <div class="bg-gradient-to-r from-[#0f2757] to-[#1a428a] rounded-2xl shadow-lg border border-blue-800 overflow-hidden shrink-0 mt-2">
+        <div class="p-6 flex flex-col md:flex-row items-center gap-6">
+            <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner">
+                <span class="text-3xl">🧠</span>
+            </div>
+            <div class="flex-1 text-center md:text-left">
+                <h3 class="text-xl font-black text-white uppercase tracking-wider mb-1">CFO Digital — IA Analítica</h3>
+                <p class="text-sm text-blue-200 font-medium">O seu consultor de dados. Ele analisa os ranhos do caixa, o embate do Pátio vs Lab e dá-lhe um diagnóstico executivo focado em cortar o prejuízo.</p>
+            </div>
+            <button onclick="window.gerarRelatorioIA()" id="btn-ia" class="bg-[#facc15] hover:bg-yellow-500 text-[#0f2757] px-6 py-3 rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all shrink-0">
+                Gerar Diagnóstico
+            </button>
+        </div>
+        
+        <div id="resultado-ia" class="hidden bg-[#081121] border-t border-blue-900 p-6 text-gray-300 font-mono text-sm leading-relaxed space-y-4">
+            </div>
+    </div>
+</div>
