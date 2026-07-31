@@ -1,84 +1,113 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<div class="fade-in space-y-6 flex flex-col h-full overflow-y-auto custom-scrollbar pb-8 pr-2">
+<div class="fade-in space-y-6 flex flex-col h-full overflow-y-auto custom-scrollbar pb-24 pr-2">
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
         <div>
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-tight">Business Intelligence</h2>
-            <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Visão global de saúde financeira, ralo de custos e performance operacional.</p>
+            <div class="flex items-center gap-2 mt-1">
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Sincronização em Tempo Real Ativa</p>
+            </div>
         </div>
         <div class="flex items-center gap-3">
             <select id="dash-mes" onchange="window.carregarDashboard()" class="bg-gray-50 dark:bg-[#0f172a] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#1a428a] transition-colors cursor-pointer">
                 </select>
-            <button onclick="window.carregarDashboard()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            </button>
         </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 shrink-0">
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">💰</span></div>
-            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Caixa Real (Realizado)</p>
-            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-caixa">R$ 0,00</h3>
-            <p class="text-xs font-bold mt-2" id="kpi-caixa-status">A calcular...</p>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-[#10b981] relative overflow-hidden">
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Lucro Líquido (Mês)</p>
+            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-lucro">R$ 0,00</h3>
+            <p class="text-xs font-bold mt-2 text-green-500" id="kpi-lucro-status">Receitas - Despesas</p>
         </div>
-
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-red-200 dark:border-red-900/30 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">⚠️</span></div>
-            <p class="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">O Ralo (A Receber / Atrasado)</p>
-            <h3 class="text-3xl font-black text-red-600 dark:text-red-500" id="kpi-receber">R$ 0,00</h3>
-            <p class="text-xs text-red-400 font-bold mt-2">Capital travado na rua.</p>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-yellow-500 relative overflow-hidden">
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Capital na Rua (A Receber)</p>
+            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-receber">R$ 0,00</h3>
+            <p class="text-xs font-bold mt-2 text-yellow-600 dark:text-yellow-500">Risco de Inadimplência</p>
         </div>
-
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">🧾</span></div>
-            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">A Pagar (Obrigação do Mês)</p>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-red-500 relative overflow-hidden">
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Custo Fixo & Peças (A Pagar)</p>
             <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-pagar">R$ 0,00</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold mt-2">Custo fixo e fornecedores.</p>
+            <p class="text-xs font-bold mt-2 text-red-500">Obrigações do Mês</p>
         </div>
-
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><span class="text-6xl">📈</span></div>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-[#1a428a] relative overflow-hidden">
             <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Ticket Médio O.S.</p>
-            <h3 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6]" id="kpi-ticket">R$ 0,00</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold mt-2">Receita média por veículo.</p>
+            <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-ticket">R$ 0,00</h3>
+            <p class="text-xs font-bold mt-2 text-blue-500" id="kpi-vol-os">0 O.S. Finalizadas</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Fluxo de Caixa Mensal</h3>
+            <div class="h-64 w-full"><canvas id="chart-fluxo"></canvas></div>
+        </div>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Top 5 Veículos da Oficina</h3>
+            <div class="h-64 w-full"><canvas id="chart-veiculos"></canvas></div>
+        </div>
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Origem do Faturamento</h3>
+            <div class="h-64 w-full"><canvas id="chart-origem"></canvas></div>
+        </div>
         
-        <div class="lg:col-span-2 bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Curva de Sobrevivência (Receitas x Despesas)</h3>
-            <div class="relative h-64 w-full">
-                <canvas id="grafico-caixa"></canvas>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+                <h3 class="font-black text-orange-500 uppercase tracking-widest text-xs mb-3">Top Peças Trocadas</h3>
+                <ul id="lista-top-pecas" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
+                    <li class="text-xs text-gray-400">A analisar...</li>
+                </ul>
             </div>
-        </div>
-
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
-            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">A Arena: Pátio vs Laboratório</h3>
-            <div class="relative flex-1 w-full min-h-[200px] flex items-center justify-center">
-                <canvas id="grafico-arena"></canvas>
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+                <h3 class="font-black text-purple-500 uppercase tracking-widest text-xs mb-3">Top Fornecedores (Custos)</h3>
+                <ul id="lista-top-fornecedores" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
+                    <li class="text-xs text-gray-400">A analisar...</li>
+                </ul>
             </div>
-            <p class="text-[10px] text-center text-gray-400 font-bold uppercase mt-4">Origem do Faturamento</p>
         </div>
     </div>
 
-    <div class="bg-gradient-to-r from-[#0f2757] to-[#1a428a] rounded-2xl shadow-lg border border-blue-800 overflow-hidden shrink-0 mt-2">
-        <div class="p-6 flex flex-col md:flex-row items-center gap-6">
-            <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner">
-                <span class="text-3xl">🧠</span>
+    <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
+        <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Mapa de Calor (Alcance de Clientes)</h3>
+        <div id="mapa-clientes" class="w-full h-80 rounded-xl z-0 border border-gray-200 dark:border-gray-600"></div>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-2 text-center">Foco de Marketing: Regiões com maior densidade de clientes.</p>
+    </div>
+
+</div>
+
+<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+    <div id="chat-ia-janela" class="pointer-events-auto w-[350px] sm:w-[400px] h-[500px] bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 mb-4 flex flex-col transform transition-all duration-300 scale-0 origin-bottom-right opacity-0">
+        <div class="bg-gradient-to-r from-[#0f2757] to-[#1a428a] p-4 rounded-t-2xl flex justify-between items-center text-white shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xl shadow-inner">🧠</div>
+                <div>
+                    <h4 class="font-black text-sm uppercase tracking-wider leading-none">Agente CFO</h4>
+                    <p class="text-[9px] text-blue-200 uppercase font-bold mt-1">Conectado aos dados ao vivo</p>
+                </div>
             </div>
-            <div class="flex-1 text-center md:text-left">
-                <h3 class="text-xl font-black text-white uppercase tracking-wider mb-1">CFO Digital — IA Analítica</h3>
-                <p class="text-sm text-blue-200 font-medium">O seu consultor de dados. Ele analisa os ranhos do caixa, o embate do Pátio vs Lab e dá-lhe um diagnóstico executivo focado em cortar o prejuízo.</p>
+            <button onclick="window.toggleChatIA()" class="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="chat-ia-mensagens" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 bg-gray-50 dark:bg-[#1e293b]">
+            <div class="flex justify-start">
+                <div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%]">
+                    Olá, Comandante. Sou a sua IA Analítica. Analisei as receitas, despesas e a operação do pátio. Peça um resumo do mês ou pergunte-me onde estamos a perder dinheiro.
+                </div>
             </div>
-            <button onclick="window.gerarRelatorioIA()" id="btn-ia" class="bg-[#facc15] hover:bg-yellow-500 text-[#0f2757] px-6 py-3 rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all shrink-0">
-                Gerar Diagnóstico
+        </div>
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f172a] rounded-b-2xl flex gap-2 shrink-0">
+            <input type="text" id="chat-ia-input" placeholder="Pergunte sobre os dados..." class="flex-1 bg-gray-100 dark:bg-[#1e293b] border-none rounded-xl px-4 py-2 text-sm outline-none text-gray-800 dark:text-white" onkeypress="if(event.key === 'Enter') window.enviarMensagemIA()">
+            <button onclick="window.enviarMensagemIA()" class="bg-[#1a428a] dark:bg-[#2563eb] text-white p-2.5 rounded-xl hover:bg-blue-900 transition-colors shadow-md">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </button>
         </div>
-        
-        <div id="resultado-ia" class="hidden bg-[#081121] border-t border-blue-900 p-6 text-gray-300 font-mono text-sm leading-relaxed space-y-4">
-            </div>
     </div>
+    
+    <button onclick="window.toggleChatIA()" class="pointer-events-auto bg-[#facc15] hover:bg-yellow-400 text-[#0f2757] w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(250,204,21,0.5)] transition-transform hover:scale-110 group relative z-50">
+        <span class="text-2xl group-hover:hidden">🧠</span>
+        <svg class="w-6 h-6 hidden group-hover:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+    </button>
 </div>
