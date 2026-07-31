@@ -119,9 +119,14 @@ window.tentarLogar = async function(e) {
             document.getElementById('tela-erp')?.classList.remove('hidden');
             document.getElementById('tela-erp')?.classList.add('flex');
             
-            // PREENCHE CRACHÁ NA TELA
-            if(document.getElementById('usuario-logado')) document.getElementById('usuario-logado').innerText = user.nome_completo;
-            if(document.getElementById('cargo-logado')) document.getElementById('cargo-logado').innerText = user.cargo.toUpperCase();
+            // PREENCHE CRACHÁ NA TELA (CORTE SNIPER PARA O PRIMEIRO NOME)
+            if(document.getElementById('usuario-logado')) {
+                const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
+                document.getElementById('usuario-logado').innerText = primeiroNome;
+            }
+            if(document.getElementById('cargo-logado')) {
+                document.getElementById('cargo-logado').innerText = user.cargo.toUpperCase();
+            }
 
             // APLICA AS PERMISSÕES DE ACESSO
             window.aplicarPermissoes(user.cargo);
@@ -174,8 +179,12 @@ window.restaurarSessao = async function() {
                 telaErp.classList.add('flex');
             }
 
+            // CORTE SNIPER PARA O PRIMEIRO NOME AO DAR F5
             const userSpan = document.getElementById('usuario-logado');
-            if (userSpan) userSpan.innerText = user.nome_completo;
+            if (userSpan) {
+                const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
+                userSpan.innerText = primeiroNome;
+            }
 
             const cargoSpan = document.getElementById('cargo-logado');
             if (cargoSpan) cargoSpan.innerText = user.cargo.toUpperCase();
