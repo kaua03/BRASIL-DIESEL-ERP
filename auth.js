@@ -393,15 +393,32 @@ window.registrarLog = async function(modulo, acao, detalhes = '') {
 };
 
 // ==========================================
-// 8. O TRANSMISSOR DE PRESENÇA BASE
+// 8. O TRANSMISSOR DE PRESENÇA BASE E ESCUTA GERAL
 // ==========================================
-// Criamos um canal global para o utilizador sempre que ele faz login ou dá F5
 window.iniciarTransmissorGlobal = function() {
     if(!window.canalTransmissaoGeral) {
+        // 1. Cria o canal
         window.canalTransmissaoGeral = supabase.channel('radar_global');
+        
+        // 2. ADICIONA OS OUVINTES AQUI (ANTES DO SUBSCRIBE PARA NÃO DAR ERRO!)
+        window.canalTransmissaoGeral
+            .on('presence', { event: 'sync' }, () => {
+                // Se a função de desenhar existir (estiver no Painel Master), ele desenha.
+                if (typeof window.renderizarUsuariosOnline === 'function') {
+                    const estadoAtual = window.canalTransmissaoGeral.presenceState();
+                    window.renderizarUsuariosOnline(estadoAtual);
+                }
+            })
+            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+                console.log('📡 Radar: Alguém entrou', newPresences);
+            })
+            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+                console.log('🔴 Radar: Alguém saiu', leftPresences);
+            });
+
+        // 3. Liga o Rádio (Subscribe)
         window.canalTransmissaoGeral.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
-                // Força o envio da presença na aba atual (já que o canal só conectou agora)
                 const rotaSalva = sessionStorage.getItem('ultimaRota');
                 let telaAtual = 'patio';
                 if(rotaSalva) { telaAtual = JSON.parse(rotaSalva).nomeDaTela; }
