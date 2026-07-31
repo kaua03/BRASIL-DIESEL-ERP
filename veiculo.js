@@ -300,6 +300,8 @@ window.excluirVeiculo = async function(id, btnElement) {
         if (window.mostrarToast) window.mostrarToast("Falha. Veículo pode estar atrelado a algo.", "erro");
         window.carregarVeiculos(true);
     }
+
+    if(window.registrarLog) window.registrarLog('Veículos', 'Excluiu Veículo', `ID Removido: ${id}`);
 };
 
 window.abrirPerfilCrmVeiculo = async function(placaBusca, modeloStr, clienteStr) {
