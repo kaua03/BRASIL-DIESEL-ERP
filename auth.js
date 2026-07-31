@@ -36,6 +36,25 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
         }
     });
 
+    // ========================================================
+    // TRANSMISSOR DE PRESENÇA (RADAR AO VIVO)
+    // ========================================================
+    try {
+        const userStr = sessionStorage.getItem('bdp_user');
+        if (userStr && window.canalTransmissaoGeral) {
+            const user = JSON.parse(userStr);
+            const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
+            
+            // Avisa o servidor "Onde eu estou agora"
+            window.canalTransmissaoGeral.track({
+                nome: primeiroNome,
+                cargo: user.cargo,
+                tela: nomeDaTela,
+                onlineAt: new Date().toISOString()
+            });
+        }
+    } catch(e) {}
+
     try {
         const resposta = await fetch(`./${nomeDaTela}.html`);
         if (!resposta.ok) throw new Error(`HTML não encontrado: ${nomeDaTela}`);
