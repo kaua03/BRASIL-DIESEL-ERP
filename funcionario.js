@@ -24,6 +24,16 @@ window.carregarFuncionarios = async function() {
     }
 };
 
+window.mascaraCelular = function(input) {
+    if (!input) return;
+    let v = input.value.replace(/\D/g, "");
+    if (v.length > 11) v = v.substring(0, 11);
+    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+    if (v.length > 9) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    else if (v.length > 8) v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    input.value = v;
+};
+
 window.renderizarFuncionarios = function() {
     const tbody = document.getElementById('tabela-funcionarios');
     if (!tbody) return;
