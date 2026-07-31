@@ -385,6 +385,11 @@ window.salvarNovaDespesa = async function(event) {
         const { error } = await supabase.from('contas_pagar').insert([dadosDespesa]);
         if (error) throw error;
 
+    if(window.registrarLog) {
+        const desc = document.getElementById('pagar-descricao').value;
+    window.registrarLog('A Pagar', 'Registrou Despesa', `Descrição: ${desc}`);
+    }
+
         if (window.mostrarToast) window.mostrarToast("Despesa registada com sucesso!", "sucesso");
         
         document.getElementById('modal-pagar').classList.add('hidden');
@@ -445,6 +450,11 @@ window.salvarEdicaoPagar = async function(event) {
     try {
         const { error } = await supabase.from('contas_pagar').update(payload).eq('id', id);
         if (error) throw error;
+
+    if(window.registrarLog) {
+        const desc = document.getElementById('pagar-descricao').value;
+    window.registrarLog('A Pagar', 'Editou Despesa', `Descrição: ${desc}`);
+    }
         
         if (window.mostrarToast) window.mostrarToast("Despesa atualizada com sucesso!", "sucesso");
         
@@ -477,6 +487,8 @@ window.darBaixaPagar = async function(id, btnElement) {
     try {
         const { error } = await supabase.from('contas_pagar').update({ status: 'Pago' }).eq('id', id);
         if (error) throw error;
+
+    if(window.registrarLog) window.registrarLog('A Pagar', 'Deu Baixa (Pagou)', `ID da Conta: ${id}`);
         
         if (window.mostrarToast) window.mostrarToast("Despesa liquidada!", "sucesso");
         setTimeout(() => window.carregarContasPagar(true), 800);
