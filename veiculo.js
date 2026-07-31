@@ -271,6 +271,12 @@ window.salvarVeiculo = async function(event) {
         console.error("ERRO AO SALVAR VEÍCULO:", err);
         if (window.mostrarToast) window.mostrarToast("Erro ao gravar placa no cofre.", "erro");
     }
+
+    if(window.registrarLog) {
+        const acao = idVeiculo ? 'Editou Veículo' : 'Cadastrou Veículo';
+        const placaVei = document.getElementById('veiculo-placa').value.toUpperCase();
+    window.registrarLog('Veículos', acao, `Placa: ${placaVei}`);
+    }
 };
 
 window.excluirVeiculo = async function(id, btnElement) {
