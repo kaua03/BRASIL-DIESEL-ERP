@@ -1,7 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <div class="fade-in space-y-6 flex flex-col h-full overflow-y-auto custom-scrollbar pb-24 pr-2">
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
@@ -9,92 +5,99 @@
             <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-tight">Business Intelligence</h2>
             <div class="flex items-center gap-2 mt-1">
                 <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                <p class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Sincronização em Tempo Real Ativa</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Motor Analítico Conectado</p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <select id="dash-mes" onchange="window.carregarDashboard()" class="bg-gray-50 dark:bg-[#0f172a] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:border-[#1a428a] transition-colors cursor-pointer">
-                </select>
+        
+        <div class="flex flex-wrap items-center gap-3 bg-gray-50 dark:bg-[#0f172a] p-2 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+                <label class="text-[10px] font-black uppercase text-gray-500 ml-2">De</label>
+                <input type="date" id="dash-data-ini" class="bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none focus:border-[#1a428a]">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-[10px] font-black uppercase text-gray-500">Até</label>
+                <input type="date" id="dash-data-fim" class="bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none focus:border-[#1a428a]">
+            </div>
+            <button onclick="window.carregarDashboard()" class="bg-[#1a428a] hover:bg-blue-900 text-white px-4 py-1.5 rounded-lg font-bold text-xs transition-colors shadow-sm">
+                Analisar
+            </button>
         </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-[#10b981] relative overflow-hidden">
-            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Lucro Líquido (Mês)</p>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Lucro Líquido (Período)</p>
             <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-lucro">R$ 0,00</h3>
-            <p class="text-xs font-bold mt-2 text-green-500" id="kpi-lucro-status">Receitas - Despesas</p>
+            <p class="text-xs font-bold mt-2 text-green-500" id="kpi-lucro-status">Receitas - Despesas Pagas</p>
         </div>
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-yellow-500 relative overflow-hidden">
-            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Capital na Rua (A Receber)</p>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Inadimplência (A Receber)</p>
             <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-receber">R$ 0,00</h3>
-            <p class="text-xs font-bold mt-2 text-yellow-600 dark:text-yellow-500">Risco de Inadimplência</p>
+            <p class="text-xs font-bold mt-2 text-yellow-600 dark:text-yellow-500">Dinheiro retido na rua</p>
         </div>
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-red-500 relative overflow-hidden">
-            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Custo Fixo & Peças (A Pagar)</p>
+            <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Obrigações (A Pagar)</p>
             <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-pagar">R$ 0,00</h3>
-            <p class="text-xs font-bold mt-2 text-red-500">Obrigações do Mês</p>
+            <p class="text-xs font-bold mt-2 text-red-500">Custos fixos e fornecedores</p>
         </div>
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border-l-4 border-[#1a428a] relative overflow-hidden">
             <p class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Ticket Médio O.S.</p>
             <h3 class="text-3xl font-black text-gray-800 dark:text-white" id="kpi-ticket">R$ 0,00</h3>
-            <p class="text-xs font-bold mt-2 text-blue-500" id="kpi-vol-os">0 O.S. Finalizadas</p>
+            <p class="text-xs font-bold mt-2 text-blue-500" id="kpi-vol-os">0 O.S. no período</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
+        
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Situação das Ordens</h3>
+            <div class="relative flex-1 w-full min-h-[200px]"><canvas id="chart-status-os"></canvas></div>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+            <h3 class="font-black text-orange-500 uppercase tracking-widest text-xs mb-3">Veículos Atuais no Pátio</h3>
+            <ul id="lista-patio-ativos" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
+                <li class="text-xs text-gray-400">A analisar...</li>
+            </ul>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+            <h3 class="font-black text-purple-500 uppercase tracking-widest text-xs mb-3">Top Produtividade (Equipe)</h3>
+            <ul id="lista-top-equipe" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
+                <li class="text-xs text-gray-400">A analisar ações no sistema...</li>
+            </ul>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Fluxo de Caixa Mensal</h3>
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Curva de Faturamento</h3>
             <div class="h-64 w-full"><canvas id="chart-fluxo"></canvas></div>
         </div>
         <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Top 5 Veículos da Oficina</h3>
-            <div class="h-64 w-full"><canvas id="chart-veiculos"></canvas></div>
+            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Radar Geográfico de Clientes</h3>
+            <div id="mapa-clientes" class="w-full h-64 rounded-xl z-0 border border-gray-200 dark:border-gray-600"></div>
         </div>
-        <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Origem do Faturamento</h3>
-            <div class="h-64 w-full"><canvas id="chart-origem"></canvas></div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
-                <h3 class="font-black text-orange-500 uppercase tracking-widest text-xs mb-3">Top Peças Trocadas</h3>
-                <ul id="lista-top-pecas" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
-                    <li class="text-xs text-gray-400">A analisar...</li>
-                </ul>
-            </div>
-            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
-                <h3 class="font-black text-purple-500 uppercase tracking-widest text-xs mb-3">Top Fornecedores (Custos)</h3>
-                <ul id="lista-top-fornecedores" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar text-sm font-bold text-gray-700 dark:text-gray-300">
-                    <li class="text-xs text-gray-400">A analisar...</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
-        <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4">Mapa de Calor (Alcance de Clientes)</h3>
-        <div id="mapa-clientes" class="w-full h-80 rounded-xl z-0 border border-gray-200 dark:border-gray-600"></div>
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-2 text-center">Foco de Marketing: Regiões com maior densidade de clientes.</p>
     </div>
 
 </div>
 
-<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+<div class="fixed bottom-6 right-6 z-[100] flex flex-col items-end pointer-events-none">
     <div id="chat-ia-janela" class="pointer-events-auto w-[350px] sm:w-[400px] h-[500px] bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 mb-4 flex flex-col transform transition-all duration-300 scale-0 origin-bottom-right opacity-0">
-        <div class="bg-gradient-to-r from-[#0f2757] to-[#1a428a] p-4 rounded-t-2xl flex justify-between items-center text-white shrink-0">
+        <div class="bg-gradient-to-r from-[#0f2757] to-[#1a428a] p-4 rounded-t-2xl flex justify-between items-center text-white shrink-0 shadow-md">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-xl shadow-inner">🧠</div>
                 <div>
                     <h4 class="font-black text-sm uppercase tracking-wider leading-none">Agente CFO</h4>
-                    <p class="text-[9px] text-blue-200 uppercase font-bold mt-1">Conectado aos dados ao vivo</p>
+                    <p class="text-[9px] text-blue-200 uppercase font-bold mt-1">Assistente Analítico</p>
                 </div>
             </div>
             <button onclick="window.toggleChatIA()" class="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
         <div id="chat-ia-mensagens" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 bg-gray-50 dark:bg-[#1e293b]">
             <div class="flex justify-start">
-                <div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%]">
-                    Olá, Comandante. Sou a sua IA Analítica. Analisei as receitas, despesas e a operação do pátio. Peça um resumo do mês ou pergunte-me onde estamos a perder dinheiro.
+                <div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">
+                    Olá, Comandante. Analisei os dados do período selecionado. Onde quer que eu procure vazamentos de caixa?
                 </div>
             </div>
         </div>
