@@ -141,8 +141,6 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Equipe</span>
                     </button>
 
-                   <!-- <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div> -->
-
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-emerald-900/50 hover:text-emerald-400 transition-all text-sm group/btn" data-pasta="nav" data-tela="receber" data-gatilho="carregarContasReceber" title="Contas a Receber">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -157,8 +155,6 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">A Pagar</span>
                     </button>
 
-                    <!-- <div class="my-2 border-b border-blue-900/50 dark:border-gray-800 mx-2"></div> -->
-
                     <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="dashboard" data-gatilho="carregarDashboard" title="Dashboard">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -166,7 +162,8 @@
                         <span class="opacity-0 group-hover/sidebar:opacity-100 w-0 group-hover/sidebar:w-auto overflow-hidden transition-all duration-300 whitespace-nowrap tracking-wide ml-0 group-hover/sidebar:ml-3">Dashboard</span>
                     </button>
                     
-                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="PainelMaster" title="Painel MASTER">
+                    <!-- BOTÃO DO PAINEL MASTER 100% CORRIGIDO AQUI! -->
+                    <button class="nav-btn w-full flex items-center p-2 rounded-xl font-bold text-gray-400 hover:bg-blue-900 dark:hover:bg-gray-800 hover:text-white transition-all text-sm group/btn" data-pasta="nav" data-tela="master" data-gatilho="carregarPainelMaster" title="Painel MASTER">
                         <div class="w-10 h-10 mx-auto group-hover/sidebar:mx-0 flex items-center justify-center shrink-0 transition-transform group-hover/btn:scale-110">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
@@ -244,6 +241,7 @@
     <script type="module" src="pagar.js"></script>
     <script type="module" src="veiculo.js"></script>
     <script type="module" src="funcionario.js"></script>
+    <!-- ADICIONADO A IMPORTAÇÃO DO MASTER -->
     <script type="module" src="master.js"></script>
 
     <script>
