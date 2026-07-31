@@ -2,7 +2,7 @@
 import { supabase } from './config.js';
 
 window.auditoriaSubscription = null;
-window.radarChannel = null;
+// Nota: Não usamos mais o window.radarChannel aqui, pois o rádio central é o window.canalTransmissaoGeral gerido pelo auth.js
 
 // =========================================================================
 // 1. CARREGAMENTO INICIAL DO PAINEL MASTER
@@ -16,7 +16,7 @@ window.carregarPainelMaster = async function() {
 
     tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
 
-    // Tática de Resiliência: Liga o radar independente do sucesso da leitura de logs
+    // Tática de Resiliência: Liga/Atualiza o radar independente do sucesso da leitura de logs
     window.iniciarRadarAoVivo();
 
     try {
@@ -97,31 +97,49 @@ window.iniciarSincronizacaoLogs = function() {
 // 3. RADAR DE PRESENÇA AO VIVO (SUPABASE PRESENCE)
 // =========================================================================
 window.iniciarRadarAoVivo = function() {
-    if (window.radarChannel) return; 
-    
-    window.radarChannel = supabase.channel('radar_global');
+    // 1. O Rádio Base: O canal global criado no auth.js
+    if (!window.canalTransmissaoGeral) {
+        // Se ainda não carregou a rede global, tenta de novo em 500ms
+        setTimeout(window.iniciarRadarAoVivo, 500);
+        return;
+    }
 
-    window.radarChannel
-        .on('presence', { event: 'sync' }, () => {
-            const estadoAtual = window.radarChannel.presenceState();
-            window.renderizarUsuariosOnline(estadoAtual);
-        })
-        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-            console.log('📡 Alguém entrou no radar', newPresences);
-        })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-            console.log('🔴 Alguém saiu do radar', leftPresences);
-        })
-        .subscribe();
+    // 2. Os Ouvidos: Só plugamos os cabos de escuta uma vez (window.radarLigado)
+    if (!window.radarLigado) {
+        window.canalTransmissaoGeral
+            .on('presence', { event: 'sync' }, () => {
+                if (typeof window.renderizarUsuariosOnline === 'function') {
+                    const estadoAtual = window.canalTransmissaoGeral.presenceState();
+                    window.renderizarUsuariosOnline(estadoAtual);
+                }
+            })
+            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+                console.log('📡 Alguém entrou no radar', newPresences);
+            })
+            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+                console.log('🔴 Alguém saiu do radar', leftPresences);
+            });
+            
+        window.radarLigado = true; // Marca como blindado contra duplicação!
+    }
+
+    // 3. A CORREÇÃO DA ABA: Sempre que a função é chamada (ex: ao voltar pra aba),
+    // pedimos à memória do rádio quem está online e FORÇAMOS o desenho na tela nova.
+    const estadoAtual = window.canalTransmissaoGeral.presenceState();
+    window.renderizarUsuariosOnline(estadoAtual);
 };
 
 window.renderizarUsuariosOnline = function(estadoPresence) {
     const container = document.getElementById('radar-usuarios');
-    if (!container) return;
+    if (!container) return; // Proteção se a tela mudar durante a execução
 
     let usuariosConectados = [];
-    for (const id in estadoPresence) {
-        usuariosConectados.push(estadoPresence[id][0]); 
+    if (estadoPresence) {
+        for (const id in estadoPresence) {
+            if (estadoPresence[id] && estadoPresence[id].length > 0) {
+                usuariosConectados.push(estadoPresence[id][0]); 
+            }
+        }
     }
 
     if (usuariosConectados.length === 0) {
@@ -170,9 +188,5 @@ window.pararSincronizacaoMaster = function() {
     if (window.auditoriaSubscription) {
         supabase.removeChannel(window.auditoriaSubscription);
         window.auditoriaSubscription = null;
-    }
-    if (window.radarChannel) {
-        supabase.removeChannel(window.radarChannel);
-        window.radarChannel = null;
     }
 };
