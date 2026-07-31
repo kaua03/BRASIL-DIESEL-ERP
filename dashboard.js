@@ -36,7 +36,7 @@ window.carregarDashboard = async function() {
                 supabase.from('contas_receber').select('*'),
                 supabase.from('contas_pagar').select('*'),
                 supabase.from('ordens_servico').select('*, itens_orcamento(*)'),
-                supabase.from('clientes').select('id, nome, endereco'),
+                supabase.from('clientes').select('*'), // CORREÇÃO DO ERRO 400 (MAPA)
                 supabase.from('auditoria_logs').select('*')
             ]);
 
