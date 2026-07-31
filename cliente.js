@@ -498,6 +498,12 @@ window.salvarCliente = async function(event) {
             if (error) throw error;
             if (window.mostrarToast) window.mostrarToast("Novo cliente cadastrado!", "sucesso");
         }
+
+        if(window.registrarLog) {
+            const acao = idCliente ? 'Editou Cliente' : 'Cadastrou Cliente';
+            const nomeCli = document.getElementById('cliente-nome').value.toUpperCase();
+        window.registrarLog('Clientes', acao, `Nome: ${nomeCli}`);
+        }
         
         document.getElementById('modal-cliente').classList.add('hidden');
         document.getElementById('modal-cliente').classList.remove('flex');
