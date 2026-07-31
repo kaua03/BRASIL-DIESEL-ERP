@@ -262,10 +262,13 @@ window.renderizarConteudoModalPatio = function() {
         const nomeUsuario = document.getElementById('usuario-logado')?.innerText || '';
         const eu = nomeUsuario === c.autor;
         
+        // CORTE SNIPER: Pega apenas a primeira palavra do nome
+        const autorPrimeiroNome = c.autor ? String(c.autor).split(' ')[0] : 'SISTEMA';
+        
         return `
             <div class="flex flex-col ${eu ? 'items-end' : 'items-start'}">
                 <div class="flex items-baseline gap-2 mb-1 px-1">
-                    <span class="text-[10px] font-black text-gray-500 dark:text-gray-400">${c.autor}</span>
+                    <span class="text-[10px] font-black text-gray-500 dark:text-gray-400">${autorPrimeiroNome}</span>
                     <span class="text-[9px] text-gray-400 dark:text-gray-500 font-mono">${dataFormatada}</span>
                 </div>
                 <div class="${eu ? 'bg-[#1a428a] dark:bg-[#2563eb] text-white rounded-br-none' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-none'} px-4 py-2.5 rounded-2xl max-w-[90%] shadow-sm">
@@ -296,7 +299,7 @@ window.marcarItemConcluido = async function(itemId, concluido, checkboxElement) 
 
     const confirmou = await window.abrirConfirmacao(
         "Confirmação de Execução",
-        `Tem certeza que deseja ${acaoTexto} este item, ${autor}?`,
+        `Tem certeza que deseja ${acaoTexto} este item, ${autor.split(' ')[0]}?`,
         "aviso"
     );
 
@@ -318,6 +321,7 @@ window.marcarItemConcluido = async function(itemId, concluido, checkboxElement) 
 
         const textoDiario = concluido ? `✅ Confirmou a conclusão do item: ${nomeItem.toUpperCase()}` : `❌ Desmarcou o item: ${nomeItem.toUpperCase()}`;
         
+        // Grava no BD o NOME COMPLETO para auditoria (segurança)
         await supabase.from('comentarios_os').insert([{
             os_id: window.osPatioAbertaId,
             autor: autor,
@@ -340,6 +344,7 @@ window.enviarComentarioPatioAtual = async function() {
     if (!input || !input.value.trim()) return;
 
     const texto = input.value.trim();
+    // Grava no BD o NOME COMPLETO para auditoria (segurança)
     const autor = document.getElementById('usuario-logado')?.innerText || 'Mecânico';
 
     try {
