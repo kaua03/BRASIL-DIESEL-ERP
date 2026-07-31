@@ -379,3 +379,37 @@ window.registrarLog = async function(modulo, acao, detalhes = '') {
         console.warn("Falha silenciosa ao registrar auditoria:", e);
     }
 };
+
+// ==========================================
+// 8. O TRANSMISSOR DE PRESENÇA BASE
+// ==========================================
+// Criamos um canal global para o utilizador sempre que ele faz login ou dá F5
+window.iniciarTransmissorGlobal = function() {
+    if(!window.canalTransmissaoGeral) {
+        window.canalTransmissaoGeral = supabase.channel('radar_global');
+        window.canalTransmissaoGeral.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                // Força o envio da presença na aba atual (já que o canal só conectou agora)
+                const rotaSalva = sessionStorage.getItem('ultimaRota');
+                let telaAtual = 'patio';
+                if(rotaSalva) { telaAtual = JSON.parse(rotaSalva).nomeDaTela; }
+                
+                try {
+                    const userStr = sessionStorage.getItem('bdp_user');
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
+                        await window.canalTransmissaoGeral.track({
+                            nome: primeiroNome, cargo: user.cargo, tela: telaAtual, onlineAt: new Date().toISOString()
+                        });
+                    }
+                } catch(e){}
+            }
+        });
+    }
+};
+
+// Chamamos isto quando a sessão é restaurada no F5
+setTimeout(() => {
+    if(sessionStorage.getItem('bdp_user')) window.iniciarTransmissorGlobal();
+}, 1000);
