@@ -319,6 +319,11 @@ window.marcarItemConcluido = async function(itemId, concluido, checkboxElement) 
         const { error } = await supabase.from('itens_orcamento').update({ concluido: concluido }).eq('id', itemId);
         if (error) throw error;
 
+    // AVISA A SALA DE SEGURANÇA QUE UM ITEM FOI MARCADO/DESMARCADO
+    if(window.registrarLog) {
+        window.registrarLog('Pátio', 'Checklist O.S. #' + window.osPatioAbertaId, `Item: ${nomeItem} | Status: ${concluido ? 'Concluído' : 'Desmarcado'}`);
+    }
+
         const textoDiario = concluido ? `✅ Confirmou a conclusão do item: ${nomeItem.toUpperCase()}` : `❌ Desmarcou o item: ${nomeItem.toUpperCase()}`;
         
         // Grava no BD o NOME COMPLETO para auditoria (segurança)
@@ -358,6 +363,11 @@ window.enviarComentarioPatioAtual = async function() {
         }]);
 
         if (error) throw error;
+
+    // AVISA A SALA DE SEGURANÇA QUE ALGUÉM COMENTOU NA O.S.
+    if(window.registrarLog) {
+        window.registrarLog('Pátio', 'Novo Comentário', `Escreveu no Diário da O.S. #${window.osPatioAbertaId}`);
+    }
         
         input.value = '';
         input.disabled = false;
