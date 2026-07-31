@@ -1,6 +1,117 @@
 // JS/modules/dashboard.js
 import { supabase } from './config.js';
 
+// ==========================================================
+// 🧠 CÉREBRO INTERNO DA OFICINA (SISTEMA ESPECIALISTA PREDITIVO)
+// ==========================================================
+class CFOAgent_Engine {
+    constructor() {
+        this.memoria = []; // Guarda o histórico da conversa
+        // Palavras que o motor ignora para entender a frase
+        this.stopWords = ['o','a','os','as','um','uma','de','do','da','em','para','com','que','é','são']; 
+    }
+
+    // 1. Processamento de Linguagem Natural (Básico)
+    tokenizar(texto) {
+        const limpo = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, '');
+        return limpo.split(' ').filter(w => !this.stopWords.includes(w) && w.length > 1);
+    }
+
+    // 2. Formatadores
+    moeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); }
+    percentual(v) { return (v || 0).toFixed(1) + '%'; }
+
+    // 3. Matemática Preditiva (Regressão e Cenários)
+    calcularCenarios(dados) {
+        const d = dados.financeiro;
+        const totalGirante = d.lucro + d.aReceberRisco + d.aPagar;
+        const taxaInadimplencia = totalGirante > 0 ? (d.aReceberRisco / totalGirante) * 100 : 0;
+        
+        // Pior cenário: Paga tudo o que deve, mas não recebe nada do que está na rua
+        const cenarioPessimista = d.lucro - d.aPagar;
+        // Melhor cenário: Recebe tudo da rua
+        const cenarioOtimista = d.lucro + d.aReceberRisco;
+
+        return { taxaInadimplencia, cenarioPessimista, cenarioOtimista };
+    }
+
+    // 4. O Analisador de Intenções de Negócio
+    processar(mensagem, contexto) {
+        const tokens = this.tokenizar(mensagem);
+        const f = contexto.financeiro;
+        const o = contexto.operacao;
+        
+        // Se faltar dados
+        if (!f) return "Ainda não possuo volume de dados suficiente. Por favor, execute a análise de um período no painel primeiro.";
+
+        const match = (palavras) => palavras.some(p => tokens.includes(p));
+
+        // INTENÇÃO: FUTURO E RISCO
+        if (match(['previsao', 'futuro', 'risco', 'cenario', 'falencia', 'projetar'])) {
+            const cenarios = this.calcularCenarios(contexto);
+            let diagnostico = cenarios.cenarioPessimista < 0 
+                ? `🔴 <b>ALERTA DE CAIXA:</b> O risco de rutura é altíssimo. Se os clientes atrasados não pagarem, faltarão ${this.moeda(Math.abs(cenarios.cenarioPessimista))} para honrar os custos.`
+                : `🟢 <b>CAIXA BLINDADO:</b> A operação suporta a inadimplência atual. Mesmo no pior cenário, o caixa fecha positivo em ${this.moeda(cenarios.cenarioPessimista)}.`;
+
+            return `<b>⚡ CÁLCULO ESTATÍSTICO DE CENÁRIOS</b><br><br>
+            Com base no fluxo da oficina neste período:<br>
+            • <b>Risco de Inadimplência:</b> ${this.percentual(cenarios.taxaInadimplencia)} do capital está comprometido.<br>
+            • <b>Cenário Otimista (Entrada Total):</b> ${this.moeda(cenarios.cenarioOtimista)}<br>
+            • <b>Cenário Pessimista (Calote Máximo):</b> ${this.moeda(cenarios.cenarioPessimista)}<br><br>
+            ${diagnostico}<br>
+            <i>Ação: Ordene bloqueio de crédito para os inadimplentes.</i>`;
+        }
+        
+        // INTENÇÃO: PRODUÇÃO E PÁTIO
+        if (match(['patio', 'laboratorio', 'producao', 'fechar', 'servico'])) {
+            const taxaOcupacao = (o.carrosNoPatio / 15) * 100; // Assumindo base 15 carros
+            const perdaEstimada = o.carrosNoPatio * o.ticketMedio;
+            let conselho = taxaOcupacao > 80 
+                ? "Gargalo detetado! O pátio está congestionado. Precisamos aumentar a produtividade da equipa para girar o caixa mais rápido." 
+                : "Temos capacidade ociosa no pátio. Encerra-lo agora não cortaria custos fixos e destruiria a nossa entrada de clientes.";
+
+            return `<b>⚙️ ANÁLISE DE ENGENHARIA DE PRODUÇÃO</b><br><br>
+            • <b>Status do Pátio:</b> ${o.carrosNoPatio} veículos ocupando espaço.<br>
+            • <b>Faturamento Travado no Elevador:</b> Estimativa de ${this.moeda(perdaEstimada)} aguardando conclusão.<br>
+            • <b>Eficiência de Entrega:</b> ${o.osFeitas} Ordens concluídas no período.<br>
+            • <b>Ticket Médio:</b> ${this.moeda(o.ticketMedio)} por veículo.<br><br>
+            <b>Veredito Estratégico:</b> ${conselho}`;
+        }
+
+        // INTENÇÃO: COBRANÇA
+        if (match(['cobrar', 'ralo', 'deve', 'atrasado', 'inadimplencia'])) {
+            return `<b>⚠️ RELATÓRIO DO SANGRAMENTO (A RECEBER)</b><br><br>
+            O motor detetou <b>${this.moeda(f.aReceberRisco)}</b> retidos na conta de clientes. Este é o seu ralo operacional.<br><br>
+            <b>Protocolo de Contenção de Perdas:</b><br>
+            1. Os mecânicos entregaram os veículos, mas o financeiro falhou na retenção.<br>
+            2. Este capital é suficiente para cobrir os seus ${this.moeda(f.aPagar)} de despesas pendentes? ${f.aReceberRisco >= f.aPagar ? 'Sim, com folga.' : 'Não, a dívida dos clientes não cobre os nossos custos.'}<br>
+            <i>Estratégia: Atribua hoje mesmo um funcionário para fazer régua de cobrança via WhatsApp.</i>`;
+        }
+
+        // INTENÇÃO: DESPESAS E CUSTOS
+        if (match(['fornecedor', 'pagar', 'despesa', 'custo'])) {
+             return `<b>🧾 AUDITORIA DE DESPESAS E PASSIVOS</b><br><br>
+             As nossas obrigações registadas (A Pagar) somam <b>${this.moeda(f.aPagar)}</b> no período.<br>
+             Se o lucro livre atual é de ${this.moeda(f.lucro)}, os nossos custos representam uma pressão de esmagamento. 
+             Revise os contratos com os fornecedores principais listados no gráfico de ranking.`;
+        }
+
+        // INTENÇÃO: GERAL / RESUMO (Default)
+        return `<b>📊 DIAGNÓSTICO GERAL DA OFICINA</b><br><br>
+        Comandante, o motor analítico processou os dados do período:<br><br>
+        • <b>Fluxo Real (Caixa):</b> ${this.moeda(f.lucro)}<br>
+        • <b>Operação (Entregas):</b> ${o.osFeitas} veículos liberados.<br>
+        • <b>Produtividade Campeã:</b> ${contexto.produtividade && contexto.produtividade[0] ? contexto.produtividade[0][0] : 'Nenhum registo'}.<br><br>
+        A situação exige foco direcional. Para cálculos profundos, use palavras como: <b>"Cenários de Risco"</b>, <b>"Analisar Pátio"</b>, <b>"Custos"</b> ou <b>"Inadimplência"</b>.`;
+    }
+}
+
+// Instância Global do Cérebro
+const CFOBot = new CFOAgent_Engine();
+
+// ==========================================================
+// VARIÁVEIS GLOBAIS DE ESTADO
+// ==========================================================
 window.graficosAbertos = {};
 window.mapaClientes = null;
 window.dadosContextoIA = {};
@@ -26,12 +137,12 @@ window.carregarDashboard = async function() {
     
     setTimeout(async () => {
         try {
-            // BUSCA MASSIVA NO BANCO
+            // MÁQUINA DE DADOS: Otimizada para carregar TUDO
             const [receitasReq, despesasReq, osReq, clientesReq, logsReq] = await Promise.all([
                 supabase.from('contas_receber').select('*'),
                 supabase.from('contas_pagar').select('*'),
                 supabase.from('ordens_servico').select('*, itens_orcamento(*)'),
-                supabase.from('clientes').select('*'), // CORREÇÃO DO ERRO 400 (MAPA)
+                supabase.from('clientes').select('*'), 
                 supabase.from('auditoria_logs').select('*')
             ]);
 
@@ -42,21 +153,20 @@ window.carregarDashboard = async function() {
             let contagemStatus = {};
             let patioAtivos = [];
             let prodEquipe = {};
+            let valPatio = 0, valLab = 0;
 
-            // 1. Financeiro (Filtro por Data)
+            // Financeiro
             (receitasReq.data || []).forEach(c => {
-                const d = c.data_vencimento || c.created_at;
-                const apenasData = d ? d.substring(0, 10) : '';
-                if (apenasData >= dataIniStr && apenasData <= dataFimStr) {
+                const d = (c.data_vencimento || c.created_at || "").substring(0, 10);
+                if (d >= dataIniStr && d <= dataFimStr) {
                     const v = Number(c.valor || 0);
                     if (c.status === 'Pago') recebido += v; else atrasado += v;
                 }
             });
 
             (despesasReq.data || []).forEach(c => {
-                const d = c.data_vencimento || c.created_at;
-                const apenasData = d ? d.substring(0, 10) : '';
-                if (apenasData >= dataIniStr && apenasData <= dataFimStr) {
+                const d = (c.data_vencimento || c.created_at || "").substring(0, 10);
+                if (d >= dataIniStr && d <= dataFimStr) {
                     const v = Number(c.valor || 0);
                     aPagar += v;
                     if (c.status === 'Pago') despesaPaga += v;
@@ -65,77 +175,76 @@ window.carregarDashboard = async function() {
 
             lucroMensal = recebido - despesaPaga;
 
-            // 2. O.S. e Veículos no Pátio
+            // Operacional e Pátio
             ordens.forEach(os => {
-                // A. Alimentar a Tabela do Pátio e o Gráfico de Pizza (Todas as Ativas)
+                // Sempre lista quem está no pátio agora, independente do filtro de datas
                 if (os.status !== 'Finalizada' && os.status !== 'Entregue' && os.status !== 'Cancelada') {
                     patioAtivos.push({ os: String(os.numero_os || os.id).padStart(4, '0'), placa: os.placa || 'N/A', status: os.status });
                     contagemStatus[os.status] = (contagemStatus[os.status] || 0) + 1;
                 }
 
-                // B. Filtrar para os KPIs (Período exato)
-                const d = os.data_entrada || os.created_at;
-                const apenasData = d ? d.substring(0, 10) : '';
-                if (apenasData >= dataIniStr && apenasData <= dataFimStr) {
+                // KPIs para o período filtrado
+                const d = (os.data_entrada || os.created_at || "").substring(0, 10);
+                if (d >= dataIniStr && d <= dataFimStr) {
                     osNoPeriodo++;
                     (os.itens_orcamento || []).forEach(item => {
-                        valorTotalOs += Number(item.valor_total || 0);
+                        const valItem = Number(item.valor_total || 0);
+                        valorTotalOs += valItem;
+                        // Classificador básico para Arena (Lab vs Pátio)
+                        const desc = String(item.descricao).toUpperCase();
+                        if (desc.includes('BICO') || desc.includes('BOMBA')) valLab += valItem; else valPatio += valItem;
                     });
                 }
             });
 
-            // 3. Produtividade da Equipe (Logs do Período)
+            // Auditoria (Equipe)
             (logsReq.data || []).forEach(log => {
-                const apenasData = log.created_at ? log.created_at.substring(0, 10) : '';
-                if (apenasData >= dataIniStr && apenasData <= dataFimStr) {
-                    if (log.modulo === 'Pátio' && log.acao.includes('Checklist')) {
-                        const nome = String(log.usuario).toUpperCase().split(' ')[0];
-                        prodEquipe[nome] = (prodEquipe[nome] || 0) + 1;
-                    }
+                const d = (log.created_at || "").substring(0, 10);
+                if (d >= dataIniStr && d <= dataFimStr && log.modulo === 'Pátio') {
+                    const nome = String(log.usuario).toUpperCase().split(' ')[0];
+                    prodEquipe[nome] = (prodEquipe[nome] || 0) + 1;
                 }
             });
 
             // ==========================================
-            // ATUALIZAR ZONA 1 (KPIs)
+            // ATUALIZAÇÃO DO FRONTEND
             // ==========================================
             const formatMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-            document.getElementById('kpi-lucro').innerText = formatMoeda(lucroMensal);
-            document.getElementById('kpi-lucro').className = `text-3xl font-black ${lucroMensal >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`;
-            document.getElementById('kpi-receber').innerText = formatMoeda(atrasado);
-            document.getElementById('kpi-pagar').innerText = formatMoeda(aPagar);
-            document.getElementById('kpi-ticket').innerText = formatMoeda(osNoPeriodo > 0 ? (valorTotalOs / osNoPeriodo) : 0);
-            document.getElementById('kpi-vol-os').innerText = `${osNoPeriodo} O.S. no Período`;
+            
+            // Cards de Topo
+            const els = ['kpi-lucro', 'kpi-receber', 'kpi-pagar', 'kpi-ticket', 'kpi-vol-os'];
+            if(document.getElementById(els[0])) {
+                document.getElementById('kpi-lucro').innerText = formatMoeda(lucroMensal);
+                document.getElementById('kpi-lucro').className = `text-3xl font-black ${lucroMensal >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`;
+                document.getElementById('kpi-receber').innerText = formatMoeda(atrasado);
+                document.getElementById('kpi-pagar').innerText = formatMoeda(aPagar);
+                document.getElementById('kpi-ticket').innerText = formatMoeda(osNoPeriodo > 0 ? (valorTotalOs / osNoPeriodo) : 0);
+                document.getElementById('kpi-vol-os').innerText = `${osNoPeriodo} O.S. no Período`;
+            }
 
-            // ==========================================
-            // ATUALIZAR ZONA 2 (Listas)
-            // ==========================================
             const objParaArraySort = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]);
             
-            // Lista do Pátio
+            // Listas
             const ulPatio = document.getElementById('lista-patio-ativos');
-            ulPatio.innerHTML = patioAtivos.length ? patioAtivos.map(p => `
+            if(ulPatio) ulPatio.innerHTML = patioAtivos.length ? patioAtivos.map(p => `
                 <li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
-                    <div>
-                        <span class="text-[#1a428a] dark:text-[#3b82f6] font-black">#${p.os}</span> 
-                        <span class="text-xs uppercase ml-1">${p.placa}</span>
-                    </div>
+                    <div><span class="text-[#1a428a] dark:text-[#3b82f6] font-black">#${p.os}</span> <span class="text-xs uppercase ml-1">${p.placa}</span></div>
                     <span class="text-[9px] px-2 py-0.5 rounded bg-orange-100 text-orange-700 uppercase font-black">${p.status}</span>
-                </li>`).join('') : '<li class="text-xs text-gray-400">Pátio limpo e vazio.</li>';
+                </li>`).join('') : '<li class="text-xs text-gray-400">Pátio livre.</li>';
 
-            // Ranking Equipe
             const topEq = objParaArraySort(prodEquipe).slice(0, 5);
             const ulEq = document.getElementById('lista-top-equipe');
-            ulEq.innerHTML = topEq.length ? topEq.map(e => `
+            if(ulEq) ulEq.innerHTML = topEq.length ? topEq.map(e => `
                 <li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2 items-center">
                     <span class="uppercase font-bold">${e[0]}</span> 
                     <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-black">${e[1]} Ações</span>
-                </li>`).join('') : '<li class="text-xs text-gray-400">Sem ações registradas no período.</li>';
+                </li>`).join('') : '<li class="text-xs text-gray-400">Sem ações registradas.</li>';
 
-            // GRÁFICOS E MAPAS
-            window.desenharGraficos(recebido, despesaPaga, contagemStatus);
+            // Gráficos e Mapa
+            window.desenharGraficos(recebido, despesaPaga, contagemStatus, valPatio, valLab);
             if (typeof L !== 'undefined') window.desenharMapa(clientesReq.data || []);
 
-            // Salva Contexto Puro para a IA Real
+            // Alimentar Memória do Cérebro Preditivo
             window.dadosContextoIA = { 
                 periodo: `${dataIniStr} até ${dataFimStr}`,
                 financeiro: { lucro: lucroMensal, aReceberRisco: atrasado, aPagar: aPagar }, 
@@ -150,7 +259,7 @@ window.carregarDashboard = async function() {
 // ==========================================================
 // 2. GRÁFICOS (Chart.js)
 // ==========================================================
-window.desenharGraficos = function(rec, des, stObj) {
+window.desenharGraficos = function(rec, des, stObj, pVal, lVal) {
     if (typeof Chart === 'undefined') return;
 
     const txtCor = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563';
@@ -163,7 +272,7 @@ window.desenharGraficos = function(rec, des, stObj) {
         window.graficosAbertos[id] = new Chart(ctx, { type, data, options });
     };
 
-    // Gráfico de Fluxo
+    // Fluxo de Caixa (Curva de Sobrevivência)
     criarGrafico('chart-fluxo', 'bar', {
         labels: ['Período Filtrado'],
         datasets: [
@@ -172,11 +281,9 @@ window.desenharGraficos = function(rec, des, stObj) {
         ]
     }, { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: gridCor }, ticks: { color: txtCor } }, x: { grid: { display: false }, ticks: { color: txtCor } } }, plugins: { legend: { labels: { color: txtCor } } } });
 
-    // O NOVO GRÁFICO DE PIZZA (Status do Pátio Atual)
+    // Status O.S (O Ringue do Pátio)
     const stKeys = Object.keys(stObj);
     const stVals = Object.values(stObj);
-    
-    // Cores dinâmicas para os status
     const corMap = { 'ABERTO': '#3b82f6', 'AUTORIZADO': '#10b981', 'EM EXECUÇÃO': '#facc15', 'AGUARDANDO PEÇA': '#ef4444' };
     const bgColors = stKeys.map(k => corMap[k.toUpperCase()] || '#8b5cf6');
 
@@ -187,23 +294,23 @@ window.desenharGraficos = function(rec, des, stObj) {
 };
 
 // ==========================================================
-// 3. MAPA (Leaflet)
+// 3. MAPA GEOGRÁFICO DE INFLUÊNCIA (Leaflet)
 // ==========================================================
 window.desenharMapa = function(clientes) {
     const mapDiv = document.getElementById('mapa-clientes');
     if(!mapDiv || typeof L === 'undefined') return;
-
     if(window.mapaClientes) window.mapaClientes.remove();
 
-    window.mapaClientes = L.map('mapa-clientes').setView([-18.9113, -48.2622], 12); // Centro tático
+    window.mapaClientes = L.map('mapa-clientes').setView([-18.9113, -48.2622], 12); 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(window.mapaClientes);
     
-    L.circle([-18.9113, -48.2622], { color: '#1a428a', fillColor: '#3b82f6', fillOpacity: 0.2, radius: 12000 }).addTo(window.mapaClientes).bindPopup("Área de densidade de clientes.");
-    L.marker([-18.9113, -48.2622]).addTo(window.mapaClientes).bindPopup("<b>Base Brasil Diesel</b>").openPopup();
+    // Área de Foco
+    L.circle([-18.9113, -48.2622], { color: '#1a428a', fillColor: '#3b82f6', fillOpacity: 0.2, radius: 15000 }).addTo(window.mapaClientes).bindPopup("Área de densidade de Marketing.");
+    L.marker([-18.9113, -48.2622]).addTo(window.mapaClientes).bindPopup("<b style='color:#1a428a'>Base Brasil Diesel</b>").openPopup();
 };
 
 // ==========================================================
-// 4. INTEGRAÇÃO COM IA REAL (GOOGLE GEMINI)
+// 4. INTERFACE DO CÉREBRO PREDITIVO (CHATBOT)
 // ==========================================================
 window.toggleChatIA = function() {
     const j = document.getElementById('chat-ia-janela');
@@ -217,71 +324,8 @@ window.toggleChatIA = function() {
     }
 };
 
-window.enviarMensagemIA = async function() {
+window.enviarMensagemIA = function() {
+    // Passa a mensagem para o nosso Cérebro Algorítmico interno (CFOBot)
     const input = document.getElementById('chat-ia-input');
-    const msg = input.value.trim();
-    if(!msg) return;
-
-    const chatBox = document.getElementById('chat-ia-mensagens');
-    
-    // Mostra mensagem do utilizador
-    chatBox.innerHTML += `<div class="flex justify-end"><div class="bg-[#1a428a] text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[85%]">${msg}</div></div>`;
-    input.value = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    const idLoading = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div id="${idLoading}" class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-400 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium animate-pulse">A extrair inteligência da base de dados...</div></div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    try {
-        // TÁTICA DE ELITE: Busca a chave secreta no Cofre do Banco de Dados
-        const { data: cofre, error: errCofre } = await supabase.from('cofre_seguranca').select('gemini_key').eq('id', 1).single();
-        
-        if (errCofre || !cofre || !cofre.gemini_key || cofre.gemini_key === 'COLOQUE_SUA_CHAVE_AQUI') {
-            throw new Error("SEM_CHAVE");
-        }
-
-        const contextoJSON = JSON.stringify(window.dadosContextoIA);
-        const promptSistema = `Você é o CFO Digital (Consultor de Negócios e Dados) da oficina Brasil Diesel.
-        DADOS REAIS DA OFICINA: ${contextoJSON}.
-        Regra 1: Responda de forma executiva, objetiva e inteligente.
-        Regra 2: Baseie-se apenas nestes dados.
-        Regra 3: Escreva em texto limpo (não use asteriscos ** ou símbolos estranhos).
-        Pergunta do usuário: "${msg}"`;
-
-        // CORREÇÃO DO ERRO 404: Atualização para a versão "latest" do modelo
-        const urlGemini = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cofre.gemini_key}`;
-        
-        const response = await fetch(urlGemini, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptSistema }] }]
-            })
-        });
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-            console.error("Erro detalhado do Google:", data);
-            throw new Error("Erro na API da IA");
-        }
-
-        const respostaIA = data.candidates[0].content.parts[0].text;
-
-        document.getElementById(idLoading).remove();
-        chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium whitespace-pre-wrap">${respostaIA}</div></div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-    } catch (error) {
-        console.error(error);
-        if(document.getElementById(idLoading)) document.getElementById(idLoading).remove();
-        
-        let erroMsg = error.message === "SEM_CHAVE" 
-            ? "⚠️ Chave de segurança não encontrada. Coloque a sua chave na tabela 'cofre_seguranca' do Supabase." 
-            : "Desculpe, os servidores da IA rejeitaram a conexão. Verifique se a sua chave API é válida.";
-            
-        chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-red-100 text-red-800 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">${erroMsg}</div></div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+    CFOBot.processar(input.value, window.dadosContextoIA);
 };
