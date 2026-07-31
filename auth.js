@@ -202,7 +202,7 @@ window.restaurarSessao = async function() {
 // ==========================================
 window.aplicarPermissoes = function(cargo) {
     // 1. Esconder todos os botões por padrão para segurança máxima
-    const todasTelas = ['patio', 'ordem', 'lab', 'itens', 'estoque', 'cliente', 'veiculo', 'funcionario', 'receber', 'pagar', 'dashboard', 'PainelMaster', 'configuracoes'];
+    const todasTelas = ['patio', 'ordem', 'lab', 'itens', 'estoque', 'cliente', 'veiculo', 'funcionario', 'receber', 'pagar', 'dashboard', 'master', 'configuracoes'];
     
     todasTelas.forEach(tela => {
         const btn = document.querySelector(`.nav-btn[data-tela="${tela}"]`) || document.querySelector(`.nav-btn[data-="${tela}"]`);
