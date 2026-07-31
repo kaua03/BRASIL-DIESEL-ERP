@@ -16,6 +16,9 @@ window.carregarPainelMaster = async function() {
 
     tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
 
+    // Tática de Resiliência: Liga o radar independente do sucesso da leitura de logs
+    window.iniciarRadarAoVivo();
+
     try {
         // Puxa os últimos 100 logs
         const { data, error } = await supabase
@@ -27,14 +30,11 @@ window.carregarPainelMaster = async function() {
         if (error) throw error;
         
         window.renderizarLogs(data || []);
-        
-        // Ativa os dois radares
         window.iniciarSincronizacaoLogs();
-        window.iniciarRadarAoVivo();
 
     } catch (err) {
         console.error("ERRO AO CARREGAR LOGS:", err);
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-red-500 font-bold">Erro de conexão com a base de dados central.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-red-500 font-bold">Erro de conexão com a base de dados central. Verifique o RLS.</td></tr>';
     }
 };
 
@@ -55,7 +55,6 @@ window.renderizarLogs = function(logs) {
         const dataFormatada = dataLocal.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         const horaFormatada = dataLocal.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        // Cores táticas para Módulos
         let corModulo = 'text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-gray-800';
         if (log.modulo === 'Autenticação') corModulo = 'text-purple-700 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/30';
         else if (log.modulo === 'Ordem de Serviço') corModulo = 'text-sky-700 bg-sky-100 dark:text-sky-400 dark:bg-sky-900/30';
@@ -94,37 +93,11 @@ window.iniciarSincronizacaoLogs = function() {
         .subscribe();
 };
 
-window.limparLogsAntigos = async function() {
-    const confirmou = await window.abrirConfirmacao("Limpeza de Banco", "Deseja eliminar definitivamente os logs com mais de 30 dias? Esta ação não tem retorno.", "perigo");
-    if (!confirmou) return;
-
-    try {
-        const trintaDiasAtras = new Date();
-        trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
-        
-        const { error } = await supabase
-            .from('auditoria_logs')
-            .delete()
-            .lt('created_at', trintaDiasAtras.toISOString());
-
-        if (error) throw error;
-        
-        if(window.mostrarToast) window.mostrarToast("Limpeza concluída!", "sucesso");
-        window.carregarPainelMaster();
-    } catch (e) {
-        console.error(e);
-        if(window.mostrarToast) window.mostrarToast("Erro ao limpar logs.", "erro");
-    }
-};
-
 // =========================================================================
 // 3. RADAR DE PRESENÇA AO VIVO (SUPABASE PRESENCE)
 // =========================================================================
 window.iniciarRadarAoVivo = function() {
-    // Só o Master precisa ouvir todos. Mas na verdade, o auth.js é que transmite.
-    // Aqui nós configuramos a sala de escuta.
-    
-    if (window.radarChannel) return; // Já está a escutar
+    if (window.radarChannel) return; 
     
     window.radarChannel = supabase.channel('radar_global');
 
@@ -146,10 +119,8 @@ window.renderizarUsuariosOnline = function(estadoPresence) {
     const container = document.getElementById('radar-usuarios');
     if (!container) return;
 
-    // Converte o objeto complexo do Presence num array plano de usuários
     let usuariosConectados = [];
     for (const id in estadoPresence) {
-        // Cada ID pode ter várias abas abertas, pegamos a mais recente (index 0)
         usuariosConectados.push(estadoPresence[id][0]); 
     }
 
@@ -158,13 +129,21 @@ window.renderizarUsuariosOnline = function(estadoPresence) {
         return;
     }
 
-    // Desenha o Crachá Visual
     container.innerHTML = usuariosConectados.map(user => {
-        // Formatar nomes amigáveis para a tela
         let nomeAmigavelTela = user.tela;
         if(user.tela === 'patio') nomeAmigavelTela = 'Pátio de Execução';
-        if(user.tela === 'ordem') nomeAmigavelTela = 'Ordem de Serviço';
-        if(user.tela === 'master') nomeAmigavelTela = 'Painel Master';
+        else if(user.tela === 'ordem') nomeAmigavelTela = 'Ordem de Serviço';
+        else if(user.tela === 'master') nomeAmigavelTela = 'Painel Master';
+        else if(user.tela === 'lab') nomeAmigavelTela = 'Laboratório';
+        else if(user.tela === 'itens') nomeAmigavelTela = 'Itens (Catálogo)';
+        else if(user.tela === 'estoque') nomeAmigavelTela = 'Estoque';
+        else if(user.tela === 'cliente') nomeAmigavelTela = 'Clientes';
+        else if(user.tela === 'veiculo') nomeAmigavelTela = 'Veículos';
+        else if(user.tela === 'funcionario') nomeAmigavelTela = 'Equipe';
+        else if(user.tela === 'receber') nomeAmigavelTela = 'Contas a Receber';
+        else if(user.tela === 'pagar') nomeAmigavelTela = 'Contas a Pagar';
+        else if(user.tela === 'dashboard') nomeAmigavelTela = 'Dashboard Financeiro';
+        else if(user.tela === 'configuracoes') nomeAmigavelTela = 'Configurações';
         
         return `
             <div class="bg-gray-50 dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-start gap-3 shadow-sm anima-fade">
@@ -187,7 +166,6 @@ window.renderizarUsuariosOnline = function(estadoPresence) {
     }).join('');
 };
 
-// Limpa a inscrição se sairmos do Painel Master
 window.pararSincronizacaoMaster = function() {
     if (window.auditoriaSubscription) {
         supabase.removeChannel(window.auditoriaSubscription);
