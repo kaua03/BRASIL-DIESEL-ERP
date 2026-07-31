@@ -392,11 +392,6 @@ window.salvarClienteRapido = async function(e) {
 
         if (error) throw error;
 
-    // AVISA A SALA DE SEGURANÇA QUE UM ITEM FOI MARCADO/DESMARCADO
-    if(window.registrarLog) {
-    window.registrarLog('Pátio', 'Checklist O.S. #' + window.osPatioAbertaId, `Item: ${nomeItem} | Status: ${concluido ? 'Concluído' : 'Desmarcado'}`);
-    }
-
         if(window.mostrarToast) window.mostrarToast("Cliente salvo e vinculado!", "sucesso");
         
         await window.carregarDatalists();
