@@ -172,6 +172,9 @@ window.fazerLogout = async function() {
     
     document.getElementById('tela-erp')?.classList.add('hidden');
     document.getElementById('tela-erp')?.classList.remove('flex');
+
+    // REGISTRA O LOGOUT
+    if(window.registrarLog) window.registrarLog('Autenticação', 'Saiu do Sistema', 'Sessão encerrada voluntariamente.');
     
     const telaLogin = document.getElementById('tela-login');
     if (telaLogin) {
