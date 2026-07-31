@@ -4,7 +4,8 @@ import { supabase } from './config.js';
 // Memória local do Pátio para reatividade rápida
 window.dadosPatio = [];
 window.osPatioAbertaId = null;
-window.patioSubscription = null; // Guarda a conexão em tempo real
+window.patioSubscription = null;
+window.tamanhoGradeAtual = 0; // 0: Padrão, 1: Médio, 2: Compacto
 
 // =========================================================================
 // 1. CARREGAMENTO E RENDERIZAÇÃO DO RADAR (CARDS)
@@ -13,8 +14,18 @@ window.carregarPatio = async function() {
     const grid = document.getElementById('grid-patio');
     if (!grid) return;
 
+    // VERIFICAÇÃO DE CARGO TELA (Exibe o Botão de Ajuste de Layout)
+    const userStr = sessionStorage.getItem('bdp_user');
+    if (userStr) {
+        const cargo = JSON.parse(userStr).cargo;
+        const btnGrade = document.getElementById('btn-grade-tv');
+        if (cargo === 'Tela' && btnGrade) {
+            btnGrade.classList.remove('hidden');
+            btnGrade.classList.add('flex');
+        }
+    }
+
     try {
-        // Busca as O.S. (Ignora as recusadas)
         const { data: ordens, error } = await supabase
             .from('ordens_servico')
             .select(`
@@ -27,7 +38,6 @@ window.carregarPatio = async function() {
 
         if (error) throw error;
 
-        // SANITIZAÇÃO DE ELITE
         window.dadosPatio = (ordens || []).map(os => {
             const clienteUpper = String(os.cliente || '---').trim().toUpperCase();
             const modeloUpper = String(os.modelo || '---').trim().toUpperCase();
@@ -46,27 +56,50 @@ window.carregarPatio = async function() {
         if (window.dadosPatio.length === 0) {
             grid.innerHTML = '<div class="col-span-full text-center p-12 text-gray-400 font-bold bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-gray-700">Pátio limpo. Nenhuma O.S. em andamento.</div>';
         } else {
-            // Renderiza os Cards Compactos
             grid.innerHTML = window.dadosPatio.map(os => window.gerarCardPatio(os)).join('');
         }
 
-        // ATUALIZAÇÃO INSTANTÂNEA: Se o Modal estiver aberto, atualiza-o imediatamente!
         if (window.osPatioAbertaId) {
             window.renderizarConteudoModalPatio();
         }
 
-        // Inicia a escuta em Tempo Real após o primeiro carregamento bem-sucedido
         window.iniciarSincronizacaoPatio();
-
-        // Automação: Ocultar sidebar automaticamente se for login dedicado à TV
-        const cargo = document.getElementById('cargo-logado')?.innerText;
-        if (cargo && (cargo.includes('PATIO') || cargo.includes('TV')) && !window.Ativo) {
-            window.alternar();
-        }
 
     } catch (err) {
         console.error("Erro ao carregar Pátio:", err);
         grid.innerHTML = '<div class="col-span-full text-center p-12 text-red-500 font-bold bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-gray-700">Erro de comunicação com o servidor.</div>';
+    }
+};
+
+// =========================================================================
+// 2. MOTO DE LAYOUT DE TV (Redimensionamento Proporcional)
+// =========================================================================
+window.mudarGradeTV = function() {
+    window.tamanhoGradeAtual = (window.tamanhoGradeAtual + 1) % 3;
+    const grid = document.getElementById('grid-patio');
+    const textoBtn = document.getElementById('texto-grade-tv');
+
+    if (!grid) return;
+
+    // Reseta as classes para a base limpa
+    grid.className = "grid gap-4 origin-top transition-all duration-300"; 
+
+    // Aplica as classes Tailwind de Colunas + Escalamento CSS Proporcional (Zoom)
+    if (window.tamanhoGradeAtual === 0) {
+        // PADRÃO (Max 5 Colunas)
+        grid.classList.add('grid-cols-1', 'sm:grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4', '2xl:grid-cols-5');
+        grid.style.zoom = "1"; // Tamanho Real
+        if(textoBtn) textoBtn.innerText = "Layout: Padrão";
+    } else if (window.tamanhoGradeAtual === 1) {
+        // MÉDIO (Max 8 Colunas)
+        grid.classList.add('grid-cols-2', 'sm:grid-cols-3', 'md:grid-cols-4', 'xl:grid-cols-6', '2xl:grid-cols-8');
+        grid.style.zoom = "0.75"; // Encolhe em 25%
+        if(textoBtn) textoBtn.innerText = "Layout: Médio";
+    } else {
+        // COMPACTO (Max 10 Colunas)
+        grid.classList.add('grid-cols-3', 'sm:grid-cols-4', 'md:grid-cols-6', 'xl:grid-cols-8', '2xl:grid-cols-10');
+        grid.style.zoom = "0.55"; // Encolhe quase pela metade para ecrãs massivos
+        if(textoBtn) textoBtn.innerText = "Layout: Compacto";
     }
 };
 
@@ -76,19 +109,16 @@ window.gerarCardPatio = function(os) {
     const clienteUpper = String(os.cliente || '---').toUpperCase();
     const modeloFormatado = String(os.modelo || '---').toUpperCase();
 
-    // Lógica do Progresso (Baseada nos itens do orçamento)
     const totalItens = os.itens_orcamento ? os.itens_orcamento.length : 0;
     const concluidos = os.itens_orcamento ? os.itens_orcamento.filter(i => i.concluido).length : 0;
     const progresso = totalItens === 0 ? 0 : Math.round((concluidos / totalItens) * 100);
 
-    // Cores das Situações Adaptadas para Modo Claro e Escuro
     let bgStatus = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     if (os.situacao === 'Aberto') bgStatus = 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border border-transparent dark:border-sky-800';
     else if (os.situacao === 'Aguardando Autorização') bgStatus = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-transparent dark:border-amber-800';
     else if (os.situacao === 'Autorizado') bgStatus = 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400';
     else if (os.situacao === 'Em Execução') bgStatus = 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border border-transparent dark:border-indigo-800';
 
-    // Cor da barra de progresso (Muda para verde quando 100%)
     let corBarra = 'bg-[#1a428a] dark:bg-[#3b82f6]';
     let corTextoProgresso = 'text-[#1a428a] dark:text-[#3b82f6]';
     if (progresso === 100) {
@@ -97,18 +127,18 @@ window.gerarCardPatio = function(os) {
     }
 
     return `
-        <div onclick="window.abrirModalPatio(${os.id})" class="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 relative group cursor-pointer flex flex-col h-full">
+        <div onclick="window.abrirModalPatio(${os.id})" class="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 relative group cursor-pointer flex flex-col h-full min-h-[160px]">
             <div class="flex justify-between items-center mb-3">
                 <span class="font-black text-[#1a428a] dark:text-[#3b82f6] text-lg">#${numeroFormatado}</span>
                 <span class="${bgStatus} text-[9px] uppercase px-2 py-1 rounded font-bold tracking-wider shadow-sm transition-colors">${os.situacao || 'Aberto'}</span>
             </div>
             <h3 class="text-2xl font-black text-[#0f2757] dark:text-white tracking-wider mb-1">${placaFormatada}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-4">${modeloFormatado}</p>
-            <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[10px] font-bold mb-5 truncate">
+            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-4 truncate">${modeloFormatado}</p>
+            <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[10px] font-bold mb-5 truncate mt-auto">
                 <svg class="h-3 w-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                 <span class="truncate">${clienteUpper}</span>
             </div>
-            <div class="mt-auto">
+            <div>
                 <div class="flex justify-between text-[10px] font-black text-gray-400 dark:text-gray-500 mb-1.5 tracking-wider uppercase">
                     <span>Progresso</span>
                     <span class="${corTextoProgresso}">${progresso}%</span>
@@ -122,10 +152,9 @@ window.gerarCardPatio = function(os) {
 };
 
 // =========================================================================
-// 2. SINCRONIZAÇÃO EM TEMPO REAL (DevSecOps)
+// 3. SINCRONIZAÇÃO EM TEMPO REAL (DevSecOps)
 // =========================================================================
 window.iniciarSincronizacaoPatio = function() {
-    // Evita múltiplas inscrições ao recarregar a tela
     if (window.patioSubscription) return;
 
     window.patioSubscription = supabase.channel('patio-realtime')
@@ -145,7 +174,6 @@ window.iniciarSincronizacaoPatio = function() {
         });
 };
 
-// Quando sair da tela do Pátio, o roteador pode chamar esta função para limpar a memória
 window.pararSincronizacaoPatio = function() {
     if (window.patioSubscription) {
         supabase.removeChannel(window.patioSubscription);
@@ -153,7 +181,6 @@ window.pararSincronizacaoPatio = function() {
         console.log("🔴 Conexão WebSocket encerrada.");
     }
 };
-
 
 // =========================================================================
 // 4. MODAL DE EXECUÇÃO (Mestre-Detalhe)
@@ -297,8 +324,6 @@ window.marcarItemConcluido = async function(itemId, concluido, checkboxElement) 
             texto: textoDiario
         }]);
 
-        // A sincronização realtime atualizará a tela automaticamente, 
-        // mas forçamos localmente por garantia de latência imediata (UX fluida)
         await window.carregarPatio();
 
     } catch (e) {
@@ -334,7 +359,6 @@ window.enviarComentarioPatioAtual = async function() {
         input.classList.remove('opacity-50');
         input.focus();
         
-        // A sincronização realtime cuida do resto!
     } catch (e) {
         console.error(e);
         input.disabled = false;
