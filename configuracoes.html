@@ -2,7 +2,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#1e293b] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300 shrink-0">
         <div>
             <div class="flex items-center gap-3">
-                <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-tight">Configurações</h2>
+                <h2 class="text-3xl font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-tight" id="titulo-config">Configurações</h2>
             </div>
             <p class="text-gray-500 dark:text-gray-400 font-medium mt-1">Parâmetros do sistema, identidade da oficina e controlo de permissões.</p>
         </div>
@@ -15,7 +15,6 @@
                 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 Dados da Empresa
             </button>
-            
             <button onclick="window.mudarAbaConfig('cargos')" id="btn-aba-cargos" class="flex items-center gap-3 p-4 rounded-xl font-bold transition-all text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800 group">
                 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 Gestão de Cargos
@@ -25,14 +24,41 @@
         <div class="flex-1 bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar p-6 transition-colors duration-300 relative">
             
             <div id="aba-empresa" class="space-y-6 fade-in block">
-                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
-                    <h3 class="text-xl font-black text-[#0f2757] dark:text-white">Identidade da Oficina</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Estes dados alimentarão o cabeçalho das suas Ordens de Serviço e Orçamentos impressos no futuro.</p>
+                <div class="flex items-start justify-between border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-[#0f2757] dark:text-white">Identidade Global (White-Label)</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Personalize a marca da sua empresa no ERP e nos PDFs.</p>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2 flex flex-col sm:flex-row gap-6 p-4 bg-gray-50 dark:bg-[#0f172a] rounded-xl border border-gray-200 dark:border-gray-700 items-center sm:items-start">
+                        <div class="relative w-32 h-32 bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden shrink-0 group">
+                            <img id="preview-logo" src="" class="hidden w-full h-full object-contain p-2">
+                            <div id="placeholder-logo" class="text-gray-400 text-center text-xs font-bold">Sem Logo</div>
+                            <input type="file" id="input-logo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="window.prepararUploadLogo(event)">
+                            <div class="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] text-center py-1 opacity-0 group-hover:opacity-100 transition-opacity">Alterar Imagem</div>
+                        </div>
+                        
+                        <div class="flex-1 space-y-4 w-full">
+                            <div>
+                                <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Nome Curto do Sistema</label>
+                                <input type="text" id="conf-nome-curto" placeholder="Ex: BRASIL DIESEL" class="w-full px-4 py-3 bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] text-gray-800 dark:text-white font-black uppercase transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Cor Primária do Sistema</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="conf-cor" class="w-12 h-12 rounded cursor-pointer border-0 p-0 bg-transparent">
+                                    <span class="text-xs text-gray-500 font-mono" id="hex-cor">#1a428a</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2"></div>
+
                     <div>
-                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Razão Social / Fantasia</label>
+                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Razão Social</label>
                         <input type="text" id="conf-razao" placeholder="Ex: Brasil Diesel Performance" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f172a] border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:border-[#1a428a] dark:focus:border-[#3b82f6] text-gray-800 dark:text-white font-bold transition-all">
                     </div>
                     <div>
@@ -54,72 +80,46 @@
                 </div>
                 
                 <div class="pt-4 flex justify-end">
-                    <button onclick="window.salvarDadosEmpresa()" class="bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-all flex items-center gap-2">
+                    <button id="btn-salvar-empresa" onclick="window.salvarDadosEmpresa()" class="bg-[#1a428a] hover:bg-blue-900 dark:bg-[#2563eb] dark:hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Gravar Informações
+                        Gravar Alterações
                     </button>
                 </div>
             </div>
 
-            <div id="aba-cargos" class="hidden space-y-6 fade-in">
-                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
-                    <h3 class="text-xl font-black text-[#0f2757] dark:text-white">Matriz de Acessos</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Painel informativo de segurança. Verifique os níveis de acesso de cada cargo dentro do ERP.</p>
+            <div id="aba-cargos" class="hidden space-y-6 fade-in flex-col h-full">
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2 shrink-0 flex justify-between items-end">
+                    <div>
+                        <h3 class="text-xl font-black text-[#0f2757] dark:text-white">Matriz de Acessos Dinâmica</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Defina o que cada cargo pode ver ou editar no ERP.</p>
+                    </div>
+                    <button onclick="window.salvarPermissoes()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-md transition-all text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Salvar Matriz
+                    </button>
                 </div>
 
-                <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl">
+                <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl flex-1">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-gray-50 dark:bg-[#0f172a] border-b border-gray-200 dark:border-gray-700 text-[10px] uppercase tracking-widest text-gray-500">
                             <tr>
-                                <th class="p-4 font-black">Cargo do Sistema</th>
+                                <th class="p-4 font-black">Cargo</th>
                                 <th class="p-4 font-black text-center">Pátio</th>
-                                <th class="p-4 font-black text-center">O.S. / Orçamentos</th>
+                                <th class="p-4 font-black text-center">Orçamentos / O.S.</th>
                                 <th class="p-4 font-black text-center">Financeiro</th>
-                                <th class="p-4 font-black text-center">Config. / Master</th>
+                                <th class="p-4 font-black text-center">Cadastros (Itens/Cli)</th>
+                                <th class="p-4 font-black text-center">Painel Master</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800 font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1e293b]">
-                            
-                            <tr class="hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-colors">
-                                <td class="p-4 text-[#1a428a] dark:text-blue-400 font-black">Dono / Analista</td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                            </tr>
-                            
-                            <tr class="hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-colors">
-                                <td class="p-4">Mecânico RSP</td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                            </tr>
-                            
-                            <tr class="hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-colors">
-                                <td class="p-4">Mecânico</td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-green-100 text-green-700">✓</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center items-center w-max px-2 h-6 rounded bg-amber-100 text-amber-700 text-[10px] uppercase">Apenas Execução</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                            </tr>
-                            
-                            <tr class="hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-colors">
-                                <td class="p-4">Modo Tela</td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center items-center w-max px-2 h-6 rounded bg-sky-100 text-sky-700 text-[10px] uppercase">Leitura Radar</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                                <td class="p-4 text-center"><span class="inline-flex justify-center w-6 h-6 rounded bg-red-100 text-red-700 opacity-50">✗</span></td>
-                            </tr>
+                        <tbody id="tabela-permissoes" class="divide-y divide-gray-100 dark:divide-gray-800 font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1e293b]">
+                            <tr><td colspan="6" class="p-8 text-center text-gray-400">A carregar matriz do banco de dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
                 
-                <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50 flex items-start gap-3">
-                    <div class="text-blue-500 mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <p class="text-xs font-medium text-gray-600 dark:text-gray-300">A matriz de regras de negócio (RBAC) é gerida no núcleo do sistema (<code class="font-bold text-[#1a428a] dark:text-blue-400">auth.js</code>) para evitar violações de segurança via banco de dados.</p>
+                <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50 flex items-start gap-3 shrink-0">
+                    <div class="text-amber-500 mt-0.5">⚠️</div>
+                    <p class="text-xs font-medium text-amber-800 dark:text-amber-400">As alterações de permissão entram em vigor no próximo login do utilizador ou quando ele atualizar a página (F5).</p>
                 </div>
             </div>
 
