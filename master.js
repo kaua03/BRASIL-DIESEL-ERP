@@ -2,7 +2,6 @@
 import { supabase } from './config.js';
 
 window.auditoriaSubscription = null;
-// Nota: Não usamos mais o window.radarChannel aqui, pois o rádio central é o window.canalTransmissaoGeral gerido pelo auth.js
 
 // =========================================================================
 // 1. CARREGAMENTO INICIAL DO PAINEL MASTER
@@ -16,7 +15,6 @@ window.carregarPainelMaster = async function() {
 
     tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
 
-    // Tática de Resiliência: Liga/Atualiza o radar independente do sucesso da leitura de logs
     window.iniciarRadarAoVivo();
 
     try {
@@ -123,8 +121,6 @@ window.iniciarRadarAoVivo = function() {
         window.radarLigado = true; // Marca como blindado contra duplicação!
     }
 
-    // 3. A CORREÇÃO DA ABA: Sempre que a função é chamada (ex: ao voltar pra aba),
-    // pedimos à memória do rádio quem está online e FORÇAMOS o desenho na tela nova.
     const estadoAtual = window.canalTransmissaoGeral.presenceState();
     window.renderizarUsuariosOnline(estadoAtual);
 };
