@@ -447,6 +447,12 @@ window.salvarEdicaoReceber = async function(event) {
         console.error("FALHA AO EDITAR:", e);
         if (window.mostrarToast) window.mostrarToast("Erro crítico ao salvar edição.", "erro");
     }
+
+    if(window.registrarLog) {
+        const desc = document.getElementById('receber-descricao').value;
+    window.registrarLog('A Receber', 'Registrou Conta', `Descrição: ${desc}`);
+    }
+    
 };
 
 // =========================================================================
@@ -476,6 +482,9 @@ window.darBaixaReceber = async function(id, numOs, btnElement) {
         if (window.mostrarToast) window.mostrarToast("Erro ao confirmar recebimento.", "erro");
         window.carregarContasReceber(true); 
     }
+
+    if(window.registrarLog) window.registrarLog('A Receber', 'Deu Baixa (Recebeu)', `ID da Conta: ${id}`);
+    
 };
 
 window.estornarReceber = async function(id, btnElement) {
@@ -501,4 +510,7 @@ window.estornarReceber = async function(id, btnElement) {
         if (window.mostrarToast) window.mostrarToast("Erro ao realizar o estorno.", "erro");
         window.carregarContasReceber(true);
     }
+
+    if(window.registrarLog) window.registrarLog('A Receber', 'Fez estorno (Estornou)', `ID da Conta: ${id}`);
+    
 };
