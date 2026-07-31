@@ -17,14 +17,13 @@
         </div>
     </div>
 
-    <!-- ÁREA 1: RADAR DE USUÁRIOS ONLINE (NOVIDADE) -->
+    <!-- ÁREA 1: RADAR DE USUÁRIOS ONLINE -->
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-colors duration-300 shrink-0">
         <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Radar da Oficina (Em Tempo Real)
         </h3>
         
-        <!-- A grelha onde as "bolinhas" vão aparecer -->
         <div id="radar-usuarios" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <div class="col-span-full text-center p-6 text-gray-400 font-medium text-xs border border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
                 A rastrear utilizadores conectados...
@@ -36,7 +35,7 @@
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300 flex-1 flex flex-col">
         <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#0f172a] flex justify-between items-center shrink-0">
             <h3 class="font-black text-[#1a428a] dark:text-[#3b82f6] uppercase tracking-widest text-xs">Registro de Atividades</h3>
-            <button onclick="window.limparLogsAntigos()" class="text-[10px] bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded font-bold uppercase tracking-wider transition-colors">Limpar Histórico (> 30 dias)</button>
+            <!-- Botão de limpar histórico foi removido daqui para segurança -->
         </div>
         
         <div class="overflow-y-auto custom-scrollbar flex-1 relative">
