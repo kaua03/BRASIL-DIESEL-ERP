@@ -1,237 +1,313 @@
 // JS/modules/dashboard.js
 import { supabase } from './config.js';
 
-// Memória dos Gráficos (Para destruir e não bugar no SPA)
-window.graficoCaixa = null;
-window.graficoArena = null;
+window.graficosAbertos = {};
+window.mapaClientes = null;
+window.dashRealtimeTimer = null;
+window.dadosContextoIA = {};
 
-// =========================================================================
-// 1. INICIALIZAÇÃO E FILTROS
-// =========================================================================
+// ==========================================================
+// 1. GESTÃO DO MÊS E INICIALIZAÇÃO
+// ==========================================================
 window.preencherFiltroMeses = function() {
     const select = document.getElementById('dash-mes');
-    if (!select || select.options.length > 0) return; // Só preenche uma vez
+    if (!select || select.options.length > 0) return; 
     
     const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const dataAtual = new Date();
-    const anoAtual = dataAtual.getFullYear();
-    const mesAtual = dataAtual.getMonth(); // 0 a 11
+    let anoAtual = dataAtual.getFullYear();
+    let mesAtual = dataAtual.getMonth(); 
 
-    // Preenche últimos 6 meses e o mês atual
     for (let i = 0; i < 6; i++) {
         let m = mesAtual - i;
         let a = anoAtual;
         if (m < 0) { m += 12; a -= 1; }
         
         const option = document.createElement('option');
-        // O valor será formato YYYY-MM para facilitar a busca no banco
         option.value = `${a}-${String(m + 1).padStart(2, '0')}`;
         option.text = `${meses[m]} de ${a}`;
-        if (i === 0) option.selected = true; // Seleciona o mês atual por padrão
-        
+        if (i === 0) option.selected = true; 
         select.appendChild(option);
     }
 };
 
 window.carregarDashboard = async function() {
     window.preencherFiltroMeses();
-    const mesFiltro = document.getElementById('dash-mes').value; // Ex: "2026-07"
+    const mesFiltro = document.getElementById('dash-mes').value; 
     
-    // Feedback visual
-    document.getElementById('kpi-caixa').innerText = "A ler dados...";
-    document.getElementById('kpi-receber').innerText = "...";
-    document.getElementById('kpi-pagar').innerText = "...";
-    document.getElementById('kpi-ticket').innerText = "...";
+    // Pequeno atraso para garantir que o HTML carregou (Comportamento SPA)
+    setTimeout(async () => {
+        try {
+            // Busca Massiva
+            const [receitasReq, despesasReq, osReq, clientesReq] = await Promise.all([
+                supabase.from('contas_receber').select('*'),
+                supabase.from('contas_pagar').select('*'),
+                supabase.from('ordens_servico').select('*, itens_orcamento(*)'),
+                supabase.from('clientes').select('id, nome, endereco') // Para o mapa
+            ]);
 
-    try {
-        // MÁQUINA DE DADOS: Busca massiva no Supabase
-        // 1. Contas a Receber (Para o Caixa e o Ralo)
-        const { data: receber, error: errRec } = await supabase.from('contas_receber').select('*');
-        // 2. Contas a Pagar
-        const { data: pagar, error: errPag } = await supabase.from('contas_pagar').select('*');
-        // 3. Ordens de Serviço (Para o Pátio vs Lab e Ticket Médio)
-        const { data: ordens, error: errOs } = await supabase.from('ordens_servico').select('*, itens_orcamento(*)');
+            const receber = receitasReq.data || [];
+            const pagar = despesasReq.data || [];
+            const ordens = osReq.data || [];
+            const clientes = clientesReq.data || [];
 
-        // CALCULAR KPIs DO MÊS SELECIONADO
-        let totalCaixaRecebido = 0;
-        let totalRaloAtrasado = 0;
-        let totalPagarMes = 0;
-        
-        // Filtra e soma Receitas
-        (receber || []).forEach(conta => {
-            const dataConta = conta.data_vencimento || conta.created_at;
-            if (dataConta.startsWith(mesFiltro)) {
-                if (conta.status === 'Pago') totalCaixaRecebido += Number(conta.valor || 0);
-                else totalRaloAtrasado += Number(conta.valor || 0);
-            }
-        });
+            // Variáveis de Cálculo
+            let lucroMensal = 0, recebido = 0, atrasado = 0, aPagar = 0, despesaPaga = 0;
+            let valPatio = 0, valLab = 0;
+            let contagemVeiculos = {};
+            let contagemPecas = {};
+            let contagemFornecedores = {};
+            let osFechadas = 0, valorTotalOs = 0;
 
-        // Filtra e soma Despesas
-        let totalCaixaPago = 0;
-        (pagar || []).forEach(conta => {
-            const dataConta = conta.data_vencimento || conta.created_at;
-            if (dataConta.startsWith(mesFiltro)) {
-                totalPagarMes += Number(conta.valor || 0);
-                if (conta.status === 'Pago') totalCaixaPago += Number(conta.valor || 0);
-            }
-        });
+            // Processar Receitas (Mês atual)
+            receber.forEach(c => {
+                const data = c.data_vencimento || c.created_at;
+                if (data.startsWith(mesFiltro)) {
+                    const v = Number(c.valor || 0);
+                    if (c.status === 'Pago') recebido += v;
+                    else atrasado += v;
+                }
+            });
 
-        // CAIXA REAL = O que entrou - O que saiu no mês
-        const saldoReal = totalCaixaRecebido - totalCaixaPago;
-        
-        // TICKET MÉDIO DA O.S. (Apenas O.S. finalizadas/pagas)
-        let totalValorOs = 0;
-        let countOs = 0;
-        let receitaPatio = 0;
-        let receitaLab = 0;
+            // Processar Despesas (Mês atual)
+            pagar.forEach(c => {
+                const data = c.data_vencimento || c.created_at;
+                if (data.startsWith(mesFiltro)) {
+                    const v = Number(c.valor || 0);
+                    aPagar += v;
+                    if (c.status === 'Pago') despesaPaga += v;
+                    // Ranking Fornecedores
+                    const forn = String(c.fornecedor || 'Diversos').toUpperCase().substring(0, 25);
+                    contagemFornecedores[forn] = (contagemFornecedores[forn] || 0) + v;
+                }
+            });
 
-        (ordens || []).forEach(os => {
-            if (os.created_at && os.created_at.startsWith(mesFiltro)) {
-                countOs++;
-                let valorDestaOs = 0;
-                (os.itens_orcamento || []).forEach(item => {
-                    const valItem = Number(item.valor_total || 0);
-                    valorDestaOs += valItem;
+            lucroMensal = recebido - despesaPaga;
+
+            // Processar O.S. e Veículos (Mês atual)
+            ordens.forEach(os => {
+                if (os.created_at && os.created_at.startsWith(mesFiltro)) {
+                    osFechadas++;
                     
-                    // Lógica para a ARENA (Classificação básica: Se for serviço de bancada é Lab, senão Pátio)
-                    // Como não temos a coluna exata, fazemos uma inferência estratégica:
-                    if (String(item.descricao).toUpperCase().includes('BICO') || String(item.descricao).toUpperCase().includes('BOMBA')) {
-                        receitaLab += valItem;
-                    } else {
-                        receitaPatio += valItem;
-                    }
-                });
-                totalValorOs += valorDestaOs;
+                    // Ranking Veículos
+                    const modelo = String(os.modelo || 'OUTROS').toUpperCase();
+                    contagemVeiculos[modelo] = (contagemVeiculos[modelo] || 0) + 1;
+
+                    (os.itens_orcamento || []).forEach(item => {
+                        const valItem = Number(item.valor_total || 0);
+                        valorTotalOs += valItem;
+                        
+                        // Lab vs Pátio
+                        const desc = String(item.descricao).toUpperCase();
+                        if (desc.includes('BICO') || desc.includes('BOMBA') || desc.includes('INJETOR')) {
+                            valLab += valItem;
+                        } else {
+                            valPatio += valItem;
+                        }
+
+                        // Ranking Peças
+                        if (item.tipo === 'Peça') {
+                            contagemPecas[desc] = (contagemPecas[desc] || 0) + item.quantidade;
+                        }
+                    });
+                }
+            });
+
+            const ticketMedio = osFechadas > 0 ? (valorTotalOs / osFechadas) : 0;
+
+            // ATUALIZAR KPIs TELA
+            const formatMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+            
+            if(document.getElementById('kpi-lucro')) {
+                document.getElementById('kpi-lucro').innerText = formatMoeda(lucroMensal);
+                document.getElementById('kpi-receber').innerText = formatMoeda(atrasado);
+                document.getElementById('kpi-pagar').innerText = formatMoeda(aPagar);
+                document.getElementById('kpi-ticket').innerText = formatMoeda(ticketMedio);
+                document.getElementById('kpi-vol-os').innerText = `${osFechadas} O.S. Executadas`;
             }
-        });
 
-        const ticketMedio = countOs > 0 ? (totalValorOs / countOs) : 0;
+            // ATUALIZAR LISTAS (TOP 5)
+            const objParaArraySort = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            
+            const topPecas = objParaArraySort(contagemPecas);
+            const ulPecas = document.getElementById('lista-top-pecas');
+            if(ulPecas) {
+                ulPecas.innerHTML = topPecas.length ? topPecas.map(p => `<li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1"><span>${p[0]}</span> <span class="text-orange-500">${p[1]}x</span></li>`).join('') : '<li class="text-xs text-gray-400">Sem dados no mês.</li>';
+            }
 
-        // ==========================================
-        // ATUALIZAR O ECRÃ (ZONA 1)
-        // ==========================================
-        const formatarReal = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-        
-        document.getElementById('kpi-caixa').innerText = formatarReal(saldoReal);
-        const stCaixa = document.getElementById('kpi-caixa-status');
-        if (saldoReal >= 0) {
-            stCaixa.innerText = "🟢 Operação Saudável"; stCaixa.className = "text-xs font-bold mt-2 text-green-500";
-            document.getElementById('kpi-caixa').className = "text-3xl font-black text-green-600 dark:text-green-500";
-        } else {
-            stCaixa.innerText = "🔴 Sangramento de Caixa"; stCaixa.className = "text-xs font-bold mt-2 text-red-500";
-            document.getElementById('kpi-caixa').className = "text-3xl font-black text-red-600 dark:text-red-500";
+            const topForn = objParaArraySort(contagemFornecedores);
+            const ulForn = document.getElementById('lista-top-fornecedores');
+            if(ulForn) {
+                ulForn.innerHTML = topForn.length ? topForn.map(f => `<li class="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1 truncate"><span class="truncate pr-2">${f[0]}</span> <span class="text-purple-500">${formatMoeda(f[1])}</span></li>`).join('') : '<li class="text-xs text-gray-400">Sem dados no mês.</li>';
+            }
+
+            // =====================================
+            // DESENHAR GRÁFICOS & MAPA
+            // =====================================
+            window.desenharGraficos(recebido, despesaPaga, contagemVeiculos, valPatio, valLab);
+            window.desenharMapa(clientes);
+            window.iniciarRealtimeDash();
+
+            // Salva dados para o Bot CFO
+            window.dadosContextoIA = { lucroMensal, recebido, atrasado, aPagar, osFechadas, ticketMedio, topVeiculos: topPecas, topForn };
+
+        } catch (e) {
+            console.error("Erro Dashboard:", e);
         }
+    }, 100);
+};
 
-        document.getElementById('kpi-receber').innerText = formatarReal(totalRaloAtrasado);
-        document.getElementById('kpi-pagar').innerText = formatarReal(totalPagarMes);
-        document.getElementById('kpi-ticket').innerText = formatarReal(ticketMedio);
+// ==========================================================
+// 2. RENDERIZAÇÃO GRÁFICA (CHART.JS)
+// ==========================================================
+window.desenharGraficos = function(rec, des, veiculosObj, patio, lab) {
+    const txtCor = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563';
+    const gridCor = document.documentElement.classList.contains('dark') ? '#334155' : '#e5e7eb';
+    
+    const criarGrafico = (id, type, data, options) => {
+        const ctx = document.getElementById(id);
+        if(!ctx) return;
+        if(window.graficosAbertos[id]) window.graficosAbertos[id].destroy();
+        window.graficosAbertos[id] = new Chart(ctx, { type, data, options });
+    };
 
-        // ==========================================
-        // DESENHAR GRÁFICOS (ZONA 2)
-        // ==========================================
-        window.desenharGraficos(totalCaixaRecebido, totalCaixaPago, receitaPatio, receitaLab);
+    // 1. Fluxo de Caixa (Barra Dupla)
+    criarGrafico('chart-fluxo', 'bar', {
+        labels: ['Mês Analisado'],
+        datasets: [
+            { label: 'Entradas', data: [rec], backgroundColor: '#10b981', borderRadius: 4 },
+            { label: 'Saídas', data: [des], backgroundColor: '#ef4444', borderRadius: 4 }
+        ]
+    }, { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: gridCor }, ticks: { color: txtCor } }, x: { grid: { display: false }, ticks: { color: txtCor } } }, plugins: { legend: { labels: { color: txtCor } } } });
 
-        // Guarda os dados brutos para o Bot da IA ler
-        window.dadosGeraisIA = { saldoReal, totalRaloAtrasado, totalPagarMes, receitaPatio, receitaLab };
+    // 2. Top Veículos (Barra Horizontal)
+    const topV = Object.entries(veiculosObj).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    criarGrafico('chart-veiculos', 'bar', {
+        labels: topV.map(v => v[0]),
+        datasets: [{ label: 'Qtd na Oficina', data: topV.map(v => v[1]), backgroundColor: '#1a428a', borderRadius: 4 }]
+    }, { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: gridCor }, ticks: { color: txtCor, stepSize: 1 } }, y: { grid: { display: false }, ticks: { color: txtCor, font: {size: 10} } } }, plugins: { legend: { display: false } } });
 
-    } catch (e) {
-        console.error("Erro no Business Intelligence:", e);
-        if(window.mostrarToast) window.mostrarToast("Falha ao calcular métricas de BI.", "erro");
+    // 3. Origem Faturamento (Doughnut)
+    criarGrafico('chart-origem', 'doughnut', {
+        labels: ['Serviço Pátio', 'Laboratório/Bancada'],
+        datasets: [{ data: [patio || 1, lab || 1], backgroundColor: ['#3b82f6', '#facc15'], borderWidth: 0, hoverOffset: 5 }]
+    }, { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: txtCor } } } });
+};
+
+// ==========================================================
+// 3. MAPA DE CALOR GEOGRÁFICO (LEAFLET)
+// ==========================================================
+window.desenharMapa = function(clientes) {
+    const mapDiv = document.getElementById('mapa-clientes');
+    if(!mapDiv) return;
+
+    if(window.mapaClientes) {
+        window.mapaClientes.remove(); // Limpa mapa antigo se existir
+    }
+
+    // Inicializa centrado em Uberlândia (como exemplo de centro tático)
+    window.mapaClientes = L.map('mapa-clientes').setView([-18.9113, -48.2622], 12);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(window.mapaClientes);
+
+    // Simulação visual: Como o banco de dados tem endereços de texto e não Latitude/Longitude exata ainda, 
+    // nós desenhamos uma área de cobertura de influência para mostrar ao patrão a ideia (Raio de 15km).
+    // Num sistema final com API de Geocoding do Google, cada cliente seria um ponto exato.
+    L.circle([-18.9113, -48.2622], {
+        color: '#1a428a',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.2,
+        radius: 12000 // 12km
+    }).addTo(window.mapaClientes).bindPopup("Área de densidade alta de clientes. Focar Marketing aqui.");
+    
+    // Marcador da Oficina
+    L.marker([-18.9113, -48.2622]).addTo(window.mapaClientes).bindPopup("<b>Sua Oficina</b>").openPopup();
+};
+
+// ==========================================================
+// 4. SUPABASE REALTIME (ATUALIZAÇÃO AO VIVO)
+// ==========================================================
+window.iniciarRealtimeDash = function() {
+    if(window.dashRealtimeAtivo) return;
+    
+    supabase.channel('dashboard-inteligente')
+        .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
+            // Se qualquer tabela mudar (O.S, Financeiro, Clientes), recarrega o Dash em 1.5s
+            // Usa Timeout para evitar que 10 mudanças juntas travem a tela.
+            clearTimeout(window.dashRealtimeTimer);
+            window.dashRealtimeTimer = setTimeout(() => {
+                if(document.getElementById('dash-mes')) window.carregarDashboard();
+            }, 1500);
+        })
+        .subscribe();
+        
+    window.dashRealtimeAtivo = true;
+};
+
+// ==========================================================
+// 5. AGENTE DE IA (CFO DIGITAL) - CHATBOT
+// ==========================================================
+window.toggleChatIA = function() {
+    const janela = document.getElementById('chat-ia-janela');
+    if (janela.classList.contains('scale-0')) {
+        janela.classList.remove('scale-0', 'opacity-0');
+        janela.classList.add('scale-100', 'opacity-100');
+        document.getElementById('chat-ia-input').focus();
+    } else {
+        janela.classList.remove('scale-100', 'opacity-100');
+        janela.classList.add('scale-0', 'opacity-0');
     }
 };
 
-// =========================================================================
-// 3. ENGENHARIA DE GRÁFICOS (CHART.JS)
-// =========================================================================
-window.desenharGraficos = function(receitas, despesas, patio, lab) {
-    // Cores de Acordo com o Tema Claro/Escuro
-    const textoCor = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563';
-    const gridCor = document.documentElement.classList.contains('dark') ? '#334155' : '#e5e7eb';
+window.enviarMensagemIA = function() {
+    const input = document.getElementById('chat-ia-input');
+    const msg = input.value.trim();
+    if(!msg) return;
 
-    // 1. Gráfico de Caixa (Barras)
-    const ctxCaixa = document.getElementById('grafico-caixa');
-    if (window.graficoCaixa) window.graficoCaixa.destroy(); // Destrói o fantasma anterior
-
-    window.graficoCaixa = new Chart(ctxCaixa, {
-        type: 'bar',
-        data: {
-            labels: ['Mês Analisado'], // Numa V2, mapeamos os 6 meses aqui
-            datasets: [
-                { label: 'Entradas (Faturado)', data: [receitas], backgroundColor: '#10b981', borderRadius: 6 },
-                { label: 'Saídas (Custos)', data: [despesas], backgroundColor: '#ef4444', borderRadius: 6 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: gridCor }, ticks: { color: textoCor } },
-                x: { grid: { display: false }, ticks: { color: textoCor } }
-            },
-            plugins: { legend: { labels: { color: textoCor, font: { weight: 'bold' } } } }
-        }
-    });
-
-    // 2. O Ringue: Pátio vs Lab (Doughnut)
-    const ctxArena = document.getElementById('grafico-arena');
-    if (window.graficoArena) window.graficoArena.destroy();
-
-    // Se tudo for zero, dá um pequeno valor fantasma só para o gráfico não sumir da tela
-    const valPatio = patio === 0 && lab === 0 ? 1 : patio;
-    const valLab = patio === 0 && lab === 0 ? 1 : lab;
-
-    window.graficoArena = new Chart(ctxArena, {
-        type: 'doughnut',
-        data: {
-            labels: ['Pátio de Execução', 'Laboratório'],
-            datasets: [{
-                data: [valPatio, valLab],
-                backgroundColor: ['#1a428a', '#facc15'],
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '70%',
-            plugins: { legend: { position: 'bottom', labels: { color: textoCor, font: { weight: 'bold' }, padding: 20 } } }
-        }
-    });
-};
-
-// =========================================================================
-// 4. O AGENTE DE IA (Preparação para Python / LLM)
-// =========================================================================
-window.gerarRelatorioIA = function() {
-    const btn = document.getElementById('btn-ia');
-    const box = document.getElementById('resultado-ia');
-    const dados = window.dadosGeraisIA || { saldoReal: 0, totalRaloAtrasado: 0, totalPagarMes: 0, receitaPatio: 0, receitaLab: 0 };
+    const chatBox = document.getElementById('chat-ia-mensagens');
     
-    btn.innerText = "A analisar dados...";
-    btn.classList.add('animate-pulse');
-    box.classList.remove('hidden');
-    box.innerHTML = `<span class="text-yellow-500 font-bold animate-pulse">Iniciando motor analítico... Mapeando buracos financeiros...</span>`;
+    // 1. Mensagem do Usuário
+    chatBox.innerHTML += `
+        <div class="flex justify-end">
+            <div class="bg-[#1a428a] text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[85%]">
+                ${msg}
+            </div>
+        </div>
+    `;
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Simulação do tempo de resposta de uma API Python/OpenAI (2.5 segundos)
+    // 2. Simula o raciocínio do LLM/Python
     setTimeout(() => {
-        btn.innerText = "Atualizar Diagnóstico";
-        btn.classList.remove('animate-pulse');
-        
-        const raloRatio = dados.totalRaloAtrasado > 0 ? (dados.totalRaloAtrasado / (dados.saldoReal + dados.totalRaloAtrasado)) * 100 : 0;
-        let alertaPatio = dados.receitaPatio < dados.receitaLab ? "O Pátio está a faturar menos que o Laboratório." : "O Pátio é o principal trator de receitas desta operação.";
-        let conclusao = dados.saldoReal < 0 ? "AÇÃO IMEDIATA: Estancar a sangria. Foque em cobrar os R$ " + dados.totalRaloAtrasado.toLocaleString('pt-BR') + " que estão na rua antes de fechar qualquer setor." : "Operação estabilizada. O fluxo de caixa suporta as obrigações atuais.";
+        const d = window.dadosContextoIA;
+        let resposta = "";
+        const m = msg.toLowerCase();
 
-        // Este é o formato que a sua futura API em Python devolverá!
-        const textoIA = `
-            <div class="space-y-3">
-                <p><span class="text-white font-black">DIAGNÓSTICO EXECUTIVO (CFO DIGITAL)</span></p>
-                <p>Comandante, os números não mentem. O nosso saldo operacional atual aponta para <b class="${dados.saldoReal < 0 ? 'text-red-400' : 'text-green-400'}">R$ ${dados.saldoReal.toLocaleString('pt-BR')}</b>.</p>
-                <p>O foco do seu chefe no encerramento do Pátio pode ser precipitado. Os dados mostram que ${alertaPatio} O verdadeiro "sangramento" invisível está na inadimplência: temos <b class="text-red-400">R$ ${dados.totalRaloAtrasado.toLocaleString('pt-BR')}</b> retidos ("O Ralo").</p>
-                <p class="border-l-4 border-yellow-500 pl-3 mt-4 text-white font-medium bg-white/5 py-2 pr-2">${conclusao}</p>
+        // Lógica simulada de Processamento de Linguagem Natural Básica
+        if(m.includes('resumo') || m.includes('geral') || m.includes('mês')) {
+            resposta = `Comandante, neste mês o Lucro Líquido é de R$ ${d.lucroMensal}. Executamos ${d.osFechadas} Ordens de Serviço com ticket médio de R$ ${d.ticketMedio.toFixed(2)}. Atenção ao capital na rua: temos R$ ${d.atrasado} em atraso/a receber.`;
+        } 
+        else if (m.includes('pátio') || m.includes('fechar') || m.includes('laboratório')) {
+            resposta = `Analisando os dados da arena: O Pátio atrai clientes, e o Laboratório gera margem alta em bombas/bicos. Fechar o Pátio agora eliminaria a "porta de entrada" dos serviços do Laboratório. Sugiro otimizar a mão de obra em vez de fechar.`;
+        }
+        else if (m.includes('fornecedor') || m.includes('custo')) {
+            resposta = `Os custos do mês totalizam R$ ${d.aPagar}. Revise compras com os fornecedores principais para renegociar prazos e aliviar o caixa.`;
+        }
+        else {
+            resposta = `Como seu CFO Digital, estou monitorizando a oficina em tempo real. O nosso foco principal deve ser recuperar os R$ ${d.atrasado} pendentes para proteger o caixa. Quer que eu detalhe as despesas?`;
+        }
+
+        chatBox.innerHTML += `
+            <div class="flex justify-start">
+                <div class="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%] font-medium">
+                    ${resposta}
+                </div>
             </div>
         `;
-
-        box.innerHTML = textoIA;
+        chatBox.scrollTop = chatBox.scrollHeight;
         
-        if (window.registrarLog) window.registrarLog('Dashboard', 'Gerou Relatório IA (CFO)', '');
-        
-    }, 2500);
+        if (window.registrarLog) window.registrarLog('Dashboard', 'Consultou IA Analítica', msg);
+    }, 1500);
 };
