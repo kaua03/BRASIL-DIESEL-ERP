@@ -6,23 +6,20 @@ import { supabase } from './config.js';
 // =========================================================================
 window.carregarPainelMaster = function() {
     
-    // O "CÃO DE GUARDA" DO DOM: Espera o HTML injetar a tabela na tela
     const verificadorDOM = setInterval(async () => {
         const tbody = document.getElementById('tabela-logs');
         const radar = document.getElementById('radar-usuarios');
         
-        // Só avança quando tiver a certeza absoluta de que a tabela e o radar existem no HTML
         if (tbody && radar) {
-            clearInterval(verificadorDOM); // Pista livre!
+            clearInterval(verificadorDOM); // O HTML aterrou, pista livre!
 
-            // 1. LIGA O RADAR VISUAL
+            // 1. LIGA O RADAR VISUAL PASSIVO
             window.iniciarRadarAoVivo();
 
-            // 2. VAI BUSCAR O HISTÓRICO DE LOGS À BASE DE DADOS
+            // 2. BUSCA O HISTÓRICO DE LOGS
             tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A extrair registos da caixa negra...</td></tr>';
 
             try {
-                // Puxa os últimos 100 registos da tabela auditoria_logs
                 const { data, error } = await supabase
                     .from('auditoria_logs')
                     .select('*')
@@ -31,27 +28,17 @@ window.carregarPainelMaster = function() {
 
                 if (error) throw error;
                 
-                // Desenha os logs na tela
                 window.renderizarLogs(data || []);
-                
-                // Liga o radar para escutar novos logs a partir de agora
                 window.iniciarSincronizacaoLogs();
 
             } catch (err) {
-                console.error("ERRO AO CARREGAR LOGS DA CAIXA NEGRA:", err);
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="text-center p-8 text-red-500 font-bold">
-                            Falha de conexão com a Caixa Negra (auditoria_logs).<br>
-                            <span class="text-xs text-gray-500 font-normal mt-2 block">Verifique se a tabela existe no Supabase.</span>
-                        </td>
-                    </tr>`;
+                console.error("ERRO AO CARREGAR LOGS:", err);
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500 font-bold">Falha de conexão. Tabela 'auditoria_logs' não localizada no Supabase.</td></tr>`;
             }
         }
     }, 50);
 
-    // Medida de segurança: se a tela demorar mais de 5 segundos para carregar, desiste para não travar o navegador.
-    setTimeout(() => clearInterval(verificadorDOM), 5000);
+    setTimeout(() => clearInterval(verificadorDOM), 5000); // Trava de segurança (5s)
 };
 
 // =========================================================================
@@ -103,8 +90,7 @@ window.renderizarLogs = function(logs) {
 };
 
 window.iniciarSincronizacaoLogs = function() {
-    if (window.auditoriaLigada) return; // Evita ligar dois rádios ao mesmo tempo
-
+    if (window.auditoriaLigada) return;
     window.auditoriaLigada = true;
     
     supabase.channel('logs-realtime')
@@ -137,36 +123,31 @@ window.adicionarLogAnimado = function(novoLog) {
 };
 
 // =========================================================================
-// 3. RADAR DE PRESENÇA AO VIVO (SUPABASE PRESENCE)
+// 3. RADAR DE PRESENÇA AO VIVO (MODO PASSIVO SEGURO)
 // =========================================================================
-window.radarLigado = false;
-
 window.iniciarRadarAoVivo = function() {
+    // Se o canal ainda não existe (do auth.js), aguarda.
     if (!window.canalTransmissaoGeral) {
         setTimeout(window.iniciarRadarAoVivo, 500);
         return;
     }
 
-    if (!window.radarLigado) {
-        window.canalTransmissaoGeral
-            .on('presence', { event: 'sync' }, () => {
-                if (typeof window.renderizarUsuariosOnline === 'function') {
-                    const estadoAtual = window.canalTransmissaoGeral.presenceState();
-                    window.renderizarUsuariosOnline(estadoAtual);
-                }
-            })
-            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-                console.log('📡 Alguém entrou no radar', newPresences);
-            })
-            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-                console.log('🔴 Alguém saiu do radar', leftPresences);
-            });
-            
-        window.radarLigado = true;
+    // Se já havia um radar em loop, limpa para não duplicar
+    if (window.loopRadar) {
+        clearInterval(window.loopRadar);
     }
 
-    const estadoAtual = window.canalTransmissaoGeral.presenceState();
-    window.renderizarUsuariosOnline(estadoAtual);
+    // Função que apenas LÊ o estado sem injetar callbacks novos (evita o erro vermelho)
+    const atualizarRadar = () => {
+        if (typeof window.renderizarUsuariosOnline === 'function') {
+            const estadoAtual = window.canalTransmissaoGeral.presenceState();
+            window.renderizarUsuariosOnline(estadoAtual);
+        }
+    };
+
+    atualizarRadar(); // Renderiza logo ao abrir a tela
+    window.loopRadar = setInterval(atualizarRadar, 3000); // Tira uma "fotografia" aos online a cada 3s
+    console.log('📡 [Master] Radar Passivo Ativado');
 };
 
 window.renderizarUsuariosOnline = function(estadoPresence) {
@@ -224,8 +205,3 @@ window.renderizarUsuariosOnline = function(estadoPresence) {
         `;
     }).join('');
 };
-
-// =========================================================================
-// PONTE DE AÇO: GARANTE QUE O HTML E O JS FALAM A MESMA LÍNGUA
-// =========================================================================
-window.carregarmaster = window.carregarPainelMaster;
