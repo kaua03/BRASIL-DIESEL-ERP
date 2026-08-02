@@ -3,7 +3,6 @@
 // =========================================================================
 // 1. CAIXA DE FERRAMENTAS VISUAIS (TOAST E CONFIRM)
 // =========================================================================
-
 window.mostrarToast = function(mensagem, tipo = 'info') {
     const toast = document.getElementById('custom-toast');
     const toastMsg = document.getElementById('toast-msg');
@@ -15,10 +14,8 @@ window.mostrarToast = function(mensagem, tipo = 'info') {
         return;
     }
 
-    // Reseta as classes padrão
     toast.className = 'fixed top-5 right-5 z-[200] transform transition-transform duration-300 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-bold max-w-sm';
 
-    // Aplica as cores conforme o tipo
     if (tipo === 'sucesso') { 
         toast.classList.add('bg-green-600'); 
         toastIcon.innerText = '✅'; 
@@ -34,9 +31,8 @@ window.mostrarToast = function(mensagem, tipo = 'info') {
     }
 
     toastMsg.innerText = mensagem;
-    toast.classList.remove('translate-x-[150%]'); // Desliza para dentro da tela
+    toast.classList.remove('translate-x-[150%]');
 
-    // Desliza para fora após 4 segundos
     setTimeout(() => { 
         toast.classList.add('translate-x-[150%]'); 
     }, 4000);
@@ -57,7 +53,6 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
         document.getElementById('confirm-title').innerText = titulo;
         document.getElementById('confirm-msg').innerText = mensagem;
 
-        // Estilização dinâmica do modal
         if (tipo === 'perigo') {
             box.classList.add('border-red-500'); 
             box.classList.remove('border-[#1a428a]');
@@ -70,7 +65,6 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
             btnOk.className = 'px-5 py-2 bg-[#1a428a] text-white font-bold rounded-lg hover:bg-blue-900 transition-colors shadow-md';
         }
 
-        // Exibe o modal com animação
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         setTimeout(() => { 
@@ -78,7 +72,6 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
             box.classList.remove('scale-95'); 
         }, 10);
 
-        // Função interna para fechar e devolver a resposta
         const fechar = (resultado) => {
             modal.classList.add('opacity-0'); 
             box.classList.add('scale-95');
@@ -89,14 +82,13 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
             }, 300);
         };
 
-        // Escuta os cliques dos botões
         document.getElementById('btn-confirm-cancel').onclick = () => fechar(false);
         document.getElementById('btn-confirm-ok').onclick = () => fechar(true);
     });
 };
 
 // =========================================================================
-// 2. O CORAÇÃO DO SISTEMA: ROTEADOR DE TELAS
+// 2. O CORAÇÃO DO SISTEMA: ROTEADOR DE TELAS INTELIGENTE
 // =========================================================================
 window.configurarBotoesMenu = function() {
     const botoes = document.querySelectorAll('.nav-btn');
@@ -112,39 +104,40 @@ window.configurarBotoesMenu = function() {
             const tela = btn.getAttribute('data-tela');
             const gatilho = btn.getAttribute('data-gatilho');
 
-            // Feedback visual de carregamento rápido
+            // Feedback visual de carregamento
             palco.innerHTML = '<div class="flex h-full items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-4 border-[#1a428a]"></div></div>';
 
             try {
-                // 1. Busca o HTML da tela
-                const response = await fetch(`views/${pasta}/${tela}.html`);
-                if (!response.ok) throw new Error(`Falha ao buscar a tela: ${tela}`);
+                // ROTEADOR ANTI-FALHAS: Tenta várias rotas até achar o seu ficheiro HTML
+                let response;
+                
+                // 1. Tenta a rota exata fornecida no index.html
+                response = await fetch(`views/${pasta}/${tela}.html`);
+                
+                // 2. Se falhar, tenta na raiz das views
+                if (!response.ok) response = await fetch(`views/${tela}.html`);
+                
+                // 3. Se falhar, tenta sem a pasta views
+                if (!response.ok) response = await fetch(`${tela}.html`);
+                
+                // Se não encontrar em lado nenhum, dispara o Erro 404
+                if (!response.ok) throw new Error(`HTML não encontrado para: ${tela}`);
+                
                 const html = await response.text();
+                palco.innerHTML = html; // Injeta o HTML com sucesso
 
-                // 2. Injeta o HTML na tela
-                palco.innerHTML = html;
-
-                // 3. DISPARA O GATILHO (O CÃO DE GUARDA É ACIONADO AQUI!)
-                // Se a função estiver pronta na memória (como window.carregarPainelMaster), ele dispara
+                // DISPARADOR DE GATILHOS (Acorda as funções de cada ecrã)
                 if (gatilho && typeof window[gatilho] === 'function') {
                     window[gatilho]();
-                } 
-                // TRAVA DE SEGURANÇA MÁXIMA PARA O PAINEL MASTER
-                // Caso a memória atrase, forçamos o disparo sabendo a tela!
-                else if (tela === 'master') {
-                    if (typeof window.carregarPainelMaster === 'function') {
-                        window.carregarPainelMaster();
-                    } else {
-                        console.error("ERRO CRÍTICO: A função 'window.carregarPainelMaster' não foi carregada no ficheiro master.js!");
-                    }
-                } 
-                else if (gatilho) {
-                    console.warn(`Atenção: A função de gatilho '${gatilho}' não existe no seu Javascript!`);
+                } else if (tela === 'master' && typeof window.carregarPainelMaster === 'function') {
+                    window.carregarPainelMaster(); // Força o gatilho do Master se falhar
+                } else if (tela === 'dashboard' && typeof window.carregarDashboard === 'function') {
+                    window.carregarDashboard(); // Mantém o seu gatilho antigo do dashboard
                 }
 
             } catch (error) {
                 console.error("Erro no Roteador:", error);
-                palco.innerHTML = `<div class="flex items-center justify-center h-full text-red-500 font-bold p-8 text-center">Erro 404: Não foi possível carregar a tela 'views/${pasta}/${tela}.html'</div>`;
+                palco.innerHTML = `<div class="flex items-center justify-center h-full text-red-500 font-bold p-8 text-center">Erro 404: Não foi possível carregar o ecrã '${tela}'. Verifique se o ficheiro HTML existe.</div>`;
             }
         });
     });
