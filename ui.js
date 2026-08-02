@@ -124,14 +124,19 @@ window.configurarBotoesMenu = function() {
                 // 2. Injeta o HTML na tela
                 palco.innerHTML = html;
 
-                // 3. DISPARA O GATILHO PARA BUSCAR OS DADOS NA BASE DE DADOS
+                // 3. DISPARA O GATILHO (O CÃO DE GUARDA É ACIONADO AQUI!)
+                // Se a função estiver pronta na memória (como window.carregarPainelMaster), ele dispara
                 if (gatilho && typeof window[gatilho] === 'function') {
                     window[gatilho]();
                 } 
-                // CORREÇÃO TÁTICA: Se o gatilho no HTML estiver com o nome errado ('carregarmaster'), 
-                // o sistema força a função correta para garantir que não falha!
-                else if (tela === 'master' && typeof window.carregarPainelMaster === 'function') {
-                    window.carregarPainelMaster();
+                // TRAVA DE SEGURANÇA MÁXIMA PARA O PAINEL MASTER
+                // Caso a memória atrase, forçamos o disparo sabendo a tela!
+                else if (tela === 'master') {
+                    if (typeof window.carregarPainelMaster === 'function') {
+                        window.carregarPainelMaster();
+                    } else {
+                        console.error("ERRO CRÍTICO: A função 'window.carregarPainelMaster' não foi carregada no ficheiro master.js!");
+                    }
                 } 
                 else if (gatilho) {
                     console.warn(`Atenção: A função de gatilho '${gatilho}' não existe no seu Javascript!`);
