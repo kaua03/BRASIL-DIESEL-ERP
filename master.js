@@ -4,51 +4,57 @@ import { supabase } from './config.js';
 // =========================================================================
 // 1. CARREGAMENTO INICIAL DO PAINEL MASTER E DOS LOGS
 // =========================================================================
-window.carregarPainelMaster = async function() {
-    // 🔴 TÁTICA DE ELITE: Atraso cirúrgico de 150ms para garantir que o HTML 
-    // terminou de carregar na tela antes do Javascript tentar preencher a tabela.
-    setTimeout(async () => {
+window.carregarPainelMaster = function() {
+    
+    // 🔴 TÁTICA DE ELITE: "O CÃO DE GUARDA" DO DOM
+    // Verifica a cada 50 milissegundos se o HTML já terminou de ser injetado na tela.
+    const verificadorDOM = setInterval(async () => {
         const tbody = document.getElementById('tabela-logs');
+        const radar = document.getElementById('radar-usuarios');
         
-        // Se mesmo após 150ms a tabela não estiver lá, o utilizador saiu da tela. Aborta.
-        if (!tbody) return; 
+        // Só avança quando tiver a certeza absoluta de que a tabela e o radar existem no HTML
+        if (tbody && radar) {
+            clearInterval(verificadorDOM); // Desliga o cão de guarda, a pista está livre!
 
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
+            // 1. LIGAR O RADAR DE USUÁRIOS ONLINE
+            window.iniciarRadarAoVivo();
 
-        // Garante que o Radar Visual está ligado
-        window.iniciarRadarAoVivo();
+            // 2. BUSCAR OS REGISTROS DE ATIVIDADE (LOGS)
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
 
-        try {
-            // Busca a auditoria na base de dados
-            const { data, error } = await supabase
-                .from('auditoria_logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(100);
+            try {
+                const { data, error } = await supabase
+                    .from('auditoria_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
 
-            if (error) throw error;
-            
-            window.renderizarLogs(data || []);
-            
-            // Garante que os ouvidos de novos logs estão ativos (só liga uma vez)
-            window.iniciarSincronizacaoLogs();
+                if (error) throw error;
+                
+                window.renderizarLogs(data || []);
+                
+                // Ligar os ouvidos para escutar novos logs em tempo real
+                window.iniciarSincronizacaoLogs();
 
-        } catch (err) {
-            console.error("ERRO AO CARREGAR LOGS:", err);
-            const tb = document.getElementById('tabela-logs');
-            if(tb) tb.innerHTML = `
-                <tr>
-                    <td colspan="4" class="text-center p-8 text-red-500 font-bold">
-                        Aviso: Tabela 'auditoria_logs' não encontrada ou sem permissão.<br>
-                        <span class="text-xs text-gray-500 font-normal mt-2 block">Verifique no Supabase se a tabela existe com as colunas: created_at, usuario, modulo, acao, detalhes.</span>
-                    </td>
-                </tr>`;
+            } catch (err) {
+                console.error("ERRO AO CARREGAR LOGS:", err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center p-8 text-red-500 font-bold">
+                            Erro de conexão com a base de dados central.<br>
+                            <span class="text-xs text-gray-500 font-normal mt-2 block">Verifique no Supabase se a tabela 'auditoria_logs' existe.</span>
+                        </td>
+                    </tr>`;
+            }
         }
-    }, 150);
+    }, 50);
+
+    // Medida de segurança: se a tela demorar mais de 5 segundos para carregar, desiste para não travar o navegador.
+    setTimeout(() => clearInterval(verificadorDOM), 5000);
 };
 
 // =========================================================================
-// 2. CONSTRUTOR DE HTML E ANIMAÇÕES (LOGS DE AUDITORIA)
+// 2. CONSTRUTOR DE HTML E ANIMAÇÕES
 // =========================================================================
 window.gerarHtmlLinhaLog = function(log) {
     const dataLocal = new Date(log.created_at);
@@ -75,7 +81,7 @@ window.gerarHtmlLinhaLog = function(log) {
             </span>
         </td>
         <td class="p-4 align-top">
-            <span class="block text-sm font-bold text-gray-800 dark:text-gray-200">${log.acao || 'Ação Registada'}</span>
+            <span class="block text-sm font-bold text-gray-800 dark:text-gray-200">${log.acao || 'Ação'}</span>
             ${log.detalhes ? `<span class="block text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-sm md:max-w-lg lg:max-w-2xl group-hover:whitespace-normal group-hover:text-clip transition-all duration-300">${log.detalhes}</span>` : ''}
         </td>
     `;
@@ -141,6 +147,7 @@ window.adicionarLogAnimado = function(novoLog) {
 window.radarLigado = false;
 
 window.iniciarRadarAoVivo = function() {
+    // Só tenta ligar se o canal global de autenticação já existir
     if (!window.canalTransmissaoGeral) {
         setTimeout(window.iniciarRadarAoVivo, 500);
         return;
@@ -155,15 +162,16 @@ window.iniciarRadarAoVivo = function() {
                 }
             })
             .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-                console.log('📡 [Master] Alguém entrou no radar', newPresences);
+                console.log('📡 Alguém entrou no radar', newPresences);
             })
             .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-                console.log('🔴 [Master] Alguém saiu do radar', leftPresences);
+                console.log('🔴 Alguém saiu do radar', leftPresences);
             });
             
         window.radarLigado = true;
     }
 
+    // Chama a renderização manual para quem acabou de aterrar na página
     const estadoAtual = window.canalTransmissaoGeral.presenceState();
     window.renderizarUsuariosOnline(estadoAtual);
 };
