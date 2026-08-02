@@ -6,8 +6,7 @@ import { supabase } from './config.js';
 // =========================================================================
 window.carregarPainelMaster = function() {
     
-    // 🔴 TÁTICA DE ELITE: "O CÃO DE GUARDA" DO DOM
-    // Verifica a cada 50 milissegundos se o HTML já terminou de ser injetado na tela.
+    // O "CÃO DE GUARDA" DO DOM: Espera o HTML injetar a tabela na tela
     const verificadorDOM = setInterval(async () => {
         const tbody = document.getElementById('tabela-logs');
         const radar = document.getElementById('radar-usuarios');
@@ -16,13 +15,14 @@ window.carregarPainelMaster = function() {
         if (tbody && radar) {
             clearInterval(verificadorDOM); // Desliga o cão de guarda, a pista está livre!
 
-            // 1. LIGAR O RADAR DE USUÁRIOS ONLINE
+            // 1. LIGA O RADAR VISUAL
             window.iniciarRadarAoVivo();
 
-            // 2. BUSCAR OS REGISTROS DE ATIVIDADE (LOGS)
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A ler ficheiros de auditoria...</td></tr>';
+            // 2. VAI BUSCAR O HISTÓRICO DE LOGS À BASE DE DADOS
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500 font-bold">A extrair registos da caixa negra...</td></tr>';
 
             try {
+                // Puxa os últimos 100 registos da tabela auditoria_logs
                 const { data, error } = await supabase
                     .from('auditoria_logs')
                     .select('*')
@@ -31,18 +31,19 @@ window.carregarPainelMaster = function() {
 
                 if (error) throw error;
                 
+                // Desenha os logs na tela
                 window.renderizarLogs(data || []);
                 
-                // Ligar os ouvidos para escutar novos logs em tempo real
+                // Liga o radar para escutar novos logs a partir de agora
                 window.iniciarSincronizacaoLogs();
 
             } catch (err) {
-                console.error("ERRO AO CARREGAR LOGS:", err);
+                console.error("ERRO AO CARREGAR LOGS DA CAIXA NEGRA:", err);
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="4" class="text-center p-8 text-red-500 font-bold">
-                            Erro de conexão com a base de dados central.<br>
-                            <span class="text-xs text-gray-500 font-normal mt-2 block">Verifique no Supabase se a tabela 'auditoria_logs' existe.</span>
+                            Falha de conexão com a Caixa Negra (auditoria_logs).<br>
+                            <span class="text-xs text-gray-500 font-normal mt-2 block">Verifique se a tabela existe no Supabase.</span>
                         </td>
                     </tr>`;
             }
