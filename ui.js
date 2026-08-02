@@ -1,7 +1,7 @@
 // JS/utils/ui.js
 
 // =========================================================================
-// CAIXA DE FERRAMENTAS VISUAIS (TOAST E CONFIRM)
+// 1. CAIXA DE FERRAMENTAS VISUAIS (TOAST E CONFIRM)
 // =========================================================================
 
 window.mostrarToast = function(mensagem, tipo = 'info') {
@@ -28,6 +28,9 @@ window.mostrarToast = function(mensagem, tipo = 'info') {
     } else if (tipo === 'aviso') { 
         toast.classList.add('bg-orange-500'); 
         toastIcon.innerText = '⚠️'; 
+    } else {
+        toast.classList.add('bg-[#1a428a]'); 
+        toastIcon.innerText = 'ℹ️'; 
     }
 
     toastMsg.innerText = mensagem;
@@ -92,6 +95,52 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
     });
 };
 
-if (tela === 'dashboard' && typeof window.carregarDashboard === 'function') {
-    window.carregarDashboard();
-}
+// =========================================================================
+// 2. O CORAÇÃO DO SISTEMA: ROTEADOR DE TELAS
+// =========================================================================
+window.configurarBotoesMenu = function() {
+    const botoes = document.querySelectorAll('.nav-btn');
+    const palco = document.getElementById('conteudo-dinamico');
+
+    if (!palco) return;
+
+    botoes.forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const pasta = btn.getAttribute('data-pasta');
+            const tela = btn.getAttribute('data-tela');
+            const gatilho = btn.getAttribute('data-gatilho');
+
+            // Feedback visual de carregamento rápido
+            palco.innerHTML = '<div class="flex h-full items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-4 border-[#1a428a]"></div></div>';
+
+            try {
+                // 1. Busca o HTML da tela
+                const response = await fetch(`views/${pasta}/${tela}.html`);
+                if (!response.ok) throw new Error(`Falha ao buscar a tela: ${tela}`);
+                const html = await response.text();
+
+                // 2. Injeta o HTML na tela
+                palco.innerHTML = html;
+
+                // 3. DISPARA O GATILHO PARA BUSCAR OS DADOS NA BASE DE DADOS
+                if (gatilho && typeof window[gatilho] === 'function') {
+                    window[gatilho]();
+                } 
+                // CORREÇÃO TÁTICA: Se o gatilho no HTML estiver com o nome errado ('carregarmaster'), 
+                // o sistema força a função correta para garantir que não falha!
+                else if (tela === 'master' && typeof window.carregarPainelMaster === 'function') {
+                    window.carregarPainelMaster();
+                } 
+                else if (gatilho) {
+                    console.warn(`Atenção: A função de gatilho '${gatilho}' não existe no seu Javascript!`);
+                }
+
+            } catch (error) {
+                console.error("Erro no Roteador:", error);
+                palco.innerHTML = `<div class="flex items-center justify-center h-full text-red-500 font-bold p-8 text-center">Erro 404: Não foi possível carregar a tela 'views/${pasta}/${tela}.html'</div>`;
+            }
+        });
+    });
+};
