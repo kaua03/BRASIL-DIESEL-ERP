@@ -1,6 +1,17 @@
 // JS/utils/ui.js
 
 // =========================================================================
+// 0. ESCUDO ANTI-FLICKER (Impede a tela de login de piscar no F5)
+// =========================================================================
+// Se detetar sessão ativa, injeta CSS de força bruta em 1 milissegundo 
+// para forçar a tela de login a ficar invisível antes de o HTML renderizar.
+if (sessionStorage.getItem('bdp_user')) {
+    const style = document.createElement('style');
+    style.innerHTML = `#tela-login { display: none !important; } #tela-erp { display: flex !important; }`;
+    document.head.appendChild(style);
+}
+
+// =========================================================================
 // 1. CAIXA DE FERRAMENTAS VISUAIS (TOAST E CONFIRM)
 // =========================================================================
 window.mostrarToast = function(mensagem, tipo = 'info') {
@@ -9,7 +20,6 @@ window.mostrarToast = function(mensagem, tipo = 'info') {
     const toastIcon = document.getElementById('toast-icon');
     
     if (!toast) {
-        console.warn("Elemento Toast não encontrado no HTML. Usando alert como fallback.");
         alert(mensagem);
         return;
     }
@@ -33,9 +43,7 @@ window.mostrarToast = function(mensagem, tipo = 'info') {
     toastMsg.innerText = mensagem;
     toast.classList.remove('translate-x-[150%]');
 
-    setTimeout(() => { 
-        toast.classList.add('translate-x-[150%]'); 
-    }, 4000);
+    setTimeout(() => { toast.classList.add('translate-x-[150%]'); }, 4000);
 };
 
 window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
@@ -45,10 +53,7 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
         const btnOk = document.getElementById('btn-confirm-ok');
         const iconBg = document.getElementById('confirm-icon-bg');
         
-        if (!modal) {
-             console.warn("Modal de confirmação não encontrado. Usando confirm nativo.");
-             return resolve(confirm(`${titulo}\n\n${mensagem}`));
-        }
+        if (!modal) return resolve(confirm(`${titulo}\n\n${mensagem}`));
 
         document.getElementById('confirm-title').innerText = titulo;
         document.getElementById('confirm-msg').innerText = mensagem;
@@ -67,19 +72,11 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        setTimeout(() => { 
-            modal.classList.remove('opacity-0'); 
-            box.classList.remove('scale-95'); 
-        }, 10);
+        setTimeout(() => { modal.classList.remove('opacity-0'); box.classList.remove('scale-95'); }, 10);
 
         const fechar = (resultado) => {
-            modal.classList.add('opacity-0'); 
-            box.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden'); 
-                modal.classList.remove('flex');
-                resolve(resultado);
-            }, 300);
+            modal.classList.add('opacity-0'); box.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(resultado); }, 300);
         };
 
         document.getElementById('btn-confirm-cancel').onclick = () => fechar(false);
@@ -88,7 +85,7 @@ window.abrirConfirmacao = function(titulo, mensagem, tipo = 'aviso') {
 };
 
 // =========================================================================
-// 2. O CORAÇÃO DO SISTEMA: ROTEADOR DE TELAS INTELIGENTE
+// 2. O CORAÇÃO DO SISTEMA: ROTEADOR INTELIGENTE
 // =========================================================================
 window.configurarBotoesMenu = function() {
     const botoes = document.querySelectorAll('.nav-btn');
@@ -104,41 +101,63 @@ window.configurarBotoesMenu = function() {
             const tela = btn.getAttribute('data-tela');
             const gatilho = btn.getAttribute('data-gatilho');
 
+            // 1. MEMÓRIA FOTOGRÁFICA: Grava a tela atual para o caso de o utilizador dar F5
+            localStorage.setItem('bdp_ultima_pasta', pasta);
+            localStorage.setItem('bdp_ultima_tela', tela);
+
+            // 2. RADAR DE PRESENÇA (Transmissor): Avisa o Supabase que você mudou de sala!
+            if (window.canalTransmissaoGeral) {
+                try {
+                    const userStr = sessionStorage.getItem('bdp_user');
+                    if (userStr) {
+                        const userObj = JSON.parse(userStr);
+                        userObj.tela = tela; // Atualiza a tela na memória
+                        sessionStorage.setItem('bdp_user', JSON.stringify(userObj));
+                        window.canalTransmissaoGeral.track(userObj); // Envia o novo sinal de radar
+                    }
+                } catch(err) { console.error("Falha ao atualizar o radar:", err); }
+            }
+
             // Feedback visual de carregamento
             palco.innerHTML = '<div class="flex h-full items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-4 border-[#1a428a]"></div></div>';
 
             try {
-                // ROTEADOR ANTI-FALHAS: Tenta várias rotas até achar o seu ficheiro HTML
-                let response;
-                
-                // 1. Tenta a rota exata fornecida no index.html
-                response = await fetch(`views/${pasta}/${tela}.html`);
-                
-                // 2. Se falhar, tenta na raiz das views
+                let response = await fetch(`views/${pasta}/${tela}.html`);
                 if (!response.ok) response = await fetch(`views/${tela}.html`);
-                
-                // 3. Se falhar, tenta sem a pasta views
                 if (!response.ok) response = await fetch(`${tela}.html`);
-                
-                // Se não encontrar em lado nenhum, dispara o Erro 404
                 if (!response.ok) throw new Error(`HTML não encontrado para: ${tela}`);
                 
                 const html = await response.text();
-                palco.innerHTML = html; // Injeta o HTML com sucesso
+                palco.innerHTML = html; 
 
-                // DISPARADOR DE GATILHOS (Acorda as funções de cada ecrã)
+                // Disparador de Gatilhos
                 if (gatilho && typeof window[gatilho] === 'function') {
                     window[gatilho]();
                 } else if (tela === 'master' && typeof window.carregarPainelMaster === 'function') {
-                    window.carregarPainelMaster(); // Força o gatilho do Master se falhar
+                    window.carregarPainelMaster(); 
                 } else if (tela === 'dashboard' && typeof window.carregarDashboard === 'function') {
-                    window.carregarDashboard(); // Mantém o seu gatilho antigo do dashboard
+                    window.carregarDashboard();
                 }
 
             } catch (error) {
                 console.error("Erro no Roteador:", error);
-                palco.innerHTML = `<div class="flex items-center justify-center h-full text-red-500 font-bold p-8 text-center">Erro 404: Não foi possível carregar o ecrã '${tela}'. Verifique se o ficheiro HTML existe.</div>`;
+                palco.innerHTML = `<div class="flex items-center justify-center h-full text-red-500 font-bold p-8 text-center">Erro 404: Não foi possível carregar o ecrã '${tela}'.</div>`;
             }
         });
     });
+};
+
+// =========================================================================
+// 3. RECUPERADOR DE ABAS (PÓS-F5)
+// =========================================================================
+window.recuperarUltimaAba = function() {
+    const telaSalva = localStorage.getItem('bdp_ultima_tela');
+    if (telaSalva) {
+        const btn = document.querySelector(`.nav-btn[data-tela="${telaSalva}"]`);
+        if (btn) {
+            btn.click(); // Simula um clique fantasma na aba onde você estava!
+            return true;
+        }
+    }
+    return false;
 };
