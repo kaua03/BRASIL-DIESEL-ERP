@@ -1,6 +1,16 @@
 // JS/core/auth.js
 import { supabase } from './config.js';
 
+// =========================================================================
+// 0. ESCUDO ANTI-FLICKER (Impede a tela de login de piscar no F5)
+// =========================================================================
+// Se detetar sessão, injeta CSS de força bruta antes do HTML desenhar a tela
+if (sessionStorage.getItem('bdp_user')) {
+    const style = document.createElement('style');
+    style.innerHTML = `#tela-login { display: none !important; opacity: 0 !important; } #tela-erp { display: flex !important; }`;
+    document.head.appendChild(style);
+}
+
 // ==========================================
 // 1. O ROTEADOR SPA ANTI-TELA BRANCA & BLINDADO
 // ==========================================
@@ -17,7 +27,7 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
         }
     }
 
-    // Grava a tela atual no sessionStorage para o F5
+    // Grava a tela atual no sessionStorage para o F5 perfeito
     sessionStorage.setItem('ultimaRota', JSON.stringify({ pasta, nomeDaTela, scriptParaChamar }));
 
     // INJETA O LOADER
@@ -45,7 +55,7 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
             const user = JSON.parse(userStr);
             const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
             
-            // Avisa o servidor "Onde eu estou agora"
+            // Avisa o servidor "Onde eu estou agora" instantaneamente
             window.canalTransmissaoGeral.track({
                 nome: primeiroNome,
                 cargo: user.cargo,
@@ -53,19 +63,26 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
                 onlineAt: new Date().toISOString()
             });
         }
-    } catch(e) {}
+    } catch(e) { console.warn("Aviso ao atualizar radar:", e); }
 
     try {
-        const resposta = await fetch(`./${nomeDaTela}.html`);
-        if (!resposta.ok) throw new Error(`HTML não encontrado: ${nomeDaTela}`);
+        // Roteador Inteligente: Procura o ficheiro em múltiplos caminhos
+        let resposta = await fetch(`views/${pasta}/${nomeDaTela}.html`).catch(() => null);
+        if (!resposta || !resposta.ok) resposta = await fetch(`views/${nomeDaTela}.html`).catch(() => null);
+        if (!resposta || !resposta.ok) resposta = await fetch(`./${nomeDaTela}.html`).catch(() => null);
+        
+        if (!resposta || !resposta.ok) throw new Error(`HTML não encontrado: ${nomeDaTela}`);
         
         const html = await resposta.text();
         
         setTimeout(() => {
             palco.innerHTML = html;
 
+            // Dispara o script específico da tela
             if (scriptParaChamar && typeof window[scriptParaChamar] === 'function') {
                 window[scriptParaChamar]();
+            } else if (nomeDaTela === 'master' && typeof window.carregarPainelMaster === 'function') {
+                window.carregarPainelMaster(); // Proteção extra para o painel master
             }
         }, 100);
         
@@ -84,7 +101,11 @@ window.carregarTela = async function(pasta, nomeDaTela, scriptParaChamar = null)
 
 window.configurarBotoesMenu = function() {
     document.querySelectorAll('.nav-btn').forEach(botao => {
-        botao.addEventListener('click', (evento) => {
+        // Remove ouvintes antigos para evitar cliques duplicados
+        const clone = botao.cloneNode(true);
+        botao.parentNode.replaceChild(clone, botao);
+        
+        clone.addEventListener('click', (evento) => {
             const btn = evento.currentTarget;
             const pasta = btn.getAttribute('data-pasta');
             const tela = btn.getAttribute('data-tela') || btn.getAttribute('data-');
@@ -113,7 +134,6 @@ window.tentarLogar = async function(e) {
     }
 
     try {
-        // Busca o funcionário pelo nome de usuário
         const { data: user, error } = await supabase
             .from('funcionarios')
             .select('*')
@@ -123,27 +143,28 @@ window.tentarLogar = async function(e) {
 
         if (error || !user) throw new Error("Usuário não encontrado ou inativo.");
 
-        // Verifica a senha (A que guardámos em Base64)
         if (user.senha !== btoa(senhaBruta)) {
             throw new Error("Senha incorreta.");
         }
 
-        // Sucesso! Grava a sessão local no navegador
         sessionStorage.setItem('bdp_user', JSON.stringify(user));
 
-    // REGISTRA O LOGIN NO PAINEL MASTER
-    if(window.registrarLog) {
-        window.registrarLog('Autenticação', 'Login no Sistema', `Usuário logado com sucesso.`);
-    }
+        if(window.registrarLog) {
+            window.registrarLog('Autenticação', 'Login no Sistema', `Usuário logado com sucesso.`);
+        }
 
         document.getElementById('tela-login')?.classList.add('opacity-0');
         
         setTimeout(() => {
+            // Remove o estilo forçado do escudo anti-flicker caso exista
+            document.querySelectorAll('style').forEach(s => {
+                if(s.innerHTML.includes('#tela-login { display: none')) s.remove();
+            });
+
             document.getElementById('tela-login')?.classList.add('hidden');
             document.getElementById('tela-erp')?.classList.remove('hidden');
             document.getElementById('tela-erp')?.classList.add('flex');
             
-            // PREENCHE CRACHÁ NA TELA (CORTE SNIPER PARA O PRIMEIRO NOME)
             if(document.getElementById('usuario-logado')) {
                 const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
                 document.getElementById('usuario-logado').innerText = primeiroNome;
@@ -152,7 +173,6 @@ window.tentarLogar = async function(e) {
                 document.getElementById('cargo-logado').innerText = user.cargo.toUpperCase();
             }
 
-            // APLICA AS PERMISSÕES DE ACESSO
             window.aplicarPermissoes(user.cargo);
 
         }, 150);
@@ -173,11 +193,19 @@ window.fazerLogout = async function() {
     document.getElementById('tela-erp')?.classList.add('hidden');
     document.getElementById('tela-erp')?.classList.remove('flex');
 
-    // REGISTRA O LOGOUT
     if(window.registrarLog) window.registrarLog('Autenticação', 'Saiu do Sistema', 'Sessão encerrada voluntariamente.');
     
+    // Desliga o radar ao sair
+    if (window.canalTransmissaoGeral) {
+        window.canalTransmissaoGeral.untrack();
+    }
+
     const telaLogin = document.getElementById('tela-login');
     if (telaLogin) {
+        // Remove o estilo forçado do escudo anti-flicker caso exista
+        document.querySelectorAll('style').forEach(s => {
+            if(s.innerHTML.includes('#tela-login { display: none')) s.remove();
+        });
         telaLogin.classList.remove('hidden');
         setTimeout(() => telaLogin.classList.remove('opacity-0'), 10);
     }
@@ -206,7 +234,6 @@ window.restaurarSessao = async function() {
                 telaErp.classList.add('flex');
             }
 
-            // CORTE SNIPER PARA O PRIMEIRO NOME AO DAR F5
             const userSpan = document.getElementById('usuario-logado');
             if (userSpan) {
                 const primeiroNome = user.nome_completo ? String(user.nome_completo).split(' ')[0] : 'Usuário';
@@ -216,7 +243,6 @@ window.restaurarSessao = async function() {
             const cargoSpan = document.getElementById('cargo-logado');
             if (cargoSpan) cargoSpan.innerText = user.cargo.toUpperCase();
 
-            // Aplica as permissões e carrega a tela
             window.aplicarPermissoes(user.cargo);
         }
     } catch (erro) {
@@ -228,7 +254,6 @@ window.restaurarSessao = async function() {
 // 5. O MOTOR DE PERMISSÕES E VISIBILIDADE (RBAC)
 // ==========================================
 window.aplicarPermissoes = function(cargo) {
-    // 1. Esconder todos os botões por padrão para segurança máxima
     const todasTelas = ['patio', 'ordem', 'lab', 'itens', 'estoque', 'cliente', 'veiculo', 'funcionario', 'receber', 'pagar', 'dashboard', 'master'];
     
     todasTelas.forEach(tela => {
@@ -236,24 +261,21 @@ window.aplicarPermissoes = function(cargo) {
         if (btn) btn.style.display = 'none';
     });
 
-    // 2. Restaurar interface padrão (Pode ter sido alterada pelo Modo Tela)
     document.getElementById('sidebar')?.classList.remove('hidden');
     document.getElementById('header-principal')?.classList.remove('hidden');
-    document.body.style.overflow = ''; // Devolve o scroll
+    document.body.style.overflow = ''; 
 
     let rotasPermitidas = [];
 
-    // 3. O Mapa de Acessos
     switch(cargo) {
         case 'Dono':
         case 'Analista':
-            rotasPermitidas = todasTelas; // Acesso a tudo
+            rotasPermitidas = todasTelas; 
             break;
         case 'Mecânico RSP':
             rotasPermitidas = ['patio', 'ordem', 'lab', 'itens', 'cliente', 'veiculo'];
             break;
         case 'Mecânico':
-            // Clientes e Veículos só via "Cadastro Rápido" (não precisam do menu)
             rotasPermitidas = ['patio', 'ordem', 'itens']; 
             break;
         case 'Laboratório':
@@ -261,22 +283,20 @@ window.aplicarPermissoes = function(cargo) {
             break;
         case 'Tela':
             rotasPermitidas = ['patio'];
-            // AÇÕES DO MODO TELA CHEIA VISUAL
             document.getElementById('sidebar')?.classList.add('hidden');
             document.getElementById('header-principal')?.classList.add('hidden');
-            document.documentElement.classList.remove('dark'); // Força Claro
+            document.documentElement.classList.remove('dark'); 
             localStorage.setItem('tema', 'light');
-            document.body.style.overflow = 'hidden'; // Evita scroll do body na TV
+            document.body.style.overflow = 'hidden'; 
             break;
         default:
-            rotasPermitidas = ['patio']; // Segurança fallback
+            rotasPermitidas = ['patio']; 
             break;
     }
 
-    // 4. Mostrar apenas os botões permitidos
     rotasPermitidas.forEach(tela => {
         const btn = document.querySelector(`.nav-btn[data-tela="${tela}"]`) || document.querySelector(`.nav-btn[data-="${tela}"]`);
-        if (btn) btn.style.display = 'flex'; // Exibe o botão usando flexbox (conforme o seu CSS)
+        if (btn) btn.style.display = 'flex'; 
     });
 
     // 5. Carregar a Tela (F5 ou Início)
@@ -284,14 +304,12 @@ window.aplicarPermissoes = function(cargo) {
     if (rotaSalva && cargo !== 'Tela') {
         const { pasta, nomeDaTela, scriptParaChamar } = JSON.parse(rotaSalva);
         
-        // Verifica se ele não tentou aceder a algo proibido pelo link
         if (rotasPermitidas.includes(nomeDaTela)) {
             window.carregarTela(pasta, nomeDaTela, scriptParaChamar);
             return;
         }
     }
     
-    // Fallback: Se não tem rota salva ou tentou algo proibido, vai para o Pátio
     window.carregarTela('nav', 'patio', 'carregarPatio');
 };
 
@@ -306,7 +324,6 @@ window.verificarPermissaoOS = async function() {
         const user = JSON.parse(userStr);
         const cargo = user.cargo;
         
-        // Estes não precisam de senha para O.S.
         const cargosLivres = ['Dono', 'Analista', 'Mecânico RSP'];
         
         return cargosLivres.includes(cargo);
@@ -346,7 +363,6 @@ window.validarSenhaGerencial = async function(e) {
     const senhaTentativa = document.getElementById('senha-liberacao').value;
     
     try {
-        // Tática de Segurança: Verifica se existe algum "Dono" com esta senha
         const { data: donos, error } = await supabase
             .from('funcionarios')
             .select('id')
@@ -397,13 +413,10 @@ window.registrarLog = async function(modulo, acao, detalhes = '') {
 // ==========================================
 window.iniciarTransmissorGlobal = function() {
     if(!window.canalTransmissaoGeral) {
-        // 1. Cria o canal
         window.canalTransmissaoGeral = supabase.channel('radar_global');
         
-        // 2. ADICIONA OS OUVINTES AQUI (ANTES DO SUBSCRIBE PARA NÃO DAR ERRO!)
         window.canalTransmissaoGeral
             .on('presence', { event: 'sync' }, () => {
-                // Se a função de desenhar existir (estiver no Painel Master), ele desenha.
                 if (typeof window.renderizarUsuariosOnline === 'function') {
                     const estadoAtual = window.canalTransmissaoGeral.presenceState();
                     window.renderizarUsuariosOnline(estadoAtual);
@@ -416,7 +429,6 @@ window.iniciarTransmissorGlobal = function() {
                 console.log('🔴 Radar: Alguém saiu', leftPresences);
             });
 
-        // 3. Liga o Rádio (Subscribe)
         window.canalTransmissaoGeral.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
                 const rotaSalva = sessionStorage.getItem('ultimaRota');
