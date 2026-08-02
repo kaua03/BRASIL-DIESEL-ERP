@@ -13,7 +13,7 @@ window.carregarPainelMaster = function() {
         
         // Só avança quando tiver a certeza absoluta de que a tabela e o radar existem no HTML
         if (tbody && radar) {
-            clearInterval(verificadorDOM); // Desliga o cão de guarda, a pista está livre!
+            clearInterval(verificadorDOM); // Pista livre!
 
             // 1. LIGA O RADAR VISUAL
             window.iniciarRadarAoVivo();
@@ -118,25 +118,19 @@ window.adicionarLogAnimado = function(novoLog) {
     const tbody = document.getElementById('tabela-logs');
     if (!tbody) return;
 
-    // Limpa a mensagem de "silencioso" caso exista
     const msgVazia = document.getElementById('msg-sem-logs');
     if (msgVazia) msgVazia.remove();
 
     const tr = document.createElement('tr');
-    
-    // ANIMAÇÃO DE ELITE: Inicia com fundo Azul que desvanece lentamente
     tr.className = "hover:bg-gray-50 dark:hover:bg-[#0f172a] transition-all duration-[2000ms] ease-out group bg-blue-100 dark:bg-blue-900/40 anima-fade border-b border-gray-100 dark:border-gray-800/50";
     tr.innerHTML = window.gerarHtmlLinhaLog(novoLog);
 
-    // Insere exatamente no topo (index 0)
     tbody.insertBefore(tr, tbody.firstChild);
 
-    // Limite de desempenho: Mantém apenas 100 linhas na tela
     if (tbody.children.length > 100) {
         tbody.removeChild(tbody.lastChild);
     }
 
-    // Após 2 segundos, remove a classe azul, fundindo com o fundo normal da tela
     setTimeout(() => {
         tr.classList.remove('bg-blue-100', 'dark:bg-blue-900/40');
     }, 2000);
@@ -148,7 +142,6 @@ window.adicionarLogAnimado = function(novoLog) {
 window.radarLigado = false;
 
 window.iniciarRadarAoVivo = function() {
-    // Só tenta ligar se o canal global de autenticação já existir
     if (!window.canalTransmissaoGeral) {
         setTimeout(window.iniciarRadarAoVivo, 500);
         return;
@@ -172,7 +165,6 @@ window.iniciarRadarAoVivo = function() {
         window.radarLigado = true;
     }
 
-    // Chama a renderização manual para quem acabou de aterrar na página
     const estadoAtual = window.canalTransmissaoGeral.presenceState();
     window.renderizarUsuariosOnline(estadoAtual);
 };
@@ -232,3 +224,8 @@ window.renderizarUsuariosOnline = function(estadoPresence) {
         `;
     }).join('');
 };
+
+// =========================================================================
+// PONTE DE AÇO: GARANTE QUE O HTML E O JS FALAM A MESMA LÍNGUA
+// =========================================================================
+window.carregarmaster = window.carregarPainelMaster;
